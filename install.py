@@ -40,17 +40,17 @@ def download_models():
 # proc.wait()
 # print("upgrade pip done")
 
-# command = [sys.executable]
-# if "python_embeded" in sys.executable: command += ['-s']
-# command += ['-m','pip', 'install','--use-pep517', '-r' , f'{EXT_PATH}/requirements.txt', 
-#     '--index-url' , 'https://mirrors.aliyun.com/pypi/simple',
-#     '--extra-index-url', 'https://download.pytorch.org/whl/cu117', '--no-warn-script-location']
-# print("Installing requirements...")
-# sleep(2)
-# proc = subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True)
-# for line in iter(proc.stdout.readline, ''):
-#     print(line, end='')
-# proc.wait()
+command = [sys.executable]
+if "python_embeded" in sys.executable: command += ['-s']
+command += ['-m','pip', 'install','--use-pep517', '-r' , f'{EXT_PATH}/requirements.txt', 
+    '--index-url' , 'https://mirrors.aliyun.com/pypi/simple',
+    '--extra-index-url', 'https://download.pytorch.org/whl/cu117', '--no-warn-script-location']
+print("Installing requirements...")
+sleep(2)
+proc = subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True)
+for line in iter(proc.stdout.readline, ''):
+    print(line, end='')
+proc.wait()
 print("Installing requirements done")
 
 if args.no_download_ckpts: exit()
@@ -58,9 +58,9 @@ print("Download models...")
 download_models()
 print("Download done")
 
-add_global_shortcut_module("cli_args", os.path.join(EXT_PATH, "../../comfy/cli_args.py"))
-add_global_shortcut_module("model_management", os.path.join(EXT_PATH, "../../comfy/model_management.py"))
-add_global_shortcut_module(this_module_name, os.path.join(EXT_PATH, "__init__.py"))
+# add_global_shortcut_module("cli_args", os.path.join(EXT_PATH, "../../comfy/cli_args.py"))
+# add_global_shortcut_module("model_management", os.path.join(EXT_PATH, "../../comfy/model_management.py"))
+# add_global_shortcut_module(this_module_name, os.path.join(EXT_PATH, "__init__.py"))
 
 
 sleep(2)
