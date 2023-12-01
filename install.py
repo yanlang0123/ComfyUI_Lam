@@ -58,9 +58,9 @@ print("Download models...")
 download_models()
 print("Download done")
 
-add_global_shortcut_module("cli_args", os.path.join(EXT_PATH, "../../comfy/cli_args.py"))
-add_global_shortcut_module("model_management", os.path.join(EXT_PATH, "../../comfy/model_management.py"))
-add_global_shortcut_module(this_module_name, os.path.join(EXT_PATH, "__init__.py"))
+# add_global_shortcut_module("cli_args", os.path.join(EXT_PATH, "../../comfy/cli_args.py"))
+# add_global_shortcut_module("model_management", os.path.join(EXT_PATH, "../../comfy/model_management.py"))
+# add_global_shortcut_module(this_module_name, os.path.join(EXT_PATH, "__init__.py"))
 
 
 sleep(2)
