@@ -93,8 +93,10 @@ class StyleSelecto:
                 values = node["properties"]["values"]
                 break
         for val in values:
-            prompt=self.styleAll[val]['prompt'].format(prompt=prompt)
-            negative_prompt+=','+self.styleAll[val]['negative_prompt']
+            if self.styleAll[val]['prompt']:
+                prompt=self.styleAll[val]['prompt'].format(prompt=prompt)
+            if self.styleAll[val]['negative_prompt']:
+                negative_prompt+=','+self.styleAll[val]['negative_prompt']
 
         return (prompt,negative_prompt)
 
