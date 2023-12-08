@@ -1,15 +1,33 @@
-import insightface
 import numpy as np
 import cv2
 import threading
 from typing import Any, Optional, List
+import insightface
+from insightface.app.common import Face
+try:
+    import torch.cuda as cuda
+except:
+    cuda = None
+if cuda is not None:
+    if cuda.is_available():
+        providers = ["CUDAExecutionProvider"]
+    else:
+        providers = ["CPUExecutionProvider"]
+else:
+    providers = ["CPUExecutionProvider"]
 
-providers = ["CPUExecutionProvider"]
 THREAD_LOCK = threading.Lock()
 FACE_ANALYSER = None
+FS_MODEL = None
+CURRENT_FS_MODEL_PATH = None
 
 def getFaceSwapModel(model_path: str):
-    FS_MODEL = insightface.model_zoo.get_model(model_path, providers=providers)
+    global FS_MODEL
+    global CURRENT_FS_MODEL_PATH
+    if CURRENT_FS_MODEL_PATH is None or CURRENT_FS_MODEL_PATH != model_path:
+        CURRENT_FS_MODEL_PATH = model_path
+        FS_MODEL = insightface.model_zoo.get_model(model_path, providers=providers)
+
     return FS_MODEL
 
 def get_face_analyser() -> Any:
