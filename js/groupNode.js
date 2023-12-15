@@ -96,10 +96,11 @@ function addConvertToGroupOptions() {
 			content: `转换为组节点且保存`,
 			disabled,
 			callback: async () => {
-				debugger;
 				const groupNode=await GroupNodeHandler.fromNodes(selected);
-				const groupData=groupNode[Object.getOwnPropertySymbols(groupNode)[0]].groupData;
-				await saveGroupNode(groupData.name,groupData.nodeData);
+				if(groupNode){
+					const groupData=groupNode[Object.getOwnPropertySymbols(groupNode)[0]].groupData;
+					await saveGroupNode(groupData.name,groupData.nodeData);
+				}
 				return groupNode;
 			},
 		});
@@ -159,7 +160,12 @@ const ext = {
 	},
 	nodeCreated(node) {
 		if (GroupNodeHandler.isGroupNode(node)) {
-			Workflow.storeGroupNode(node[Object.getOwnPropertySymbols(node)[0]].groupData.name, node[Object.getOwnPropertySymbols(node)[0]].groupData.nodeData);
+			//保留节点存储时的选择
+			const groupData=node[Object.getOwnPropertySymbols(node)[0]].groupData;
+			for(var i=0;i<groupData.nodeData.nodes.length;i++){
+				node.widgets[i].value=groupData.nodeData.nodes[i].widgets_values[0]
+			}
+			Workflow.storeGroupNode(groupData.name, groupData.nodeData);
 		}
 	},
 };
