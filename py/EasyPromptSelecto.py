@@ -1,14 +1,58 @@
-import server
+from server import PromptServer
 from aiohttp import web
+import json
 import os
 import yaml
 
+#获取组节点
+gdir = os.path.abspath(os.path.join(__file__, "../../groupNode"))
+if not os.path.exists(gdir):
+    os.mkdir(gdir)
 
+@PromptServer.instance.routes.get("/lam/groupNode")
+async def get_groupNode(request):
+    file=os.path.join(gdir, "groupNodes.json")
+    if os.path.isfile(file):
+        f = open(file,'r', encoding='utf-8')
+        data = json.load(f)
+        return web.json_response(data)
+    return web.Response(status=404)
+
+
+
+@PromptServer.instance.routes.post("/lam/groupNode")
+async def save_groupNode(request):
+    json_data = await request.json()
+    file=os.path.join(gdir, "groupNodes.json")
+    if os.path.isfile(file):
+        f = open(file,'r', encoding='utf-8')
+        data = json.load(f)
+    for key in list(json_data.keys()):
+        data[key] = json_data[key]
+    with open(file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    return web.Response(status=201)
+
+@PromptServer.instance.routes.post("/lam/delGroupNode")
+async def del_groupNode(request):
+    json_data = await request.json()
+    file=os.path.join(gdir, "groupNodes.json")
+    if os.path.isfile(file):
+        f = open(file,'r', encoding='utf-8')
+        data = json.load(f)
+    if 'name' in list(json_data.keys()):
+        if json_data['name'] in data:
+            del data[json_data['name']]
+    with open(file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    return web.Response(status=201)
+
+#获取提示词
 dir = os.path.abspath(os.path.join(__file__, "../../tags"))
 if not os.path.exists(dir):
     os.mkdir(dir)
 
-@server.PromptServer.instance.routes.get("/lam/getPrompt")
+@PromptServer.instance.routes.get("/lam/getPrompt")
 def getPrompt(request):
     if "name" in request.rel_url.query:
         name = request.rel_url.query["name"]

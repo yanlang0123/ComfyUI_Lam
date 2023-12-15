@@ -1,0 +1,124 @@
+{
+    "宽高选择": {
+        "nodes": [
+            {
+                "type": "AspectRatio",
+                "pos": [
+                    292,
+                    524
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 126
+                },
+                "flags": {},
+                "order": 2,
+                "mode": 0,
+                "outputs": [
+                    {
+                        "name": "宽",
+                        "type": "INT",
+                        "links": [],
+                        "shape": 3,
+                        "label": "宽",
+                        "slot_index": 0
+                    },
+                    {
+                        "name": "高",
+                        "type": "INT",
+                        "links": [],
+                        "shape": 3,
+                        "label": "高",
+                        "slot_index": 1
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "AspectRatio"
+                },
+                "widgets_values": [
+                    "1152×896 ∣ 9:7",
+                    0,
+                    0
+                ],
+                "index": 0
+            },
+            {
+                "type": "EmptyLatentImage",
+                "pos": [
+                    644,
+                    524
+                ],
+                "size": {
+                    "0": 316,
+                    "1": 108
+                },
+                "flags": {},
+                "order": 4,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "width",
+                        "type": "INT",
+                        "link": null,
+                        "widget": {
+                            "name": "width"
+                        },
+                        "label": "width"
+                    },
+                    {
+                        "name": "height",
+                        "type": "INT",
+                        "link": null,
+                        "widget": {
+                            "name": "height"
+                        },
+                        "label": "height"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "LATENT",
+                        "type": "LATENT",
+                        "links": [],
+                        "slot_index": 0,
+                        "label": "LATENT"
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "EmptyLatentImage"
+                },
+                "widgets_values": [
+                    1024,
+                    1024,
+                    126
+                ],
+                "index": 1
+            }
+        ],
+        "links": [
+            [
+                0,
+                0,
+                1,
+                0,
+                25,
+                "INT"
+            ],
+            [
+                0,
+                1,
+                1,
+                1,
+                25,
+                "INT"
+            ]
+        ],
+        "external": [
+            [
+                1,
+                0,
+                "LATENT"
+            ]
+        ]
+    }
+}
