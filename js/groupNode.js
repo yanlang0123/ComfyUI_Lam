@@ -141,6 +141,14 @@ function addConvertToGroupOptions() {
         }
 		return options;
 	};
+	//刷新和清除的时候都刷新一下组节点
+	const sendActionToCanvas = LGraph.prototype.sendActionToCanvas;
+	LGraph.prototype.sendActionToCanvas = function (action, params) {
+		const options = sendActionToCanvas.apply(this, arguments);
+		if (action === "clear") {
+			getGroupNode();
+		}
+	}
     
 }
 
@@ -151,9 +159,9 @@ const ext = {
 	setup() {
 		addConvertToGroupOptions();
 	},
-	async beforeConfigureGraph(graphData, missingNodeTypes) {
-        await getGroupNode(missingNodeTypes);
-	},
+	// async beforeConfigureGraph(graphData, missingNodeTypes) {
+    //     await getGroupNode(missingNodeTypes);
+	// },
 	addCustomNodeDefs(defs) {
 		// Store this so we can mutate it later with group nodes
 		globalDefs = defs;
