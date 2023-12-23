@@ -1,36 +1,37 @@
 # ComfyUI_Lam
 
-#### Description
-{**When you're done, you can delete the content in this README and update the file with details for others getting started with your repository**}
+### Introduction
+A plugin developed based on comfyUI.
 
-#### Software Architecture
-Software architecture description
+#### Usage Instructions
+Download and place in the plugin directory of comfyUI, as shown below:
 
-#### Installation
+![Alt text](解压存放路径及名称.png)
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+##### Special Note: For this version, execute the latest version "ComfyUI_windows_portable_nvidia_cu121_or_cpu.7z" with cu121 inside. The version address is as follows:
+https://github.com/comfyanonymous/ComfyUI/releases/download/latest/ComfyUI_windows_portable_nvidia_cu121_or_cpu.7z
 
-#### Instructions
+Then run the install.bat file, and if there are no errors, it's ready.
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+1. Model addresses and storage paths:
+   - Lama model:
+     https://huggingface.co/lllyasviel/Annotators/resolve/main/ControlNetLama.pth  ..\ComfyUI\models\lama\ControlNetLama.pth
+   - SadTalker models:
+     https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/mapping_00109-model.pth.tar ..\ComfyUI\models\SadTalker\mapping_00109-model.pth.tar
+     https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/mapping_00229-model.pth.tar ..\ComfyUI\models\SadTalker\mapping_00229-model.pth.tar
+     https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/SadTalker_V0.0.2_256.safetensors ..\ComfyUI\models\SadTalker\SadTalker_V0.0.2_256.safetensors
+     https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/SadTalker_V0.0.2_512.safetensors ..\ComfyUI\models\SadTalker\SadTalker_V0.0.2_512.safetensors
 
-#### Contribution
+2. Image-face-fusion model (Face swapping model)
+   - Link: https://pan.baidu.com/s/19DOgJQ_RHNAjfNrzSr2uTQ?pwd=gf0p 
+   - Extraction Code: gf0p
+   - Extract to the directory ..\ComfyUI\models\image-face-fusion
 
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
-
-
-#### Gitee Feature
-
-1.  You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+3. Modify the execution.py file in the comfyUI root directory. Modify the content, search for "Return type mismatch between linked nodes," find the corresponding line, and replace
+   ```python
+   if r[val[1]] != type_input:
+   ```
+   with
+   ```python
+   if type_input !="*" and r[val[1]] != type_input:
+   ```
