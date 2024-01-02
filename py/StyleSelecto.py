@@ -74,7 +74,7 @@ class StyleSelecto:
             "optional": {
                 "negative_prompt":("STRING",{"forceInput": True}),
             },
-            "hidden": {"extra_pnginfo": "EXTRA_PNGINFO", "unique_id": "UNIQUE_ID"},
+            "hidden": {"unique_id": "UNIQUE_ID","wprompt":"PROMPT"},
         }
 
     RETURN_TYPES = ("STRING","STRING",)
@@ -86,12 +86,12 @@ class StyleSelecto:
 
     CATEGORY = "lam"
 
-    def get_style(self,prompt,style_type,extra_pnginfo, unique_id,negative_prompt=""):
+    def get_style(self,prompt,style_type,unique_id,wprompt,negative_prompt=""):
         values = []
-        for node in extra_pnginfo["workflow"]["nodes"]:
-            if node["id"] == int(unique_id):
-                values = node["properties"]["values"]
-                break
+        if unique_id in wprompt:
+            if wprompt[unique_id]["inputs"]['button']:
+                #分割字符串
+                values = wprompt[unique_id]["inputs"]['button'].split(',')
         for val in values:
             if 'prompt' in self.styleAll[val]:
                 prompt=self.styleAll[val]['prompt'].format(prompt=prompt)
