@@ -88,7 +88,6 @@ class StyleSelecto:
 
     def get_style(self,prompt,style_type,unique_id,wprompt,negative_prompt=""):
         values = []
-        print(wprompt)
         if unique_id in wprompt:
             if wprompt[unique_id]["inputs"]['button']:
                 #分割字符串
