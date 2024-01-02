@@ -33,8 +33,19 @@ $el("style", {
         flex-wrap: wrap;
         list-style: none;
         gap: 10px;
-        min-height: 260px;
-        height: 80%;
+        min-height: 100px;
+        height: 60%;
+        overflow: auto;
+        margin: 10px 0;
+        padding: 0;
+    }
+    .lam_style-model-tags-sel-list {
+        display: flex;
+        flex-wrap: wrap;
+        list-style: none;
+        gap: 10px;
+        min-height: 100px;
+        height: 20%;
         overflow: auto;
         margin: 10px 0;
         padding: 0;
@@ -48,6 +59,7 @@ $el("style", {
         border-radius: 5px;
         padding: 2px 5px;
         cursor: pointer;
+        height: 26px;
     }
     .lam_style-model-tag--selected span::before {
         content: "✅";
@@ -135,6 +147,22 @@ async function getStyles(name) {
     }
     
 }
+
+function getSelList(tags) {
+    let rlist=[]
+    tags.forEach((k) => {
+        rlist.push($el(
+            "li.lam_style-model-tag",
+            {},
+            [
+                $el("p", {
+                    textContent:k,
+                })
+            ]
+        ))
+    })
+    return rlist;
+}
 function getTagList(tags) {
     let rlist=[]
     tags.forEach((k,i) => {
@@ -144,6 +172,7 @@ function getTagList(tags) {
             {
                 dataset: {
                     tag: t[1],
+                    name: t[0],
                 },
                 $: (el) => {
                     el.onclick = () => {
@@ -174,9 +203,12 @@ app.registerExtension({
             nodeType.prototype.onNodeCreated = function() {
                 const r = onNodeCreated?.apply(this, arguments);
                 let style_type = this.widgets[this.widgets.findIndex(obj => obj.name === 'style_type')];
+                const style_name = {value:''}
                 this.setProperty("values", [])
+                let names=[]
                 //stylesEl.inputEl.classList.add("lam-model-notes");
                 const list = $el("ol.lam_style-model-tags-list",[]);
+                const lists = $el("ol.lam_style-model-tags-sel-list",[]);
                 let styles=this.addDOMWidget('button',"btn",$el('div.lam_style-preview',[$el('button',{
                     textContent:'清除全部选择',
                     style:{},
@@ -185,8 +217,11 @@ app.registerExtension({
                                 el.classList.remove("lam_style-model-tag--selected");
                             })
                             this.properties["values"]=[]
+                            names=[]
+                            styles.element.children[3].innerHTML=''
+
                         }}
-                    ),list]));
+                    ),list,$el('span',{textContent:"选择内容"}),lists]));
                 let st_values=''
                 Object.defineProperty(style_type, "value", {
                     set: (x) => {
@@ -201,7 +236,7 @@ app.registerExtension({
                                     if(this.properties["values"].includes(el.dataset.tag)){
                                         el.classList.add("lam_style-model-tag--selected");
                                     }
-                                    this.setSize([500, 400]);
+                                    this.setSize([500, 600]);
                                 });
                             }
                             
@@ -215,7 +250,7 @@ app.registerExtension({
                                 if(this.properties["values"].includes(el.dataset.tag)){
                                     el.classList.add("lam_style-model-tag--selected");
                                 }
-                                this.setSize([500, 400]);
+                                this.setSize([500, 600]);
                             });
                         }
                         return st_values;
@@ -227,25 +262,38 @@ app.registerExtension({
                         
                     },
                     get: () => {
+                            let namestr=names.join(',')
                             styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
                             if(el.classList.value.indexOf("lam_style-model-tag--selected")>=0){
                                 if(!this.properties["values"].includes(el.dataset.tag)){
                                     this.properties["values"].push(el.dataset.tag);
-                                    stylesValue = this.properties["values"].join(',');
+                                }
+                                if(!names.includes(el.dataset.name)){
+                                    names.push(el.dataset.name)
                                 }
                             }else{
                                 if(this.properties["values"].includes(el.dataset.tag)){
                                     this.properties["values"]=this.properties["values"].filter(v=>v!=el.dataset.tag);
-                                    stylesValue = this.properties["values"].join(',');
+                                    names=names.filter(v=>v!=el.dataset.name);
                                 }
                             }
-                            
+                            if(namestr!=names.join(',')){
+                                if(names.length>0){
+                                    let sellist=getSelList(names)
+                                    styles.element.children[3].innerHTML=''
+                                    styles.element.children[3].append(...sellist)
+                                }else{
+                                    styles.element.children[3].innerHTML=''
+                                }
+                            }
+                            stylesValue = this.properties["values"].join(',');
+
                         });
                         return stylesValue;
                     }
                 });
                 
-                this.setSize([500, 400]);
+                this.setSize([500, 600]);
                 return r;
             };
 

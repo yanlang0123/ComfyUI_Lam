@@ -1,1 +1,1083 @@
-{}
+{
+    "宽高选择": {
+        "nodes": [
+            {
+                "type": "AspectRatio",
+                "pos": [
+                    292,
+                    524
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 126
+                },
+                "flags": {},
+                "order": 2,
+                "mode": 0,
+                "outputs": [
+                    {
+                        "name": "宽",
+                        "type": "INT",
+                        "links": [],
+                        "shape": 3,
+                        "label": "宽",
+                        "slot_index": 0
+                    },
+                    {
+                        "name": "高",
+                        "type": "INT",
+                        "links": [],
+                        "shape": 3,
+                        "label": "高",
+                        "slot_index": 1
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "AspectRatio"
+                },
+                "widgets_values": [
+                    "1152×896 ∣ 9:7",
+                    0,
+                    0
+                ],
+                "index": 0
+            },
+            {
+                "type": "EmptyLatentImage",
+                "pos": [
+                    644,
+                    524
+                ],
+                "size": {
+                    "0": 316,
+                    "1": 108
+                },
+                "flags": {},
+                "order": 4,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "width",
+                        "type": "INT",
+                        "link": null,
+                        "widget": {
+                            "name": "width"
+                        },
+                        "label": "width"
+                    },
+                    {
+                        "name": "height",
+                        "type": "INT",
+                        "link": null,
+                        "widget": {
+                            "name": "height"
+                        },
+                        "label": "height"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "LATENT",
+                        "type": "LATENT",
+                        "links": [],
+                        "slot_index": 0,
+                        "label": "LATENT"
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "EmptyLatentImage"
+                },
+                "widgets_values": [
+                    1024,
+                    1024,
+                    126
+                ],
+                "index": 1
+            }
+        ],
+        "links": [
+            [
+                0,
+                0,
+                1,
+                0,
+                25,
+                "INT"
+            ],
+            [
+                0,
+                1,
+                1,
+                1,
+                25,
+                "INT"
+            ]
+        ],
+        "external": [
+            [
+                1,
+                0,
+                "LATENT"
+            ]
+        ]
+    },
+    "模型换脸": {
+        "nodes": [
+            {
+                "type": "CLIPVisionLoader",
+                "pos": [
+                    1096,
+                    -192
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 58
+                },
+                "flags": {},
+                "order": 3,
+                "mode": 0,
+                "outputs": [
+                    {
+                        "name": "CLIP_VISION",
+                        "type": "CLIP_VISION",
+                        "links": [],
+                        "shape": 3,
+                        "label": "CLIP视觉"
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "CLIPVisionLoader"
+                },
+                "widgets_values": [
+                    "clip_vision_vit_h.safetensors"
+                ],
+                "index": 0
+            },
+            {
+                "type": "IPAdapterModelLoader",
+                "pos": [
+                    1092,
+                    -300
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 58
+                },
+                "flags": {},
+                "order": 4,
+                "mode": 0,
+                "outputs": [
+                    {
+                        "name": "IPADAPTER",
+                        "type": "IPADAPTER",
+                        "links": [],
+                        "shape": 3,
+                        "label": "IP适配",
+                        "slot_index": 0
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "IPAdapterModelLoader"
+                },
+                "widgets_values": [
+                    "ip-adapter-plus-face_sdxl_vit-h.safetensors"
+                ],
+                "index": 1
+            },
+            {
+                "type": "IPAdapterApply",
+                "pos": [
+                    1088,
+                    -92
+                ],
+                "size": {
+                    "0": 388,
+                    "1": 188
+                },
+                "flags": {},
+                "order": 7,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "ipadapter",
+                        "type": "IPADAPTER",
+                        "link": null,
+                        "label": "IP适配"
+                    },
+                    {
+                        "name": "clip_vision",
+                        "type": "CLIP_VISION",
+                        "link": null,
+                        "label": "CLIP视觉",
+                        "slot_index": 1
+                    },
+                    {
+                        "name": "image",
+                        "type": "IMAGE",
+                        "link": null,
+                        "label": "图像",
+                        "slot_index": 2
+                    },
+                    {
+                        "name": "model",
+                        "type": "MODEL",
+                        "link": null,
+                        "label": "模型"
+                    },
+                    {
+                        "name": "attn_mask",
+                        "type": "MASK",
+                        "link": null,
+                        "label": "attn_mask",
+                        "slot_index": 4
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "MODEL",
+                        "type": "MODEL",
+                        "links": [],
+                        "shape": 3,
+                        "label": "模型",
+                        "slot_index": 0
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "IPAdapterApply"
+                },
+                "widgets_values": [
+                    0.75,
+                    1,
+                    "original"
+                ],
+                "index": 2
+            }
+        ],
+        "links": [
+            [
+                1,
+                0,
+                2,
+                0,
+                18,
+                "IPADAPTER"
+            ],
+            [
+                0,
+                0,
+                2,
+                1,
+                24,
+                "CLIP_VISION"
+            ],
+            [
+                null,
+                0,
+                2,
+                2,
+                25,
+                "IMAGE"
+            ],
+            [
+                null,
+                0,
+                2,
+                3,
+                10,
+                "MODEL"
+            ]
+        ],
+        "external": [
+            [
+                2,
+                0,
+                "MODEL"
+            ]
+        ]
+    },
+    "SD模型加载CLM加速": {
+        "nodes": [
+            {
+                "type": "CheckpointLoaderSimple",
+                "pos": [
+                    520,
+                    284
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 98
+                },
+                "flags": {},
+                "order": 2,
+                "mode": 0,
+                "outputs": [
+                    {
+                        "name": "MODEL",
+                        "type": "MODEL",
+                        "links": [],
+                        "slot_index": 0,
+                        "label": "模型"
+                    },
+                    {
+                        "name": "CLIP",
+                        "type": "CLIP",
+                        "links": [],
+                        "slot_index": 1,
+                        "label": "CLIP"
+                    },
+                    {
+                        "name": "VAE",
+                        "type": "VAE",
+                        "links": [],
+                        "slot_index": 2,
+                        "label": "VAE"
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "CheckpointLoaderSimple"
+                },
+                "widgets_values": [
+                    "chilloutmix_NiPrunedFp32Fix.safetensors"
+                ],
+                "index": 0
+            },
+            {
+                "type": "LoraLoader",
+                "pos": [
+                    928,
+                    268
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 126
+                },
+                "flags": {},
+                "order": 3,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "model",
+                        "type": "MODEL",
+                        "link": null,
+                        "label": "模型"
+                    },
+                    {
+                        "name": "clip",
+                        "type": "CLIP",
+                        "link": null,
+                        "label": "CLIP"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "MODEL",
+                        "type": "MODEL",
+                        "links": [],
+                        "slot_index": 0,
+                        "label": "模型"
+                    },
+                    {
+                        "name": "CLIP",
+                        "type": "CLIP",
+                        "links": [],
+                        "slot_index": 1,
+                        "label": "CLIP"
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "LoraLoader"
+                },
+                "widgets_values": [
+                    "lcm-lora-sdv1-5.safetensors",
+                    1,
+                    1
+                ],
+                "index": 1
+            }
+        ],
+        "links": [
+            [
+                0,
+                0,
+                1,
+                0,
+                47,
+                "MODEL"
+            ],
+            [
+                0,
+                1,
+                1,
+                1,
+                47,
+                "CLIP"
+            ]
+        ],
+        "external": [
+            [
+                0,
+                2,
+                "VAE"
+            ],
+            [
+                1,
+                0,
+                "MODEL"
+            ],
+            [
+                1,
+                1,
+                "CLIP"
+            ]
+        ]
+    },
+    "ControlNet动漫艺术线": {
+        "nodes": [
+            {
+                "type": "ControlNetLoader",
+                "pos": [
+                    468,
+                    -220
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 58
+                },
+                "flags": {},
+                "order": 3,
+                "mode": 0,
+                "outputs": [
+                    {
+                        "name": "CONTROL_NET",
+                        "type": "CONTROL_NET",
+                        "links": [],
+                        "shape": 3,
+                        "label": "ControlNet",
+                        "slot_index": 0
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "ControlNetLoader"
+                },
+                "widgets_values": [
+                    "control_v11p_sd15s2_lineart_anime.pth"
+                ],
+                "index": 0
+            },
+            {
+                "type": "AnimeLineArtPreprocessor",
+                "pos": [
+                    212,
+                    -124
+                ],
+                "size": {
+                    "0": 210,
+                    "1": 26
+                },
+                "flags": {},
+                "order": 7,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "image",
+                        "type": "IMAGE",
+                        "link": null,
+                        "label": "图像"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "IMAGE",
+                        "type": "IMAGE",
+                        "links": [],
+                        "shape": 3,
+                        "label": "图像",
+                        "slot_index": 0
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "AnimeLineArtPreprocessor"
+                },
+                "index": 1
+            },
+            {
+                "type": "Reroute",
+                "pos": [
+                    372,
+                    -228
+                ],
+                "size": [
+                    75,
+                    26
+                ],
+                "flags": {},
+                "order": 11,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "",
+                        "type": "*",
+                        "link": null
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "",
+                        "type": "*",
+                        "links": null
+                    }
+                ],
+                "properties": {
+                    "showOutputText": false,
+                    "horizontal": false
+                },
+                "index": 2
+            },
+            {
+                "type": "ControlNetApply",
+                "pos": [
+                    488,
+                    -100
+                ],
+                "size": {
+                    "0": 317.4000244140625,
+                    "1": 98
+                },
+                "flags": {},
+                "order": 12,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "conditioning",
+                        "type": "CONDITIONING",
+                        "link": null,
+                        "label": "条件"
+                    },
+                    {
+                        "name": "control_net",
+                        "type": "CONTROL_NET",
+                        "link": null,
+                        "label": "ControlNet",
+                        "slot_index": 1
+                    },
+                    {
+                        "name": "image",
+                        "type": "IMAGE",
+                        "link": null,
+                        "label": "图像",
+                        "slot_index": 2
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "CONDITIONING",
+                        "type": "CONDITIONING",
+                        "links": [],
+                        "shape": 3,
+                        "label": "条件",
+                        "slot_index": 0
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "ControlNetApply"
+                },
+                "widgets_values": [
+                    1
+                ],
+                "index": 3
+            }
+        ],
+        "links": [
+            [
+                null,
+                0,
+                1,
+                0,
+                20,
+                "IMAGE"
+            ],
+            [
+                1,
+                0,
+                2,
+                0,
+                42,
+                "IMAGE"
+            ],
+            [
+                null,
+                0,
+                3,
+                0,
+                6,
+                "CONDITIONING"
+            ],
+            [
+                0,
+                0,
+                3,
+                1,
+                41,
+                "CONTROL_NET"
+            ],
+            [
+                1,
+                0,
+                3,
+                2,
+                42,
+                "IMAGE"
+            ]
+        ],
+        "external": [
+            [
+                3,
+                0,
+                "CONDITIONING"
+            ]
+        ]
+    },
+    "ControlNet细线硬边缘": {
+        "nodes": [
+            {
+                "type": "ControlNetLoader",
+                "pos": [
+                    1104,
+                    -329.13811347898366
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 58
+                },
+                "flags": {},
+                "order": 3,
+                "mode": 0,
+                "outputs": [
+                    {
+                        "name": "CONTROL_NET",
+                        "type": "CONTROL_NET",
+                        "links": [],
+                        "shape": 3,
+                        "label": "ControlNet"
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "ControlNetLoader"
+                },
+                "widgets_values": [
+                    "control_v11p_sd15_canny.pth"
+                ],
+                "index": 0
+            },
+            {
+                "type": "CannyEdgePreprocessor",
+                "pos": [
+                    712,
+                    -368
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 106
+                },
+                "flags": {},
+                "order": 7,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "image",
+                        "type": "IMAGE",
+                        "link": null,
+                        "label": "图像"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "IMAGE",
+                        "type": "IMAGE",
+                        "links": [],
+                        "shape": 3,
+                        "label": "图像",
+                        "slot_index": 0
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "CannyEdgePreprocessor"
+                },
+                "widgets_values": [
+                    200,
+                    100,
+                    "disable"
+                ],
+                "index": 1
+            },
+            {
+                "type": "Reroute",
+                "pos": [
+                    1069.4938738484025,
+                    -404
+                ],
+                "size": [
+                    75,
+                    26
+                ],
+                "flags": {},
+                "order": 11,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "",
+                        "type": "*",
+                        "link": null
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "",
+                        "type": "*",
+                        "links": null
+                    }
+                ],
+                "properties": {
+                    "showOutputText": false,
+                    "horizontal": false
+                },
+                "index": 2
+            },
+            {
+                "type": "ControlNetApply",
+                "pos": [
+                    1140,
+                    -177.13811347898366
+                ],
+                "size": {
+                    "0": 317.4000244140625,
+                    "1": 98
+                },
+                "flags": {},
+                "order": 14,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "conditioning",
+                        "type": "CONDITIONING",
+                        "link": null,
+                        "label": "条件",
+                        "slot_index": 0
+                    },
+                    {
+                        "name": "control_net",
+                        "type": "CONTROL_NET",
+                        "link": null,
+                        "label": "ControlNet",
+                        "slot_index": 1
+                    },
+                    {
+                        "name": "image",
+                        "type": "IMAGE",
+                        "link": null,
+                        "label": "图像",
+                        "slot_index": 2
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "CONDITIONING",
+                        "type": "CONDITIONING",
+                        "links": [],
+                        "shape": 3,
+                        "label": "条件",
+                        "slot_index": 0
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "ControlNetApply"
+                },
+                "widgets_values": [
+                    1
+                ],
+                "index": 3
+            }
+        ],
+        "links": [
+            [
+                null,
+                0,
+                1,
+                0,
+                20,
+                "IMAGE"
+            ],
+            [
+                1,
+                0,
+                2,
+                0,
+                37,
+                "IMAGE"
+            ],
+            [
+                null,
+                0,
+                3,
+                0,
+                27,
+                "CONDITIONING"
+            ],
+            [
+                0,
+                0,
+                3,
+                1,
+                36,
+                "CONTROL_NET"
+            ],
+            [
+                1,
+                0,
+                3,
+                2,
+                37,
+                "IMAGE"
+            ]
+        ],
+        "external": [
+            [
+                3,
+                0,
+                "CONDITIONING"
+            ]
+        ]
+    },
+    "脸部修复": {
+        "nodes": [
+            {
+                "type": "FaceRestoreModelLoader",
+                "pos": [
+                    2540,
+                    220
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 58
+                },
+                "flags": {},
+                "order": 3,
+                "mode": 0,
+                "outputs": [
+                    {
+                        "name": "FACERESTORE_MODEL",
+                        "type": "FACERESTORE_MODEL",
+                        "links": [],
+                        "shape": 3,
+                        "label": "FACERESTORE_MODEL"
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "FaceRestoreModelLoader"
+                },
+                "widgets_values": [
+                    "GFPGANv1.4.pth"
+                ],
+                "index": 0
+            },
+            {
+                "type": "FaceRestoreCFWithModel",
+                "pos": [
+                    2548,
+                    324
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 102
+                },
+                "flags": {},
+                "order": 10,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "facerestore_model",
+                        "type": "FACERESTORE_MODEL",
+                        "link": null,
+                        "label": "facerestore_model",
+                        "slot_index": 0
+                    },
+                    {
+                        "name": "image",
+                        "type": "IMAGE",
+                        "link": null,
+                        "label": "image"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "IMAGE",
+                        "type": "IMAGE",
+                        "links": [],
+                        "shape": 3,
+                        "label": "IMAGE",
+                        "slot_index": 0
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "FaceRestoreCFWithModel"
+                },
+                "widgets_values": [
+                    "retinaface_resnet50",
+                    0.5
+                ],
+                "index": 1
+            }
+        ],
+        "links": [
+            [
+                0,
+                0,
+                1,
+                0,
+                44,
+                "FACERESTORE_MODEL"
+            ],
+            [
+                null,
+                0,
+                1,
+                1,
+                8,
+                "IMAGE"
+            ]
+        ],
+        "external": [
+            [
+                1,
+                0,
+                "IMAGE"
+            ]
+        ]
+    },
+    "XL模型加载LCM加速": {
+        "nodes": [
+            {
+                "type": "CheckpointLoaderSimple",
+                "pos": [
+                    -73,
+                    512
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 98
+                },
+                "flags": {},
+                "order": 2,
+                "mode": 0,
+                "outputs": [
+                    {
+                        "name": "MODEL",
+                        "type": "MODEL",
+                        "links": [],
+                        "slot_index": 0,
+                        "label": "模型"
+                    },
+                    {
+                        "name": "CLIP",
+                        "type": "CLIP",
+                        "links": [],
+                        "slot_index": 1,
+                        "label": "CLIP"
+                    },
+                    {
+                        "name": "VAE",
+                        "type": "VAE",
+                        "links": [],
+                        "slot_index": 2,
+                        "label": "VAE"
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "CheckpointLoaderSimple"
+                },
+                "widgets_values": [
+                    "juggernautXL_version6Rundiffusion.safetensors"
+                ],
+                "index": 0
+            },
+            {
+                "type": "LoraLoader",
+                "pos": [
+                    -72,
+                    695
+                ],
+                "size": {
+                    "0": 315,
+                    "1": 126
+                },
+                "flags": {},
+                "order": 5,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "name": "model",
+                        "type": "MODEL",
+                        "link": null,
+                        "label": "模型"
+                    },
+                    {
+                        "name": "clip",
+                        "type": "CLIP",
+                        "link": null,
+                        "label": "CLIP"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "MODEL",
+                        "type": "MODEL",
+                        "links": [],
+                        "slot_index": 0,
+                        "label": "模型"
+                    },
+                    {
+                        "name": "CLIP",
+                        "type": "CLIP",
+                        "links": [],
+                        "slot_index": 1,
+                        "label": "CLIP"
+                    }
+                ],
+                "properties": {
+                    "Node name for S&R": "LoraLoader"
+                },
+                "widgets_values": [
+                    "lcm-lora-sdxl.safetensors",
+                    1,
+                    1
+                ],
+                "index": 1
+            }
+        ],
+        "links": [
+            [
+                0,
+                0,
+                1,
+                0,
+                12,
+                "MODEL"
+            ],
+            [
+                0,
+                1,
+                1,
+                1,
+                12,
+                "CLIP"
+            ]
+        ],
+        "external": [
+            [
+                0,
+                2,
+                "VAE"
+            ]
+        ]
+    }
+}
