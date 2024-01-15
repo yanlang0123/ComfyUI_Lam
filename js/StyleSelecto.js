@@ -148,15 +148,54 @@ async function getStyles(name) {
     
 }
 
+function displayImg(imgName) {  
+    var img = document.getElementById("show_image_id");  
+    var pxy=img.parentElement.getBoundingClientRect();
+    if(imgName) {
+        img.src = `/lam/getStyleImage?name=${imgName}`;
+    }
+   var e = event || window.event;
+   var x = e.pageX-pxy.x+50;
+   var y = e.pageY-pxy.y-150;  
+    img.style.left =  x+"px";  
+    img.style.top =  y+"px";  
+    img.style.display = "block";  
+}  
+
+function vanishImg(){ //theEvent用来传入事件，Firefox的方式
+    var img = document.getElementById('show_image_id');
+    img.style.display = "none";
+}
+
 function getSelList(tags) {
     let rlist=[]
-    tags.forEach((k) => {
+    Object.keys(tags).forEach((k) => {
         rlist.push($el(
             "li.lam_style-model-tag",
-            {},
+            {
+                dataset: {
+                    imgName: tags[k]['imgName'],
+                    name:   tags[k]['name'],
+                    tag: tags[k]['tag']
+                },
+                $: (el) => {
+                    el.onclick = () => {
+                        el.classList.add("lam_style-model-tag--del");
+                    };
+                    el.onmousemove = () => {
+                        displayImg(el.dataset.imgName)
+                    };
+                    el.onmouseout = () => {
+                        vanishImg()
+                    };
+                    el.onmouseover = () => {
+                        displayImg(el.dataset.imgName)
+                    };
+                },
+            },
             [
                 $el("p", {
-                    textContent:k,
+                    textContent:tags[k]['name'],
                 })
             ]
         ))
@@ -166,17 +205,27 @@ function getSelList(tags) {
 function getTagList(tags) {
     let rlist=[]
     tags.forEach((k,i) => {
-        let t=[ k['zhName'],k['name']]
+        let t=[ k['zhName'],k['name'],k['imgName']]
         rlist.push($el(
             "li.lam_style-model-tag",
             {
                 dataset: {
                     tag: t[1],
                     name: t[0],
+                    imgName: t[2],
                 },
                 $: (el) => {
                     el.onclick = () => {
                         el.classList.toggle("lam_style-model-tag--selected");
+                    };
+                    el.onmousemove = () => {
+                        displayImg(el.dataset.imgName)
+                    };
+                    el.onmouseout = () => {
+                        vanishImg()
+                    };
+                    el.onmouseover = () => {
+                        displayImg(el.dataset.imgName)
                     };
                 },
             },
@@ -203,9 +252,8 @@ app.registerExtension({
             nodeType.prototype.onNodeCreated = function() {
                 const r = onNodeCreated?.apply(this, arguments);
                 let style_type = this.widgets[this.widgets.findIndex(obj => obj.name === 'style_type')];
-                const style_name = {value:''}
                 this.setProperty("values", [])
-                let names=[]
+                this.setProperty("selTags", {})
                 //stylesEl.inputEl.classList.add("lam-model-notes");
                 const list = $el("ol.lam_style-model-tags-list",[]);
                 const lists = $el("ol.lam_style-model-tags-sel-list",[]);
@@ -217,11 +265,14 @@ app.registerExtension({
                                 el.classList.remove("lam_style-model-tag--selected");
                             })
                             this.properties["values"]=[]
-                            names=[]
+                            this.properties['selTags']={}
                             styles.element.children[3].innerHTML=''
 
                         }}
-                    ),list,$el('span',{textContent:"选择内容"}),lists]));
+                    ),list,$el('span',{textContent:"选择内容"}),lists,
+                    $el('img',{id:'show_image_id',
+                    style:{display:'none',position:'absolute'},
+                    src:'/lam/getStyleImage?name=abstract_expressionism'})]));
                 let st_values=''
                 Object.defineProperty(style_type, "value", {
                     set: (x) => {
@@ -262,33 +313,47 @@ app.registerExtension({
                         
                     },
                     get: () => {
-                            let namestr=names.join(',')
-                            styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
-                            if(el.classList.value.indexOf("lam_style-model-tag--selected")>=0){
+                        let namestr=Object.keys(this.properties['selTags']).join(',')
+                        let delList=[]
+                        styles.element.children[3].querySelectorAll(".lam_style-model-tag--del").forEach(el => {
+                            delList.push(el.dataset.tag)
+                        })
+                        styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
+                            if(el.classList.value.indexOf("lam_style-model-tag--selected")>=0&&!delList.includes(el.dataset.tag)){
                                 if(!this.properties["values"].includes(el.dataset.tag)){
                                     this.properties["values"].push(el.dataset.tag);
                                 }
-                                if(!names.includes(el.dataset.name)){
-                                    names.push(el.dataset.name)
+                                if(!Object.keys(this.properties['selTags']).includes(el.dataset.name)){
+                                    this.properties['selTags'][el.dataset.tag]={imgName:el.dataset.imgName,tag:el.dataset.tag,name:el.dataset.name}
                                 }
                             }else{
+                                if(delList.includes(el.dataset.tag)){
+                                    el.classList.remove("lam_style-model-tag--selected");
+                                    delList=delList.filter(v=>v!=el.dataset.tag)
+                                }
                                 if(this.properties["values"].includes(el.dataset.tag)){
                                     this.properties["values"]=this.properties["values"].filter(v=>v!=el.dataset.tag);
-                                    names=names.filter(v=>v!=el.dataset.name);
+                                    delete this.properties['selTags'][el.dataset.tag];
                                 }
                             }
-                            if(namestr!=names.join(',')){
-                                if(names.length>0){
-                                    let sellist=getSelList(names)
-                                    styles.element.children[3].innerHTML=''
-                                    styles.element.children[3].append(...sellist)
-                                }else{
-                                    styles.element.children[3].innerHTML=''
-                                }
-                            }
-                            stylesValue = this.properties["values"].join(',');
 
                         });
+                        for(let i=0;i<delList.length;i++){
+                            if(this.properties["values"].includes(delList[i])){
+                                this.properties["values"]=this.properties["values"].filter(v=>v!=delList[i]);
+                                delete this.properties['selTags'][delList[i]];
+                            }
+                        }
+                        if(namestr!=Object.keys(this.properties['selTags']).join(',')||styles.element.children[3].innerHTML==''){
+                            if(Object.keys(this.properties['selTags']).length>0){
+                                let sellist=getSelList(this.properties['selTags'])
+                                styles.element.children[3].innerHTML=''
+                                styles.element.children[3].append(...sellist)
+                            }else{
+                                styles.element.children[3].innerHTML=''
+                            }
+                        }
+                        stylesValue = this.properties["values"].join(',');
                         return stylesValue;
                     }
                 });

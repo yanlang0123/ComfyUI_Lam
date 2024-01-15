@@ -8,6 +8,15 @@ dir = os.path.abspath(os.path.join(__file__, "../../styles"))
 if not os.path.exists(dir):
     os.mkdir(dir)
 
+@server.PromptServer.instance.routes.get("/lam/getStyleImage")
+async def get_groupNode(request):
+    if "name" in request.rel_url.query:
+        name = request.rel_url.query["name"]
+        file = os.path.join(dir,'samples', name+'.jpg')
+        if os.path.isfile(file):
+            return web.FileResponse(file)
+    return web.Response(status=404)
+
 @server.PromptServer.instance.routes.get("/lam/getStyles")
 def getStyles(request):
     if "name" in request.rel_url.query:
@@ -31,8 +40,10 @@ def getStyles(request):
                         name=d['name'].replace('-',' ')
                         words=name.split(' ')
                         key=' '.join(word.upper() if word.lower() in ['mre','sai','3d'] else word.capitalize() for word in words)
+                        img_name='_'.join(words).lower()
                         nd['zhName']=zhData[key] if key in zhData else key
                         nd["name"]=d['name']
+                        nd['imgName']=img_name
                         ndata.append(nd)
                 return web.json_response(ndata)
     return web.Response(status=404)
