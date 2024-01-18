@@ -84,12 +84,13 @@ class StyleSelecto:
             },
             "optional": {
                 "negative_prompt":("STRING",{"forceInput": True}),
+                "i": ("INT",{"forceInput": True}),
             },
             "hidden": {"unique_id": "UNIQUE_ID","wprompt":"PROMPT"},
         }
 
-    RETURN_TYPES = ("STRING","STRING",)
-    RETURN_NAMES = ("正向提示词","反向提示词",)
+    RETURN_TYPES = ("STRING","STRING","STRING",)
+    RETURN_NAMES = ("正向提示词","反向提示词","i项风格名称",)
 
     FUNCTION = "get_style"
 
@@ -97,19 +98,25 @@ class StyleSelecto:
 
     CATEGORY = "lam"
 
-    def get_style(self,prompt,style_type,unique_id,wprompt,negative_prompt=""):
+    def get_style(self,prompt,style_type,unique_id,wprompt,negative_prompt="",i=None):
         values = []
         if unique_id in wprompt:
-            if wprompt[unique_id]["inputs"]['button']:
+            if wprompt[unique_id]["inputs"]['styles']:
                 #分割字符串
-                values = wprompt[unique_id]["inputs"]['button'].split(',')
+                values = wprompt[unique_id]["inputs"]['styles'].split(',')
+        if i!=None:
+            keysl=list(self.styleAll.keys())
+            if 'prompt' in self.styleAll[keysl[i]]:
+                prompt=self.styleAll[keysl[i]]['prompt'].format(prompt=prompt)
+            if 'negative_prompt' in self.styleAll[keysl[i]]:
+                negative_prompt+=','+self.styleAll[keysl[i]]['negative_prompt']
         for val in values:
             if 'prompt' in self.styleAll[val]:
                 prompt=self.styleAll[val]['prompt'].format(prompt=prompt)
             if 'negative_prompt' in self.styleAll[val]:
                 negative_prompt+=','+self.styleAll[val]['negative_prompt']
 
-        return (prompt,negative_prompt)
+        return (prompt,negative_prompt,keysl[i] if i else '')
 
 # A dictionary that contains all nodes you want to export with their names
 # NOTE: names should be globally unique

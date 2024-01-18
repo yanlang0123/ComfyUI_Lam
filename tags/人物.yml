@@ -1,8 +1,8 @@
 対象:
-  - 1girl
-  - 1boy
-  - 1other
-  - multiple girls
+  一个女孩: 1girl
+  一个男孩: 1boy
+  一个其他: 1other
+  多个女孩: multiple girls
 
 年龄:
   十几岁: teen
