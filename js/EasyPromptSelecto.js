@@ -30,11 +30,24 @@ $el("style", {
     }
     .lam-model-tags-list {
         display: flex;
+        align-content: flex-start;
         flex-wrap: wrap;
         list-style: none;
         gap: 10px;
         min-height: 100px;
-        max-height: 200px;
+        height: 60%;
+        overflow: auto;
+        margin: 10px 0;
+        padding: 0;
+    }
+    .lam-model-tags-sel-list {
+        display: flex;
+        align-content: flex-start;
+        flex-wrap: wrap;
+        list-style: none;
+        gap: 10px;
+        min-height: 100px;
+        height: 20%;
         overflow: auto;
         margin: 10px 0;
         padding: 0;
@@ -128,7 +141,7 @@ async function getPrompt(name) {
     }
     
 }
-function getTagList(tags) {
+function getTagList(tags,cat) {
     let rlist=[]
     Object.keys(tags).forEach((k) => {
         if (typeof tags[k] === "string") {
@@ -138,6 +151,8 @@ function getTagList(tags) {
                 {
                     dataset: {
                         tag: t[1],
+                        name: t[0],
+                        cat:cat
                     },
                     $: (el) => {
                         el.onclick = () => {
@@ -155,10 +170,39 @@ function getTagList(tags) {
                 ]
             ))
         }else{
-            rlist.push(...getTagList(tags[k]))
+            rlist.push(...getTagList(tags[k],cat))
         }
     });
     return rlist
+}
+function getSelList(tags) {
+    let rlist=[]
+    Object.keys(tags).forEach((k) => {
+        rlist.push($el(
+            "li.lam-model-tag",
+            {
+                dataset: {
+                    name:  tags[k]['name'],
+                    tag: tags[k]['tag'],
+                    cat: tags[k]['cat']
+                },
+                $: (el) => {
+                    el.onclick = () => {
+                        el.classList.add("lam-model-tag--del");
+                    };
+                },
+            },
+            [
+                $el("p", {
+                    textContent:tags[k]['name'],
+                }),
+                $el("span", {
+                    textContent: tags[k]['cat'],
+                }),
+            ]
+        ))
+    })
+    return rlist;
 }
 // Displays input text on a node
 app.registerExtension({
@@ -170,14 +214,31 @@ app.registerExtension({
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function() {
                 const r = onNodeCreated?.apply(this, arguments);
+                this.setProperty("values", [])
+                this.setProperty("selTags", {})
                 ComfyWidgets["COMBO"](this, "category", ['a','b']).widget;
                 const list = $el("ol.lam-model-tags-list",[]);
-                let tags=this.addDOMWidget('tags',"list",list)
+                const lists = $el("ol.lam-model-tags-sel-list",[]);
+                let tags=this.addDOMWidget('tags',"list",$el('div.lam_style-preview',[$el('button',{
+                    textContent:'清除全部选择',
+                    style:{},
+                    onclick:()=>{
+                            tags.element.children[1].querySelectorAll(".lam-model-tag--selected").forEach(el => {
+                                el.classList.remove("lam-model-tag--selected");
+                            })
+                            this.properties["values"]=[]
+                            this.properties['selTags']={}
+                            tags.element.children[3].innerHTML=''
+
+                        }}
+                    ),list,$el('span',{textContent:"选择内容"}),lists]));
                 let prompt_type = this.widgets[this.widgets.findIndex(obj => obj.name === 'prompt_type')];
                 let textEl = this.widgets[this.widgets.findIndex(obj => obj.name === 'text')];
                 let category = this.widgets[this.widgets.findIndex(obj => obj.name === 'category')];
                 let cat_values=[]
                 let cat_value=''
+                let tagsValue=''
+
                 Object.defineProperty(category.options, "values", {
                     set: (x) => {
                     },
@@ -193,7 +254,6 @@ app.registerExtension({
                         return cat_values;
                     }
                 });
-                let text_value=[]
                 Object.defineProperty(category, "value", {
                     set: (x) => {
                         if(cat_value!=x){
@@ -201,25 +261,32 @@ app.registerExtension({
                             if(!cat_value){
                                 return 
                             }
-                            if(this.widgets.length!=4){
-                                const list = $el("ol.lam-model-tags-list", getTagList(pb_cache[prompt_type.value][cat_value]));
-                                this.addDOMWidget('tags',"list",list)
-                            }else{
-                                if(pb_cache[prompt_type.value]&&pb_cache[prompt_type.value][cat_value]){
-                                    this.widgets[3].element.innerHTML=''
-                                    let list =getTagList(pb_cache[prompt_type.value][cat_value]);
-                                    this.widgets[3].element.append(...list)
-                                }
+                            if(pb_cache[prompt_type.value]&&pb_cache[prompt_type.value][cat_value]){
+                                tags.element.children[1].innerHTML=''
+                                let list =getTagList(pb_cache[prompt_type.value][cat_value],cat_value);
+                                tags.element.children[1].append(...list)
                             }
-                            this.widgets[3].element.querySelectorAll(".lam-model-tag").forEach(el => {
-                                if(text_value.includes(el.dataset.tag)){
+                            tags.element.children[1].querySelectorAll(".lam-model-tag").forEach(el => {
+                                if(this.properties["values"].includes(el.dataset.tag)){
                                     el.classList.add("lam-model-tag--selected");
                                 }
                             });
+                            this.setSize([500, 600]);
+
                             
                         }
                     },
                     get: () => {
+                        if(pb_cache[prompt_type.value]&&pb_cache[prompt_type.value][cat_value]&&tags.element.children[1].children.length==0){
+                            let list =getTagList(pb_cache[prompt_type.value][cat_value],cat_value);
+                            tags.element.children[1].append(...list)
+                            tags.element.children[1].querySelectorAll(".lam-model-tag").forEach(el => {
+                            if(this.properties["values"].includes(el.dataset.tag)){
+                                el.classList.add("lam-model-tag--selected");
+                            }
+                            this.setSize([500, 600]);
+                        });
+                    }
                         return cat_value;
                     }
                 });               
@@ -228,24 +295,51 @@ app.registerExtension({
                         
                     },
                     get: () => {
-                        this.widgets[3].element.querySelectorAll(".lam-model-tag").forEach(el => {
-                            if(el.classList.value.indexOf("lam-model-tag--selected")>=0){
-                                if(!text_value.includes(el.dataset.tag)){
-                                    text_value.push(el.dataset.tag);
-                                    textEl.value=text_value.join(',');
+                        let namestr=Object.keys(this.properties['selTags']).join(',')
+                        let delList=[]
+                        tags.element.children[3].querySelectorAll(".lam-model-tag--del").forEach(el => {
+                            delList.push(el.dataset.tag)
+                        })
+                        tags.element.children[1].querySelectorAll(".lam-model-tag").forEach(el => {
+                            if(el.classList.value.indexOf("lam-model-tag--selected")>=0&&!delList.includes(el.dataset.tag)){
+                                if(!this.properties["values"].includes(el.dataset.tag)){
+                                    this.properties["values"].push(el.dataset.tag);
+                                }
+                                if(!Object.keys(this.properties['selTags']).includes(el.dataset.name)){
+                                    this.properties['selTags'][el.dataset.tag]={tag:el.dataset.tag,name:el.dataset.name,cat:el.dataset.cat}
                                 }
                             }else{
-                                if(text_value.includes(el.dataset.tag)){
-                                    text_value=text_value.filter(v=>v!=el.dataset.tag);
-                                    textEl.value=text_value.join(',');
+                                if(delList.includes(el.dataset.tag)){
+                                    el.classList.remove("lam-model-tag--selected");
+                                    delList=delList.filter(v=>v!=el.dataset.tag)
+                                }
+                                if(this.properties["values"].includes(el.dataset.tag)){
+                                    this.properties["values"]=this.properties["values"].filter(v=>v!=el.dataset.tag);
+                                    delete this.properties['selTags'][el.dataset.tag];
                                 }
                             }
-                            
+
                         });
-                        return '';
+                        for(let i=0;i<delList.length;i++){
+                            if(this.properties["values"].includes(delList[i])){
+                                this.properties["values"]=this.properties["values"].filter(v=>v!=delList[i]);
+                                delete this.properties['selTags'][delList[i]];
+                            }
+                        }
+                        if(namestr!=Object.keys(this.properties['selTags']).join(',')||tags.element.children[3].innerHTML==''){
+                            if(Object.keys(this.properties['selTags']).length>0){
+                                let sellist=getSelList(this.properties['selTags'])
+                                tags.element.children[3].innerHTML=''
+                                tags.element.children[3].append(...sellist)
+                            }else{
+                                tags.element.children[3].innerHTML=''
+                            }
+                        }
+                        tagsValue = this.properties["values"].join(',');
+                        return tagsValue;
                     }
                 });
-                this.setSize([400, 400]);
+                this.setSize([500, 600]);
                 return r;
             };
 
