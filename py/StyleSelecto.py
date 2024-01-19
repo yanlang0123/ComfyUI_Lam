@@ -79,10 +79,10 @@ class StyleSelecto:
         return {
             "required": {
                 "prompt": ("STRING", {"forceInput": True}),
-                "style_type":(files_name, ),
 
             },
             "optional": {
+                "style_type":(files_name, ),
                 "negative_prompt":("STRING",{"forceInput": True}),
                 "i": ("INT",{"forceInput": True}),
             },

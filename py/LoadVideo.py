@@ -34,6 +34,8 @@ class LamLoadVideo:
     OUTPUT_NODE = True
 
     def load_image(self, videoPath,sample_start_idx,n_sample_frames,extract_audio,filename_prefix):
+        if os.path.exists(videoPath) == False:
+            raise Exception('视频文件不存在')
         cap = cv2.VideoCapture(videoPath)
         fps = cap.get(cv2.CAP_PROP_FPS)
         frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
