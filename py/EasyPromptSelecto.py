@@ -87,9 +87,10 @@ class EasyPromptSelecto:
 
         return {
             "required": {
-                "text": ("STRING", {"multiline": True}),
+                "text": ("STRING",{"default": ""}),
                 "prompt_type":(files_name, ),
             },
+            "hidden": {"unique_id": "UNIQUE_ID","wprompt":"PROMPT"},
         }
 
     RETURN_TYPES = ("STRING",)
@@ -101,8 +102,13 @@ class EasyPromptSelecto:
 
     CATEGORY = "lam"
 
-    def translate(self,text,**args):
-        return (text,)
+    def translate(self,prompt_type,unique_id,wprompt,text=''):
+        values = ''
+        if unique_id in wprompt:
+            if wprompt[unique_id]["inputs"]['tags']:
+                #分割字符串
+                values = wprompt[unique_id]["inputs"]['tags']
+        return (text+values,)
 
 # A dictionary that contains all nodes you want to export with their names
 # NOTE: names should be globally unique

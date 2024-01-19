@@ -33,6 +33,10 @@ class Video2TalkingFace:
     OUTPUT_NODE = True
 
     def sad_talker(self, videoPath,audioPath,batch_size,enhancer,filename_prefix):
+        if os.path.exists(videoPath) == False:
+            raise Exception('视频文件不存在')
+        if os.path.exists(audioPath) == False:
+            raise Exception('音频文件不存在')
         sad_talker = SadTalker(self.checkpoint_path, "custom_nodes/ComfyUI_Lam/py/src/config", lazy_load=True)
         autio_path=sad_talker.run_video_2_video(videoPath,audioPath,enhancer,batch_size,result_dir=self.output_dir)
         full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, self.output_dir)

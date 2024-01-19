@@ -30,6 +30,7 @@ $el("style", {
     }
     .lam_style-model-tags-list {
         display: flex;
+        align-content: flex-start;
         flex-wrap: wrap;
         list-style: none;
         gap: 10px;
@@ -41,6 +42,7 @@ $el("style", {
     }
     .lam_style-model-tags-sel-list {
         display: flex;
+        align-content: flex-start;
         flex-wrap: wrap;
         list-style: none;
         gap: 10px;
@@ -59,7 +61,6 @@ $el("style", {
         border-radius: 5px;
         padding: 2px 5px;
         cursor: pointer;
-        height: 26px;
     }
     .lam_style-model-tag--selected span::before {
         content: "✅";
@@ -257,7 +258,7 @@ app.registerExtension({
                 //stylesEl.inputEl.classList.add("lam-model-notes");
                 const list = $el("ol.lam_style-model-tags-list",[]);
                 const lists = $el("ol.lam_style-model-tags-sel-list",[]);
-                let styles=this.addDOMWidget('button',"btn",$el('div.lam_style-preview',[$el('button',{
+                let styles=this.addDOMWidget('styles',"list",$el('div.lam_style-preview',[$el('button',{
                     textContent:'清除全部选择',
                     style:{},
                     onclick:()=>{
