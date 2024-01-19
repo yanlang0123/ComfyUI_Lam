@@ -26,10 +26,14 @@ class VideoAddAudio:
     OUTPUT_NODE = True
 
     def video_add_audio(self, videoPath,audioPath,filename_prefix):
+        if os.path.exists(videoPath) == False:
+            raise Exception('视频文件不存在')
+        if os.path.exists(audioPath) == False:
+            raise Exception('音频文件不存在')
         _ext_video = os.path.basename(videoPath).strip().split('.')[-1]
         _ext_audio = os.path.basename(audioPath).strip().split('.')[-1]
         if _ext_audio not in ['mp3', 'wav']:
-            raise Exception('audio format not support')
+            raise Exception('只支持mp3和wav格式的音频')
         _codec = 'copy'
         if _ext_audio == 'wav':
             _codec = 'aac'
