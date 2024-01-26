@@ -98,7 +98,7 @@ function addConvertToGroupOptions() {
 			callback: async () => {
 				const groupNode=await GroupNodeHandler.fromNodes(selected);
 				if(groupNode){
-					const groupData=groupNode[Object.getOwnPropertySymbols(groupNode)[0]].groupData;
+					const groupData=groupNode[Object.getOwnPropertySymbols(groupNode).filter(e=>(groupNode[e] instanceof GroupNodeHandler))[0]].groupData;
 					await saveGroupNode(groupData.name,groupData.nodeData);
 				}
 				return groupNode;
@@ -129,7 +129,7 @@ function addConvertToGroupOptions() {
                 callback: ()=> {
                     const selected = Object.values(app.canvas.selected_nodes ?? {});
 					const ret=selected[0].convertToNodes();
-					const nodeName=selected[0][Object.getOwnPropertySymbols(selected[0])[0]].groupData.name;
+					const nodeName=selected[0][Object.getOwnPropertySymbols(selected[0]).filter(e=>(selected[0][e] instanceof GroupNodeHandler))[0]].groupData.name;
 					Workflow.delGroupNode(nodeName);
 					try {
 						LiteGraph.unregisterNodeType("workflow/" + nodeName);
@@ -169,11 +169,17 @@ const ext = {
 	nodeCreated(node) {
 		if (GroupNodeHandler.isGroupNode(node)) {
 			//保留节点存储时的选择
-			const groupData=node[Object.getOwnPropertySymbols(node)[0]].groupData;
+			const groupData=node[Object.getOwnPropertySymbols(node).filter(e=>(node[e] instanceof GroupNodeHandler))[0]].groupData;;
+			let values=[]
 			for(var i=0;i<groupData.nodeData.nodes.length;i++){
-				node.widgets[i].value=groupData.nodeData.nodes[i].widgets_values[0]
+				if(groupData.nodeData.nodes[i].widgets_values&&groupData.nodeData.nodes[i].widgets_values.length>0){
+					values.push(...groupData.nodeData.nodes[i].widgets_values)
+				}
 			}
-			Workflow.storeGroupNode(node[Object.getOwnPropertySymbols(node)[0]].groupData.name, node[Object.getOwnPropertySymbols(node)[0]].groupData.nodeData);
+			for(var i=0;i<values.length;i++){
+				node.widgets[i].value=values[i]
+			}
+			Workflow.storeGroupNode(groupData.name, groupData.nodeData);
 		}
 	},
 };
