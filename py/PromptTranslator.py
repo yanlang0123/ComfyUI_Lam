@@ -65,10 +65,14 @@ class PromptTranslator:
         # Send request
         r = requests.post(url, params=payload, headers=headers)
         result = r.json()
+        texts=''
+        for result in result['result']['trans_result']:
+            if result['dst']:
+                texts+=result['dst']+'\n'
         if 'error_code' in result:
             return { "ui": { "text":"翻译失败:"+result['error_msg']},"result": (text) }
         else:
-            return { "ui": { "text":"翻译结果："+result['result']['trans_result'][0]['dst']},"result": (result['result']['trans_result'][0]['dst'],)}
+            return { "ui": { "text":"翻译结果："+texts},"result": (texts,)}
 
     def getAccessToken(self,apiKey,secretKey):
         url = f"https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id={apiKey}&client_secret={secretKey}"

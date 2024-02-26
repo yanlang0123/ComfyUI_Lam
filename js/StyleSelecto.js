@@ -59,7 +59,7 @@ $el("style", {
         align-items: center;
         gap: 5px;
         border-radius: 5px;
-        padding: 2px 5px;
+        padding: 2px 2px;
         cursor: pointer;
     }
     .lam_style-model-tag--selected span::before {
