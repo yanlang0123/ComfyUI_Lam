@@ -324,7 +324,7 @@ app.registerExtension({
 							},
 						},
 						{
-							content: "删除全部为连接的框",
+							content: "删除全部未连接的框",
 							callback: () => {
 								let indexesToRemove = []
 
