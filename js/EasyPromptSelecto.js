@@ -35,7 +35,7 @@ $el("style", {
         list-style: none;
         gap: 10px;
         min-height: 100px;
-        height: 60%;
+        height: 45%;
         overflow: auto;
         margin: 10px 0;
         padding: 0;
@@ -47,7 +47,7 @@ $el("style", {
         list-style: none;
         gap: 10px;
         min-height: 100px;
-        height: 20%;
+        height: 35%;
         overflow: auto;
         margin: 10px 0;
         padding: 0;
@@ -77,15 +77,28 @@ $el("style", {
     .lam-model-tag p {
         margin: 0;
     }
-    .lam-model-tag span {
+    .lam-model-tag span.lable {
         text-align: center;
         border-radius: 5px;
         background-color: dodgerblue;
         color: #fff;
         padding: 2px;
+        position:
+         relative;
+        min-width: 20px;
+        overflow: hidden;
+        min-width: 35px;
+    }
+    .lam-model-tag span.btn {
+        text-align: center;
+        border-radius: 5px;
+        background-color: red;
+        color: #fff;
+        padding: 2px;
         position: relative;
         min-width: 20px;
         overflow: hidden;
+        user-select: none;
     }
     
     .lam-model-metadata .comfy-modal-content {
@@ -152,7 +165,8 @@ function getTagList(tags,cat) {
                     dataset: {
                         tag: t[1],
                         name: t[0],
-                        cat:cat
+                        cat:cat,
+                        weight: 1
                     },
                     $: (el) => {
                         el.onclick = () => {
@@ -164,7 +178,7 @@ function getTagList(tags,cat) {
                     $el("p", {
                         textContent: t[0],
                     }),
-                    $el("span", {
+                    $el("span.lable", {
                         textContent: t[1],
                     }),
                 ]
@@ -184,20 +198,48 @@ function getSelList(tags) {
                 dataset: {
                     name:  tags[k]['name'],
                     tag: tags[k]['tag'],
-                    cat: tags[k]['cat']
+                    cat: tags[k]['cat'],
+                    weight: tags[k]['weight'],
                 },
-                $: (el) => {
-                    el.onclick = () => {
-                        el.classList.add("lam-model-tag--del");
-                    };
-                },
+                // $: (el) => {
+                //     el.onclick = () => {
+                //         el.classList.add("lam-model-tag--del");
+                //     };
+                // },
             },
             [
-                $el("p", {
-                    textContent:tags[k]['name'],
+                $el("span.btn", {
+                    textContent: "-",
+                    $: (el) => {
+                        el.onclick = () => {
+                            el.parentElement.dataset.weight = (((Number(el.parentElement.dataset.weight)*1000)-(0.05*1000))/1000).toFixed(2);
+                        };
+                    },
                 }),
-                $el("span", {
+                $el("p", {
+                    textContent: tags[k]['name'],
+                }),
+                $el("span.lable", {
+                    textContent: tags[k]['weight'],
+                }),
+                $el("span.lable", {
                     textContent: tags[k]['cat'],
+                }),
+                $el("span.btn", {
+                    textContent: "+",
+                    $: (el) => {
+                        el.onclick = () => {
+                            el.parentElement.dataset.weight = (((Number(el.parentElement.dataset.weight)*1000)+(0.05*1000))/1000).toFixed(2);
+                        };
+                    },
+                }),
+                $el("span.btn", {
+                    textContent: "X",
+                    $: (el) => {
+                        el.onclick = () => {
+                            el.parentElement.classList.add("lam-model-tag--del");
+                        };
+                    },
                 }),
             ]
         ))
@@ -271,7 +313,7 @@ app.registerExtension({
                                     el.classList.add("lam-model-tag--selected");
                                 }
                             });
-                            this.setSize([500, 600]);
+                            this.setSize([600, 700]);
 
                             
                         }
@@ -284,7 +326,7 @@ app.registerExtension({
                             if(this.properties["values"].includes(el.dataset.tag)){
                                 el.classList.add("lam-model-tag--selected");
                             }
-                            this.setSize([500, 600]);
+                            this.setSize([600, 700]);
                         });
                     }
                         return cat_value;
@@ -295,7 +337,13 @@ app.registerExtension({
                         
                     },
                     get: () => {
-                        let namestr=Object.keys(this.properties['selTags']).join(',')
+                        let namestr=Object.values(this.properties["selTags"]).map(item => {
+                            if(item.weight!=1) {
+                                return `(${item.tag}:${item.weight})`;
+                            } else {
+                                return item.tag;
+                            }
+                        }).join(',')
                         let delList=[]
                         tags.element.children[3].querySelectorAll(".lam-model-tag--del").forEach(el => {
                             delList.push(el.dataset.tag)
@@ -305,8 +353,8 @@ app.registerExtension({
                                 if(!this.properties["values"].includes(el.dataset.tag)){
                                     this.properties["values"].push(el.dataset.tag);
                                 }
-                                if(!Object.keys(this.properties['selTags']).includes(el.dataset.name)){
-                                    this.properties['selTags'][el.dataset.tag]={tag:el.dataset.tag,name:el.dataset.name,cat:el.dataset.cat}
+                                if(!Object.keys(this.properties['selTags']).includes(el.dataset.tag)){
+                                    this.properties['selTags'][el.dataset.tag]={tag:el.dataset.tag,name:el.dataset.name,cat:el.dataset.cat,weight:Number(el.dataset.weight)}
                                 }
                             }else{
                                 if(delList.includes(el.dataset.tag)){
@@ -318,15 +366,26 @@ app.registerExtension({
                                     delete this.properties['selTags'][el.dataset.tag];
                                 }
                             }
-
                         });
+                        tags.element.children[3].querySelectorAll(".lam-model-tag").forEach(el => {
+                            if(Object.keys(this.properties['selTags']).includes(el.dataset.tag)){
+                                this.properties['selTags'][el.dataset.tag]={tag:el.dataset.tag,name:el.dataset.name,cat:el.dataset.cat,weight:Number(el.dataset.weight)}
+                            }
+                        })
                         for(let i=0;i<delList.length;i++){
                             if(this.properties["values"].includes(delList[i])){
                                 this.properties["values"]=this.properties["values"].filter(v=>v!=delList[i]);
                                 delete this.properties['selTags'][delList[i]];
                             }
                         }
-                        if(namestr!=Object.keys(this.properties['selTags']).join(',')||tags.element.children[3].innerHTML==''){
+                        tagsValue = Object.values(this.properties["selTags"]).map(item => {
+                            if(item.weight!=1) {
+                                return `(${item.tag}:${item.weight})`;
+                            } else {
+                                return item.tag;
+                            }
+                        }).join(',');
+                        if(namestr!=tagsValue||tags.element.children[3].innerHTML==''){
                             if(Object.keys(this.properties['selTags']).length>0){
                                 let sellist=getSelList(this.properties['selTags'])
                                 tags.element.children[3].innerHTML=''
@@ -335,11 +394,10 @@ app.registerExtension({
                                 tags.element.children[3].innerHTML=''
                             }
                         }
-                        tagsValue = this.properties["values"].join(',');
                         return tagsValue;
                     }
                 });
-                this.setSize([500, 600]);
+                this.setSize([600, 700]);
                 return r;
             };
 
