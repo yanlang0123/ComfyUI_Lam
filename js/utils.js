@@ -94,23 +94,36 @@ export function renameNodeInputs(node, name, offset=0) {
 		node.inputs[i].name = `${name}${i-offset}`
 	}
 }
-
+export function swapInputsNot01(node, indexesToRemove){
+	for (let i=0;i<indexesToRemove.length;i++) {
+		if(node.inputs[indexesToRemove[i]].widget){
+			for(let j=0; j<node.inputs.length; j++){
+				if(!indexesToRemove.includes(j)&&j>indexesToRemove[i]){
+					swapInputs(node, indexesToRemove[i], j)
+					indexesToRemove[i]=j
+					swapInputsNot01(node, indexesToRemove)
+					break;
+				}
+			}
+		}
+	}
+}
 export function removeNodeInputs(node, indexesToRemove, offset=0) {
+	swapInputsNot01(node, indexesToRemove)
 	indexesToRemove.sort((a, b) => b - a);
-
 	for (let i of indexesToRemove) {
-		if (node.inputs.length <= 2) { console.log("too short"); continue } // if only 2 left
+		if ((node.inputs.length-offset) <= 2) { console.log("too short"); continue } // if only 2 left
 		node.removeInput(i)
-		node.properties.values.splice(i-offset, 1)
+		node.properties["values"]&&node.properties.values.splice(i-offset, 1)
 	}
+	if(node.properties["values"]){
+		const inputLenght = node.properties["values"].length-1
 
-	const inputLenght = node.properties["values"].length-1
-
-	node.widgets[node.index].options.max = inputLenght
-	if (node.widgets[node.index].value > inputLenght) {
-		node.widgets[node.index].value = inputLenght
+		node.widgets[node.index].options.max = inputLenght
+		if (node.widgets[node.index].value > inputLenght) {
+			node.widgets[node.index].value = inputLenght
+		}
 	}
-
 	node.onResize(node.size)
 }
 
