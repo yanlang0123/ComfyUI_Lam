@@ -48,7 +48,7 @@ class ForEnd:
             r = requests.post("http://127.0.0.1:"+str(port)+"/prompt",json=pdata)
             result = r.text
 
-        return { "ui": { "text":"第"+str(index)+"次循环结果："+result} }
+        return { "ui": { "text":"第"+str(index+1)+"次循环结果："+result} }
 
 NODE_CLASS_MAPPINGS = {
     "ForEnd": ForEnd

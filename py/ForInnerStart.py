@@ -6,7 +6,7 @@ import folder_paths
 import random
 import sys
 
-class ForStart:
+class ForInnerStart:
     def __init__(self):
         pass
 
@@ -19,8 +19,8 @@ class ForStart:
                 "i": ("INT", {"default": 0, "min": 0, "max": 99999}),
             }
         }
-    RETURN_TYPES = ("INT","INT","INT")
-    RETURN_NAMES = ("总数","循环次数","seed")
+    RETURN_TYPES = ("INT","INT","INT",)
+    RETURN_NAMES = ("总数","循环次数","seed",)
     FUNCTION = "for_start_fun"
 
     CATEGORY = "lam"
@@ -30,10 +30,9 @@ class ForStart:
         return (total,i,random.randint(0,sys.maxsize),)
 
 NODE_CLASS_MAPPINGS = {
-    "ForStart": ForStart
+    "ForInnerStart": ForInnerStart
 }
 
-# A dictionary that contains the friendly/humanly readable titles for the nodes
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ForStart": "计次循环首"
+    "ForInnerStart": "计次内循环首"
 }

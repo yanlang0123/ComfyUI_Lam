@@ -319,12 +319,12 @@ app.registerExtension({
 							content: `删除${this.widgets[this.index].value}框`,
 							callback: () => {
 								const index = this.widgets[this.index].value+this.originalsize
-								removeNodeInputs(this, [index])
+								removeNodeInputs(this, [index],this.originalsize)
 								renameNodeInputs(this, "text",this.originalsize)
 							},
 						},
 						{
-							content: "删除全部为连接的框",
+							content: "删除全部未连接的框",
 							callback: () => {
 								let indexesToRemove = []
 
@@ -334,9 +334,7 @@ app.registerExtension({
 									}
 								}
 
-								if (indexesToRemove.length!=this.properties["values"].length) {
-									removeNodeInputs(this, indexesToRemove, "text")
-								}
+								removeNodeInputs(this, indexesToRemove, this.originalsize)
 								renameNodeInputs(this, "text",this.originalsize)
 							},
 						},
