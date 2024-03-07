@@ -38,3 +38,47 @@ if r[val[1]] != type_input:
 ```python
 if type_input !="*" and r[val[1]] != type_input:
 ```
+
+搜索 “def recursive_execute” 
+位置参考图如下：
+![Alt text](修改位置.png)
+新增内容：
+```python
+#循环添加代码----------开始----------
+def get_del_keys(key, prompt):
+    keys=[]
+    for k,v in prompt.items():
+        for k1,v1 in v['inputs'].items():
+            if type(v1)==list and v1[0]==key:
+                keys.append(k)
+                keys=keys+get_del_keys(k,prompt)
+    return keys
+#循环添加代码-----------结束---------
+```
+```python
+    #循环添加代码----------开始----------
+    startNum=None
+    delKeys=[]
+    if class_type=='ForInnerEnd':
+        startNum=prompt[unique_id]['inputs']['total'][0]
+        inputNum=prompt[unique_id]['inputs']['images'][0]
+        startInput=prompt[startNum]['inputs']
+        maxKey = int(sorted(list(prompt.keys()), key=lambda x: int(x))[-1])
+        delKeys=list(set(get_del_keys(startNum,prompt)))
+        delKeys.append(startNum)
+        delKeys = list(filter(lambda x: x != inputNum, delKeys))
+        for i in range(startInput['i']+1,startInput['total'],startInput['stop']):
+            prompt[str(maxKey+i)]=prompt[inputNum]
+            prompt[unique_id]['inputs']['images'+str(i)]=[str(maxKey+i),prompt[unique_id]['inputs']['images'][-1]]
+
+    #循环添加代码-----------结束---------
+```
+```python
+                #循环添加代码----------开始----------
+                if class_type=='ForInnerEnd' and x !='images' and x.startswith('images'):
+                    if startNum!=None:
+                        prompt[startNum]['inputs']['i']=prompt[startNum]['inputs']['i']+prompt[startNum]['inputs']['stop']
+                        for key in delKeys:
+                            outputs.pop(key, None)
+                #循环添加代码-----------结束---------
+```
