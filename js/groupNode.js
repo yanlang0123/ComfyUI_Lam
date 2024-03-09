@@ -37,11 +37,12 @@ const Workflow = {
 		delete groupNodes[name];
 	},
 };
-
+let group_datas = {};
 async function getGroupNode(missingNodeTypes) {
     const resp = await api.fetchApi(`/lam/groupNode`, { cache: "no-store" });
     if (resp.status === 200) {
         let data = await resp.json();
+		group_datas=data;
         await GroupNodeConfig.registerFromWorkflow(data, missingNodeTypes);
     }
 }
@@ -98,7 +99,12 @@ function addConvertToGroupOptions() {
 			callback: async () => {
 				const groupNode=await GroupNodeHandler.fromNodes(selected);
 				if(groupNode){
+					var widgets_values=groupNode.widgets.map(w => {
+						return w.value; // 示例操作：将每个属性的值翻倍
+					  });
 					const groupData=groupNode[Object.getOwnPropertySymbols(groupNode).filter(e=>(groupNode[e] instanceof GroupNodeHandler))[0]].groupData;
+					var nodeData=groupData.nodeData
+					nodeData['widgets_values']=widgets_values
 					await saveGroupNode(groupData.name,groupData.nodeData);
 				}
 				return groupNode;
@@ -159,9 +165,9 @@ const ext = {
 	setup() {
 		addConvertToGroupOptions();
 	},
-	// async beforeConfigureGraph(graphData, missingNodeTypes) {
-    //     await getGroupNode(missingNodeTypes);
-	// },
+	async beforeConfigureGraph(graphData, missingNodeTypes) {
+        await getGroupNode(missingNodeTypes);
+	},
 	addCustomNodeDefs(defs) {
 		// Store this so we can mutate it later with group nodes
 		globalDefs = defs;
@@ -170,14 +176,25 @@ const ext = {
 		if (GroupNodeHandler.isGroupNode(node)) {
 			//保留节点存储时的选择
 			const groupData=node[Object.getOwnPropertySymbols(node).filter(e=>(node[e] instanceof GroupNodeHandler))[0]].groupData;;
-			let values=[]
-			for(var i=0;i<groupData.nodeData.nodes.length;i++){
-				if(groupData.nodeData.nodes[i].widgets_values&&groupData.nodeData.nodes[i].widgets_values.length>0){
-					values.push(...groupData.nodeData.nodes[i].widgets_values)
+			if(group_datas[groupData.name].widgets_values){
+				const values=group_datas[groupData.name].widgets_values
+				for(var i=0;i<values.length;i++){
+					if(node.widgets[i]){
+						node.widgets[i].value=values[i]
+					}
 				}
-			}
-			for(var i=0;i<values.length;i++){
-				node.widgets[i].value=values[i]
+			}else{
+				let values=[]
+				for(var i=0;i<groupData.nodeData.nodes.length;i++){
+					if(groupData.nodeData.nodes[i].widgets_values&&groupData.nodeData.nodes[i].widgets_values.length>0){
+						values.push(...groupData.nodeData.nodes[i].widgets_values)
+					}
+				}
+				for(var i=0;i<values.length;i++){
+					if(node.widgets[i]){
+						node.widgets[i].value=values[i]
+					}
+				}
 			}
 			Workflow.storeGroupNode(groupData.name, groupData.nodeData);
 		}
