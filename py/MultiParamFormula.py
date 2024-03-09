@@ -1,4 +1,5 @@
-class MultiIntFormula:
+from .src.utils.uitls import AlwaysEqualProxy
+class MultiParamFormula:
     def __init__(self):
         pass
 
@@ -9,28 +10,26 @@ class MultiIntFormula:
                 "expression": ("STRING",{"multiline": True}),
             },
             "optional": {
-                "n0": ("INT,FLOAT", ),
-                "n1": ("INT,FLOAT", ),
+                "p0": (AlwaysEqualProxy("*"), ),
+                "p1": (AlwaysEqualProxy("*"), ),
             }
         }
 
-    RETURN_TYPES = ("INT","FLOAT",)
+    RETURN_TYPES = (AlwaysEqualProxy("*"),)
     FUNCTION = "evaluate"
     CATEGORY = "lam"
-    OUTPUT_NODE = True
 
     def evaluate(self, expression, **kwargs):
         lookup = {}
         for arg in kwargs:
-            if type(kwargs[arg]) == int or type(kwargs[arg])== float:
-                lookup[arg] = kwargs[arg]
+            lookup[arg] = kwargs[arg]
         r = eval(expression, lookup)
-        return {"ui": {"value": [r]}, "result": (int(r), float(r),)}
+        return (r,)
     
 NODE_CLASS_MAPPINGS = {
-    "MultiIntFormula": MultiIntFormula
+    "MultiParamFormula": MultiParamFormula
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "MultiIntFormula": "多参数学表达式"
+    "MultiParamFormula": "多参代码表达式"
 }

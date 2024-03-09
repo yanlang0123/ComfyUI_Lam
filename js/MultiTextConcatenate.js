@@ -1,4 +1,5 @@
 import { app } from "/scripts/app.js";
+import { ComfyWidgets } from "/scripts/widgets.js";
 import {CUSTOM_INT, recursiveLinkUpstream, transformFunc, swapInputs, renameNodeInputs, removeNodeInputs, getDrawColor, computeCanvasSize} from "./utils.js"
 
 // Displays input text on a node
@@ -6,38 +7,87 @@ import {CUSTOM_INT, recursiveLinkUpstream, transformFunc, swapInputs, renameNode
 app.registerExtension({
     name: "Comfy.lam.MultiTextConcatenate",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        var names=["MultiTextConcatenate",'MultiTextSelelct']
+        var showNames=["IfInnerExecute",'MultiIntFormula']
+        if (showNames.indexOf(nodeData.name)>=0) {
+            const onDrawForeground = nodeType.prototype.onDrawForeground;
+            nodeType.prototype.onDrawForeground = function (ctx) {
+                const r = onDrawForeground?.apply?.(this, arguments);
+                const v = app.nodeOutputs?.[this.id + ""];
+                if (!this.flags.collapsed && v) {
+                    const text = v.value[0] + "";
+                    ctx.save();
+                    ctx.font = "bold 12px sans-serif";
+                    ctx.fillStyle = "dodgerblue";
+                    const sz = ctx.measureText(text);
+                    ctx.fillText(text, this.size[0] - sz.width - 5, LiteGraph.NODE_SLOT_HEIGHT * 3);
+                    ctx.restore();
+                }
+                return r;
+            };
+        }
+        var names=["MultiTextConcatenate",'MultiTextSelelct',"MultiIntFormula","MultiParamFormula"]
         if (names.indexOf(nodeData.name)>=0) {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
 			nodeType.prototype.onNodeCreated = function () {
 				const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 				this.originalsize=0 
+                this.inputType="STRING"
+                this.inputPrefix="text"
                 if('MultiTextSelelct'==nodeData.name){
                     this.originalsize=1
+                }
+                if('MultiIntFormula'==nodeData.name){
+                    this.inputType="INT,FLOAT"
+                    this.inputPrefix="n"
+                }
+                if('MultiParamFormula'==nodeData.name){
+                    this.inputType="*"
+                    this.inputPrefix="p"
+                }
+                function changCustomtext(){
+                    let cuTexts=[]
+                    const pos = this.widgets.findIndex((w) => w.type === "customtext");
+                    if (pos !== -1) {
+                        for (let i = pos; i < this.widgets.length; i++) {
+                            cuTexts.push({
+                                name: this.widgets[i].name,
+                                value: this.widgets[i].value,
+                            })
+                            this.widgets[i].onRemove?.();
+                        }
+                        this.widgets.length = pos;
+                    }
+                    for(let i = 0; i < cuTexts.length; i++){
+                        let val=cuTexts[i].value
+                        let name=cuTexts[i].name
+                        const w =ComfyWidgets["STRING"](this, name, ["STRING", { multiline: true }, app]).widget;
+                        w.value = val;
+                    }
                 }
                 this.getExtraMenuOptions = function(_, options) {
                     options.unshift(
                         {
                             content: `最前插入 /\\`,
                             callback: () => {
-                                this.addInput("text", "STRING")
-                                
+                                this.addInput(this.inputPrefix, this.inputType)
                                 const inputLenth = this.inputs.length-1
                                 const index = 0+this.originalsize
 
                                 for (let i = inputLenth; i > index; i--) {
                                     swapInputs(this, i, i-1)
                                 }
-                                renameNodeInputs(this, "text",this.originalsize)
+                                renameNodeInputs(this, this.inputPrefix,this.originalsize)
                                 this.setDirtyCanvas(true);
+                                changCustomtext.call(this)
                             },
                         },
                         {
                             content: `最后插入 \\/`,
                             callback: () => {
-                                this.addInput("text", "STRING")
-                                renameNodeInputs(this, "text",this.originalsize)
+                                this.addInput(this.inputPrefix, this.inputType)
+                                renameNodeInputs(this, this.inputPrefix,this.originalsize)
                                 this.setDirtyCanvas(true);
+                                changCustomtext.call(this)
                             },
                         },
                         {
@@ -52,20 +102,13 @@ app.registerExtension({
                                 }
                                 
                                 removeNodeInputs(this, indexesToRemove,this.originalsize)
-                                renameNodeInputs(this, "text",this.originalsize)
+                                renameNodeInputs(this, this.inputPrefix,this.originalsize)
+                                changCustomtext.call(this)
                             },
                         },
                     );
                 }
 
-                this.onRemoved = function () {
-                    // When removing this node we need to remove the input from the DOM
-                    for (let y in this.widgets) {
-                        if (this.widgets[y].canvas) {
-                            this.widgets[y].canvas.remove();
-                        }
-                    }
-                };
             
                 this.onSelected = function () {
                     this.selected = true

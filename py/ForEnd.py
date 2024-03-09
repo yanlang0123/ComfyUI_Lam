@@ -2,6 +2,7 @@ from PIL import Image
 import numpy as np
 import requests
 import json
+from .src.utils.uitls import AlwaysEqualProxy
 
 class ForEnd:
     def __init__(self):
@@ -15,7 +16,7 @@ class ForEnd:
                 "total": ("INT", {"forceInput": True}),
                 "i": ("INT",{"forceInput": True}),
                 "port": ("INT", {"default": 8188, "min": 1, "max": 99999}),
-                "obj": ("*",),
+                "obj": (AlwaysEqualProxy("*"),),
             },
         }
     RETURN_TYPES = ()
@@ -48,7 +49,7 @@ class ForEnd:
             r = requests.post("http://127.0.0.1:"+str(port)+"/prompt",json=pdata)
             result = r.text
 
-        return { "ui": { "text":"第"+str(index)+"次循环结果："+result} }
+        return { "ui": { "text":"第"+str(index+1)+"次循环结果："+result} }
 
 NODE_CLASS_MAPPINGS = {
     "ForEnd": ForEnd

@@ -92,6 +92,9 @@ export function swapInputs(node, indexA, indexB) {
 export function renameNodeInputs(node, name, offset=0) {
 	for (let i=offset; i < node.inputs.length; i++) {
 		node.inputs[i].name = `${name}${i-offset}`
+		if(node.inputs[i].label){
+			node.inputs[i].label = `${name}${i-offset}`
+		}
 	}
 }
 export function swapInputsNot01(node, indexesToRemove){
