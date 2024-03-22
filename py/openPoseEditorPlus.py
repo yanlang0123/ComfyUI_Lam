@@ -144,7 +144,7 @@ class openPoseEditorPlus:
   RETURN_NAMES = ("image","width","height","masks",)
   FUNCTION = "output_pose"
 
-  CATEGORY = "image"
+  CATEGORY = "lam"
 
   def output_pose(self, width,height,unique_id,wprompt,**kwargs):
     groups=[]
