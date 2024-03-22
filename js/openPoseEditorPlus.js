@@ -752,10 +752,10 @@ function createOpenPose(node, inputName, inputData, app) {
   document.body.appendChild(widget.openpose);
   
   
-  node.addWidget("button", "Test", "Test", () => {
-    debugger;
-    console.log(node.openPose.getJSON());
-  });
+  // node.addWidget("button", "Test", "Test", () => {
+  //   debugger;
+  //   console.log(node.openPose.getJSON());
+  // });
   
   // Add buttons Reference image
   // node.addWidget("button", "Reference image", "reference_image", () => {
