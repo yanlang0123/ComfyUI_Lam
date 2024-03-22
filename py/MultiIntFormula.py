@@ -24,8 +24,14 @@ class MultiIntFormula:
         for arg in kwargs:
             if type(kwargs[arg]) == int or type(kwargs[arg])== float:
                 lookup[arg] = kwargs[arg]
-        r = eval(expression, lookup)
-        return {"ui": {"value": [r]}, "result": (int(r), float(r),)}
+        msg=None
+        r=0
+        try:
+            r = eval(expression, lookup)
+            msg=[r]
+        except Exception as e:
+            msg=["表达式错误"]
+        return {"ui": {"value": msg}, "result": (int(r), float(r),)}
     
 NODE_CLASS_MAPPINGS = {
     "MultiIntFormula": MultiIntFormula

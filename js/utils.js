@@ -97,6 +97,53 @@ export function renameNodeInputs(node, name, offset=0) {
 		}
 	}
 }
+
+export function swapOutputs(node, indexA, indexB) {
+	const linkAs = JSON.parse(JSON.stringify(node.outputs[indexA].links))
+	let origin_slotA = null
+	let node_IDA = null
+	let connectedNodeA = null
+	let labelA = node.outputs[indexA].label || null
+
+	const linkBs = JSON.parse(JSON.stringify(node.outputs[indexB].links))
+	let origin_slotB = null
+	let node_IDB = null
+	let connectedNodeB = null
+	let labelB = node.outputs[indexB].label || null
+
+	if(linkAs&&linkAs.length>0){
+		for(let linkA of linkAs){
+			node_IDA = node.graph.links[linkA].target_id
+			origin_slotA = node.graph.links[linkA].target_slot
+			connectedNodeA = node.graph._nodes_by_id[node_IDA]
+			node.connect(indexB,connectedNodeA,origin_slotA)
+		}
+		node.disconnectOutput(indexA)
+	}
+	
+
+	if(linkBs&&linkBs.length>0){
+		for(let linkB of linkBs){
+			node_IDB = node.graph.links[linkB].target_id
+			origin_slotB = node.graph.links[linkB].target_slot
+			connectedNodeB = node.graph._nodes_by_id[node_IDB]
+			node.connect(indexA,connectedNodeB,origin_slotB)
+		}
+		node.disconnectOutput(indexB)
+	}
+
+	node.outputs[indexA].label = labelB
+	node.outputs[indexB].label = labelA
+	
+}
+export function renameNodeOutputs(node, name, offset=0) {
+	for (let i=offset; i < node.outputs.length; i++) {
+		node.outputs[i].name = `${name}${i-offset}`
+		if(node.outputs[i].label){
+			node.outputs[i].label = `${name}${i-offset}`
+		}
+	}
+}
 export function swapInputsNot01(node, indexesToRemove){
 	for (let i=0;i<indexesToRemove.length;i++) {
 		if(node.inputs[indexesToRemove[i]].widget){
@@ -126,6 +173,30 @@ export function removeNodeInputs(node, indexesToRemove, offset=0) {
 		if (node.widgets[node.index].value > inputLenght) {
 			node.widgets[node.index].value = inputLenght
 		}
+	}
+	node.onResize(node.size)
+}
+
+export function swapOutputsNot01(node, indexesToRemove){
+	for (let i=0;i<indexesToRemove.length;i++) {
+		if(node.outputs[indexesToRemove[i]].widget){
+			for(let j=0; j<node.outputs.length; j++){
+				if(!indexesToRemove.includes(j)&&j>indexesToRemove[i]){
+					swapOutputs(node, indexesToRemove[i], j)
+					indexesToRemove[i]=j
+					swapOutputsNot01(node, indexesToRemove)
+					break;
+				}
+			}
+		}
+	}
+}
+export function removeNodeOutputs(node, indexesToRemove, offset=0) {
+	swapOutputsNot01(node, indexesToRemove)
+	indexesToRemove.sort((a, b) => b - a);
+	for (let i of indexesToRemove) {
+		if ((node.outputs.length-offset) <= 1) { console.log("too short"); continue } // if only 2 left
+		node.removeOutput(i)
 	}
 	node.onResize(node.size)
 }
