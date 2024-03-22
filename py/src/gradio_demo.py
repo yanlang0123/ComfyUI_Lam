@@ -159,7 +159,7 @@ class SadTalker():
             else:
                 shutil.move(driven_audio, input_dir)
 
-        elif use_idle_mode:
+        elif use_idle_mode: #空闲模式 生成空音频
             audio_path = os.path.join(input_dir, 'idlemode_'+str(length_of_audio)+'.wav') ## generate audio from this new audio_path
             from pydub import AudioSegment
             one_sec_segment = AudioSegment.silent(duration=1000*length_of_audio)  #duration in milliseconds
@@ -169,6 +169,7 @@ class SadTalker():
             assert use_ref_video == True and ref_info == 'all'
 
         if use_ref_video and ref_info == 'all': # full ref mode
+            #提取视频的音频文件
             ref_video_videoname = os.path.basename(ref_video)
             audio_path = os.path.join(save_dir, ref_video_videoname+'.wav')
             print('new audiopath:',audio_path)
@@ -178,7 +179,7 @@ class SadTalker():
 
         os.makedirs(save_dir, exist_ok=True)
         
-        #crop image and extract 3dmm from image
+        #crop image and extract 3dmm from image #裁剪图像并从图像中提取3dmm
         first_frame_dir = os.path.join(save_dir, 'first_frame_dir')
         os.makedirs(first_frame_dir, exist_ok=True)
         first_coeff_path, crop_pic_path, crop_info = self.preprocess_model.generate(pic_path, first_frame_dir, preprocess, True, size)
@@ -188,6 +189,7 @@ class SadTalker():
 
         if use_ref_video:
             print('using ref video for genreation')
+            #使用ref视频进行生成
             ref_video_videoname = os.path.splitext(os.path.split(ref_video)[-1])[0]
             ref_video_frame_dir = os.path.join(save_dir, ref_video_videoname)
             os.makedirs(ref_video_frame_dir, exist_ok=True)

@@ -1,13 +1,13 @@
 import { app } from "/scripts/app.js";
 import { ComfyWidgets } from "/scripts/widgets.js";
-import {CUSTOM_INT, recursiveLinkUpstream, transformFunc, swapInputs, renameNodeInputs, removeNodeInputs, getDrawColor, computeCanvasSize} from "./utils.js"
+import {CUSTOM_INT, recursiveLinkUpstream, transformFunc, swapInputs,swapOutputs, renameNodeInputs,renameNodeOutputs, removeNodeInputs,removeNodeOutputs, getDrawColor, computeCanvasSize} from "./utils.js"
 
 // Displays input text on a node
 
 app.registerExtension({
     name: "Comfy.lam.MultiTextConcatenate",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        var showNames=["IfInnerExecute",'MultiIntFormula']
+        var showNames=["IfInnerExecute",'MultiIntFormula','MultiParamFormula']
         if (showNames.indexOf(nodeData.name)>=0) {
             const onDrawForeground = nodeType.prototype.onDrawForeground;
             nodeType.prototype.onDrawForeground = function (ctx) {
@@ -33,6 +33,7 @@ app.registerExtension({
 				this.originalsize=0 
                 this.inputType="STRING"
                 this.inputPrefix="text"
+                this.outputPrefix=""
                 if('MultiTextSelelct'==nodeData.name){
                     this.originalsize=1
                 }
@@ -43,6 +44,7 @@ app.registerExtension({
                 if('MultiParamFormula'==nodeData.name){
                     this.inputType="*"
                     this.inputPrefix="p"
+                    this.outputPrefix="r"
                 }
                 function changCustomtext(){
                     let cuTexts=[]
@@ -65,48 +67,131 @@ app.registerExtension({
                     }
                 }
                 this.getExtraMenuOptions = function(_, options) {
-                    options.unshift(
-                        {
-                            content: `最前插入 /\\`,
-                            callback: () => {
-                                this.addInput(this.inputPrefix, this.inputType)
-                                const inputLenth = this.inputs.length-1
-                                const index = 0+this.originalsize
-
-                                for (let i = inputLenth; i > index; i--) {
-                                    swapInputs(this, i, i-1)
-                                }
-                                renameNodeInputs(this, this.inputPrefix,this.originalsize)
-                                this.setDirtyCanvas(true);
-                                changCustomtext.call(this)
-                            },
-                        },
-                        {
-                            content: `最后插入 \\/`,
-                            callback: () => {
-                                this.addInput(this.inputPrefix, this.inputType)
-                                renameNodeInputs(this, this.inputPrefix,this.originalsize)
-                                this.setDirtyCanvas(true);
-                                changCustomtext.call(this)
-                            },
-                        },
-                        {
-                            content: "删除全部未连接的框",
-                            callback: () => {
-                                let indexesToRemove = []
-
-                                for (let i = 0; i < this.inputs.length; i++) {
-                                    if (!this.inputs[i].link&&i>=this.originalsize) {
-                                        indexesToRemove.push(i)
+                    if(this.outputPrefix){
+                        options.unshift(
+                            {
+                                content: `最前插入参 /\\`,
+                                callback: () => {
+                                    this.addInput(this.inputPrefix, this.inputType)
+                                    const inputLenth = this.inputs.length-1
+                                    const index = 0+this.originalsize
+    
+                                    for (let i = inputLenth; i > index; i--) {
+                                        swapInputs(this, i, i-1)
                                     }
-                                }
-                                
-                                removeNodeInputs(this, indexesToRemove,this.originalsize)
-                                renameNodeInputs(this, this.inputPrefix,this.originalsize)
-                                changCustomtext.call(this)
+                                    renameNodeInputs(this, this.inputPrefix,this.originalsize)
+                                    this.setDirtyCanvas(true);
+                                    changCustomtext.call(this)
+                                },
                             },
-                        },
-                    );
+                            {
+                                content: `最后插入参 \\/`,
+                                callback: () => {
+                                    this.addInput(this.inputPrefix, this.inputType)
+                                    renameNodeInputs(this, this.inputPrefix,this.originalsize)
+                                    this.setDirtyCanvas(true);
+                                    changCustomtext.call(this)
+                                },
+                            },
+                            {
+                                content: "删除全部未连接的入参框",
+                                callback: () => {
+                                    let indexesToRemove = []
+    
+                                    for (let i = 0; i < this.inputs.length; i++) {
+                                        if (!this.inputs[i].link&&i>=this.originalsize) {
+                                            indexesToRemove.push(i)
+                                        }
+                                    }
+                                    
+                                    removeNodeInputs(this, indexesToRemove,this.originalsize)
+                                    renameNodeInputs(this, this.inputPrefix,this.originalsize)
+                                    changCustomtext.call(this)
+                                },
+                            },
+                            {
+                                content: `最前插出参 /\\`,
+                                callback: () => {
+                                    this.addOutput(this.outputPrefix, this.inputType)
+                                    const inputLenth = this.outputs.length-1
+                                    const index = 0+this.originalsize
+    
+                                    for (let i = inputLenth; i > index; i--) {
+                                        swapOutputs(this, i, i-1)
+                                    }
+                                    renameNodeOutputs(this, this.outputPrefix,this.originalsize)
+                                    this.setDirtyCanvas(true);
+                                    changCustomtext.call(this)
+                                },
+                            },
+                            {
+                                content: `最后插出参 \\/`,
+                                callback: () => {
+                                    this.addOutput(this.outputPrefix, this.inputType)
+                                    renameNodeOutputs(this, this.outputPrefix,this.originalsize)
+                                    this.setDirtyCanvas(true);
+                                    changCustomtext.call(this)
+                                },
+                            },
+                            {
+                                content: "删除全部未连接的出参框",
+                                callback: () => {
+                                    let indexesToRemove = []
+                                    for (let i = 0; i < this.outputs.length; i++) {
+                                        if ((!this.outputs[i].links||this.outputs[i].links.length==0)&&i>=this.originalsize) {
+                                            indexesToRemove.push(i)
+                                        }
+                                    }
+                                    removeNodeOutputs(this, indexesToRemove,this.originalsize)
+                                    renameNodeOutputs(this, this.outputPrefix,this.originalsize)
+                                    changCustomtext.call(this)
+                                },
+                            }
+                        );
+                    }else{
+                        options.unshift(
+                            {
+                                content: `最前插入参 /\\`,
+                                callback: () => {
+                                    this.addInput(this.inputPrefix, this.inputType)
+                                    const inputLenth = this.inputs.length-1
+                                    const index = 0+this.originalsize
+    
+                                    for (let i = inputLenth; i > index; i--) {
+                                        swapInputs(this, i, i-1)
+                                    }
+                                    renameNodeInputs(this, this.inputPrefix,this.originalsize)
+                                    this.setDirtyCanvas(true);
+                                    changCustomtext.call(this)
+                                },
+                            },
+                            {
+                                content: `最后插入参 \\/`,
+                                callback: () => {
+                                    this.addInput(this.inputPrefix, this.inputType)
+                                    renameNodeInputs(this, this.inputPrefix,this.originalsize)
+                                    this.setDirtyCanvas(true);
+                                    changCustomtext.call(this)
+                                },
+                            },
+                            {
+                                content: "删除全部未连接的入参框",
+                                callback: () => {
+                                    let indexesToRemove = []
+    
+                                    for (let i = 0; i < this.inputs.length; i++) {
+                                        if (!this.inputs[i].link&&i>=this.originalsize) {
+                                            indexesToRemove.push(i)
+                                        }
+                                    }
+                                    
+                                    removeNodeInputs(this, indexesToRemove,this.originalsize)
+                                    renameNodeInputs(this, this.inputPrefix,this.originalsize)
+                                    changCustomtext.call(this)
+                                },
+                            }
+                        );
+                    }
                 }
 
             

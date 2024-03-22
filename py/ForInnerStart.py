@@ -19,15 +19,16 @@ class ForInnerStart:
                 "i": ("INT", {"default": 0, "min": 0, "max": 99999}),
             }
         }
-    RETURN_TYPES = ("INT","INT","INT",)
-    RETURN_NAMES = ("总数","循环次数","seed",)
+    RETURN_TYPES = ("INT","INT","INT","IMAGE",)
+    RETURN_NAMES = ("总数","循环次数","seed",'图片',)
     FUNCTION = "for_start_fun"
 
     CATEGORY = "lam"
 
-    def for_start_fun(self,total,stop,i):
+    def for_start_fun(self,total,stop,i, **kwargs):
+        images=kwargs['images'] if 'images' in kwargs else None
         random.seed(i)
-        return (total,i,random.randint(0,sys.maxsize),)
+        return (total,i,random.randint(0,sys.maxsize),images,)
 
 NODE_CLASS_MAPPINGS = {
     "ForInnerStart": ForInnerStart

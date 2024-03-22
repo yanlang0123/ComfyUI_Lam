@@ -70,13 +70,14 @@ class CropAndExtract():
 
         #load input
         if not os.path.isfile(input_path):
+            #input_path必须是视频/图像文件的有效路径
             raise ValueError('input_path must be a valid path to video/image file')
         elif input_path.split('.')[-1] in ['jpg', 'png', 'jpeg']:
             # loader for first frame
             full_frames = [cv2.imread(input_path)]
             fps = 25
         else:
-            # loader for videos
+            # loader for videos 读取视频1张图片
             video_stream = cv2.VideoCapture(input_path)
             fps = video_stream.get(cv2.CAP_PROP_FPS)
             full_frames = [] 
@@ -91,7 +92,7 @@ class CropAndExtract():
 
         x_full_frames= [cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  for frame in full_frames] 
 
-        #### crop images as the 
+        #### crop images as the 裁剪图像作为
         if 'crop' in crop_or_resize.lower(): # default crop
             x_full_frames, crop, quad = self.propress.crop(x_full_frames, still=True if 'ext' in crop_or_resize.lower() else False, xsize=512)
             clx, cly, crx, cry = crop
@@ -113,22 +114,26 @@ class CropAndExtract():
         frames_pil = [Image.fromarray(cv2.resize(frame,(pic_size, pic_size))) for frame in x_full_frames]
         if len(frames_pil) == 0:
             print('No face is detected in the input file')
+            #在输入文件中未检测到人脸
             return None, None
 
-        # save crop info
+        # save crop info #保存人脸图片
         for frame in frames_pil:
             cv2.imwrite(png_path, cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2BGR))
 
-        # 2. get the landmark according to the detected face. 
+        # 2. get the landmark according to the detected face.  根据检测到的人脸获取地标。
         if not os.path.isfile(landmarks_path): 
             lm = self.propress.predictor.extract_keypoint(frames_pil, landmarks_path)
         else:
             print(' Using saved landmarks.')
+            #使用保存的地标。
             lm = np.loadtxt(landmarks_path).astype(np.float32)
             lm = lm.reshape([len(x_full_frames), -1, 2])
 
         if not os.path.isfile(coeff_path):
             # load 3dmm paramter generator from Deep3DFaceRecon_pytorch 
+            #从Deep3DFaceRecon_pyarch加载3dmm参数生成器
+            #视频中的3DMM提取
             video_coeffs, full_coeffs = [],  []
             for idx in tqdm(range(len(frames_pil)), desc='3DMM Extraction In Video:'):
                 frame = frames_pil[idx]
