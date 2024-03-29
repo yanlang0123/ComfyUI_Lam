@@ -140,8 +140,8 @@ class openPoseEditorPlus:
               
             }
 
-  RETURN_TYPES = ("IMAGE","INT","INT","MASKS",)
-  RETURN_NAMES = ("image","width","height","masks",)
+  RETURN_TYPES = ("IMAGE","INT","INT","MASKS","MASKS",)
+  RETURN_NAMES = ("image","width","height","head_masks","body_masks",)
   FUNCTION = "output_pose"
 
   CATEGORY = "lam"
@@ -154,17 +154,18 @@ class openPoseEditorPlus:
               if arg.startswith("wPose_"):
                 groups=json.loads('{"groups":' + wprompt[unique_id]["inputs"][arg]+ '}')["groups"]
                 break
-    masks=[]
+    head_masks=[]
+    body_masks=[]
     candidate=[]
     subsets=[] 
     index=0
     for g in groups:
       head=get_bounding_box(g[-4:]+g[:2],width,height,1,1)
       if head:
-        masks.append(create_mask(head,width,height))
+        head_masks.append(create_mask(head,width,height))
       whole=get_bounding_box(g,width,height,0.5,0.2)
       if whole:
-        masks.append(create_mask(whole,width,height)) 
+        body_masks.append(create_mask(whole,width,height)) 
       subset=[]
       for i in range(len(g)):
          if g[i][0]<0 or g[i][1]<0:
@@ -183,7 +184,7 @@ class openPoseEditorPlus:
     image = np.array(image).astype(np.float32) / 255.0
     image = torch.from_numpy(image)[None,]
 
-    return (image,width,height,masks,)
+    return (image,width,height,head_masks,body_masks,)
 
   @classmethod
   def IS_CHANGED(self, image):
