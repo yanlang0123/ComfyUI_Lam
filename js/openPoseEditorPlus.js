@@ -108,23 +108,7 @@ class OpenPose {
                 originY: 'top',
                 opacity: 0.5
             });
-              /*
-              var width = img.width; // 图片的宽度  
-			  var height = img.height; // 图片的高度  
-			  var minSideLength; // 最小边长  
-			  
-			  if (width < height) {  
-				// 宽度小于高度，所以最短边是宽度  
-				minSideLength = width;  
-				img.scaleX = canvas.width / img.width;
-				img.scaleY = canvas.width / img.width;
-			  } else {  
-				// 宽度大于或等于高度，所以最短边是高度或两者相等  
-				minSideLength = height;  
-				img.scaleX = this.canvas.height / img.height;  
-				img.scaleY = this.canvas.height / img.height;  
-			  }  
-            */
+            
 			this.canvas.setWidth(img.width);
 			this.canvas.setHeight(img.height);
 			
@@ -531,6 +515,42 @@ class OpenPose {
 
   getImageOpse(image){ //上传图片识别骨骼姿态
     this.lockMode=true;
+    let thi=this;
+    // 创建一个自定义的Loading控件
+    var loading = (function() {
+      if(!thi.canvas.wrapperEl.loadingDiv){
+        var loadingDiv = document.createElement('div');
+        loadingDiv.style.position = 'absolute';
+        loadingDiv.style.left = '0';
+        loadingDiv.style.top = '0';
+        loadingDiv.style.right = '0';
+        loadingDiv.style.bottom = '0';
+        loadingDiv.style.background = 'rgba(255, 255, 255, 0.5)';
+        loadingDiv.style.display = 'flex';
+        loadingDiv.style.justifyContent = 'center';
+        loadingDiv.style.alignItems = 'center';
+        loadingDiv.style.zIndex = '100';
+        loadingDiv.style.textAlign = 'center';
+        loadingDiv.style.paddingTop = thi.canvas.height/2+'px';
+        var loadingText = document.createElement('p');
+        loadingText.textContent = '图片识别中...';
+        loadingDiv.appendChild(loadingText);
+      
+        thi.canvas.wrapperEl.appendChild(loadingDiv);
+        thi.canvas.wrapperEl.loadingDiv = loadingDiv;
+      }
+      return {
+        show: function() {
+          thi.canvas.wrapperEl.loadingDiv.style.display = 'block';
+        },
+        hide: function() {
+          thi.canvas.wrapperEl.loadingDiv.style.display = 'none';
+        }
+      };
+    })();
+    // 在执行某些异步操作前显示Loading
+    loading.show();
+    
     const uploadFile = async (blobFile) => {
       try {
         const resp = await fetch("/lam/getImagePose", {
@@ -542,6 +562,8 @@ class OpenPose {
           console.log(data)
           if(data.groups.length<=0){
             alert('未识别到姿态骨骼');
+            // 操作完成后隐藏Loading
+            loading.hide();
             return ;
           }
           for(let i = 0; i < data.groups.length; i++){
@@ -554,12 +576,16 @@ class OpenPose {
           this.node.setDirtyCanvas(true);
           this.setIndexPose(this.groups.length-1,false)
           this.updateHistoryData();
+          // 操作完成后隐藏Loading
+          loading.hide();
         } else {
           alert(resp.status + " - " + resp.statusText);
+          loading.hide();
         }
         this.lockMode=false;
       } catch (error) {
         console.error(error);
+        loading.hide();
       }
     };
     let formData = new FormData();
