@@ -20,6 +20,7 @@ class LongTextToList:
     CATEGORY = "lam"
 
     def text_to_list(self,text,i,delimiter):
+        delimiter=delimiter.replace("\\n","\n")
         strList=text.split(delimiter)
 
         return (strList[i],strList,len(strList) )
