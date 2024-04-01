@@ -8,15 +8,6 @@ dir = os.path.abspath(os.path.join(__file__, "../../styles"))
 if not os.path.exists(dir):
     os.mkdir(dir)
 
-@server.PromptServer.instance.routes.get("/lam/getStyleImage")
-async def get_groupNode(request):
-    if "name" in request.rel_url.query:
-        name = request.rel_url.query["name"]
-        file = os.path.join(dir,'samples', name+'.jpg')
-        if os.path.isfile(file):
-            return web.FileResponse(file)
-    return web.Response(status=404)
-
 @server.PromptServer.instance.routes.get("/lam/getStyles")
 def getStyles(request):
     if "name" in request.rel_url.query:
@@ -79,10 +70,10 @@ class StyleSelecto:
         return {
             "required": {
                 "prompt": ("STRING", {"forceInput": True}),
+                "style_type":(files_name, ),
 
             },
             "optional": {
-                "style_type":(files_name, ),
                 "negative_prompt":("STRING",{"forceInput": True}),
                 "i": ("INT",{"forceInput": True}),
             },

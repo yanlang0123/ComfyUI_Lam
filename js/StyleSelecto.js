@@ -59,7 +59,7 @@ $el("style", {
         align-items: center;
         gap: 5px;
         border-radius: 5px;
-        padding: 2px 5px;
+        padding: 2px 2px;
         cursor: pointer;
     }
     .lam_style-model-tag--selected span::before {
@@ -153,7 +153,7 @@ function displayImg(imgName) {
     var img = document.getElementById("show_image_id");  
     var pxy=img.parentElement.getBoundingClientRect();
     if(imgName) {
-        img.src = `/lam/getStyleImage?name=${imgName}`;
+        img.src = `/lam/getImage?type=styles&&name=${imgName}.jpg`;
     }
    var e = event || window.event;
    var x = e.pageX-pxy.x+50;
