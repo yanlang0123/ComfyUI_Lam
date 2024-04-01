@@ -153,7 +153,7 @@ function displayImg(imgName) {
     var img = document.getElementById("show_image_id");  
     var pxy=img.parentElement.getBoundingClientRect();
     if(imgName) {
-        img.src = `/lam/getStyleImage?name=${imgName}`;
+        img.src = `/lam/getImage?type=styles&&name=${imgName}.jpg`;
     }
    var e = event || window.event;
    var x = e.pageX-pxy.x+50;

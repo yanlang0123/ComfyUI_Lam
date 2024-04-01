@@ -1,5 +1,6 @@
 import { app } from "../../../scripts/app.js";
 import { fabric } from "./fabric.js";
+import { api } from "../../../scripts/api.js";
 
 fabric.Object.prototype.transparentCorners = false;
 fabric.Object.prototype.cornerColor = "#108ce6";
@@ -67,7 +68,21 @@ const default_keypoints = [
   [270, 52],
 ];
 const default_subset=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
-
+const asyncLoadImg = (imgURL) => {
+  return new Promise((resolve,reject) => {
+      // 2.6.0 版本没有对图片加载异常的处理，需要自己处理
+      fabric.Image.fromURL(imgURL, img => {
+          // 加载出错提示，否则会造成渲染出错
+          if(img._originalElement === null){
+            reject('图片加载出错啦~~~')  
+          }else {
+            resolve(img)
+          }
+      })
+      // 4.2.0版本有错误处理 
+      // fabric.Image.fromURL(imgURL, (img,isError) => {})
+  })
+}
 class OpenPose {
   constructor(node, canvasElement) {
     this.lockMode = false;
@@ -78,6 +93,7 @@ class OpenPose {
     this.redo_history = LS_Poses[node.name].redo_history || [];
     this.groups = [];
     this.subsets = [];
+    this.hands = [];
     this.index = 0
     this.history_index = 0;
     this.history_change = false;
@@ -115,39 +131,80 @@ class OpenPose {
             this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas));
         });
     }
+  
+  //左右翻转
+  fliplf() {
+    let aobj=this.canvas.getActiveObject()
+    if(!aobj){
+      alert("请选择一只需要翻转的手")
+    }
+    if(aobj&&aobj['itype']&&aobj['itype']=='hand'){
+      this.canvas.getActiveObject().set('flipX', !this.canvas.getActiveObject().flipX);
+      this.canvas.renderAll();
+    }else{
+      alert("只有手能翻转")
+    }
+  }
+  //上下翻转
+  fliptd() {
+    let aobj=this.canvas.getActiveObject()
+    if(!aobj){
+      alert("请选择一只需要翻转的手")
+    }
+    if(aobj&&aobj['itype']&&aobj['itype']=='hand'){
+      this.canvas.getActiveObject().set('flipX', !this.canvas.getActiveObject().flipX);
+      this.canvas.renderAll();
+    }else{
+      alert("只有手能翻转")
+    }
+  }
+  // 异步加载图片
 
-    // 到顶层
-  bringToFront() {
-    // 方法1
-    this.canvas.bringToFront(rect);
-    // 方法2
-    // rect.bringToFront()
+  async addHand(obj,isEdit=true,group=undefined){
+    // 引入fabric.js库
+    let thi=this
+    let x=obj['l'],y=obj['t'];
+    let img = await asyncLoadImg(`/lam/getImage?type=hands&&name=${obj.name}`)
+    let left=x?x-img.width*0.1/2:0,top=y?y-img.height*0.1/2:0;
+    let nobj=Object.assign({
+      left: left, // 图片的初始水平位置
+      top: top, // 图片的初始垂直位置
+      angle: 0, // 图片的初始旋转角度
+      opacity: 0.95, // 图片透明度
+      // 这里可以通过scaleX和scaleY来设置图片绘制后的大小，这里为原来大小的一半
+      scaleX: 0.1, 
+      scaleY: 0.1,
+      flipX:false,
+      flipY:false,
+      selectable: isEdit,
+      evented: isEdit,
+    }, obj);
+    img.set(nobj);
+    img['itype']='hand'
+    if(group){
+      group.addWithUpdate(img);
+    }else{
+      thi.canvas.add(img); // 将图片添加到画布上
+    }
+    if(x && y){
+      thi.canvas.setActiveObject(img); //选中
+      thi.hands[thi.history_index].push({
+        left: left, // 图片的初始水平位置
+        top: top, // 图片的初始垂直位置
+        angle: 0, // 图片的初始旋转角度
+        name:obj.name,
+        scaleX: 0.1, 
+        scaleY: 0.1,
+        flipX:false,
+        flipY:false,
+        x:x,
+        y:y
+      })
+      thi.canvas.requestRenderAll();
+    }
+    return img
   }
 
-  //到底层层
-  sendToBack() {
-    // 方法1
-    this.canvas.sendToBack(rect);
-    // 方法2
-    // rect.sendToBack()
-  }
-
-  // 往上走一层
-  bringForward() {
-    // 方法1
-    this.canvas.bringForward(triangle);
-    // 方法2
-    // triangle.bringForward()
-  }
-
-  // 下走一层
-  sendBackwards() {
-    // 方法1
-    this.canvas.sendBackwards(circle);
-
-    // 方法2
-    // circle.sendBackwards()
-  }  
   setCanvasWidth(width){
     this.canvas.setWidth(width)
   }
@@ -155,22 +212,23 @@ class OpenPose {
     this.canvas.setHeight(height)
   }
   delIndexPose(){
-    this.lockMode=true
     let delIndex=this.history_index
     this.groups.splice(delIndex,1)
     this.subsets.splice(delIndex,1)
+    this.hands.splice(delIndex,1)
     this.node.widgets[this.index].value =0;
     this.node.widgets[this.index].options['max']=this.groups.length-1;
     this.node.setDirtyCanvas(true);
     this.setIndexPose(0,false)
-    this.lockMode=false
   }
   setIndexPose(v,isChangIndex=true){
+    this.lockMode=true
     if(isChangIndex){
       this.changeIndexPose()
     }
     this.history_index=v
     let groups=this.groups
+    let hands=this.hands
     let vgroups=[]
     for (let i = 0; i < groups.length; i++) {
       if(i==v){
@@ -179,7 +237,16 @@ class OpenPose {
       vgroups.push(groups[i])
     }
     this.setPose([],vgroups,false)
-    this.addPose(groups[v])
+    for (let i = 0; i < hands.length; i++) {
+      if(i==v){
+        continue;
+      }
+      for(let j = 0; j < hands[i].length; j++){
+        this.addHand(hands[i][j],false)
+      }
+    }
+    this.addPose(groups[v],true,hands[v])
+    this.lockMode=false
   }
 
    changeIndexPose(index=undefined){
@@ -201,6 +268,11 @@ class OpenPose {
       }
 
       this.groups[index]=group
+    }
+    if(json['hands'].length>0){
+      this.hands[index]=json['hands']
+    }else{
+      this.hands[index]=[]
     }
   }
 
@@ -224,13 +296,14 @@ class OpenPose {
     }
   }
 
-  addPose(keypoints = undefined,isEdit=true) {
+  async addPose(keypoints = undefined,isEdit=true,hands=[]) {
     if (keypoints === undefined) {
       keypoints = default_keypoints;
       this.changeIndexPose()
       this.setPose([],this.groups,false)
       this.groups.push(keypoints);
       this.subsets.push(default_subset);
+      this.hands.push(hands);
       this.node.widgets[this.index].value = this.groups.length-1;
       this.node.widgets[this.index].options['max']=this.groups.length-1;
       this.history_index=this.node.widgets[this.index].value
@@ -315,6 +388,9 @@ class OpenPose {
       circles.push(circle);
       group.addWithUpdate(circle);
     }
+    for(let i = 0; i < hands.length; i++){
+      await this.addHand(hands[i],true,group)
+    }
     this.canvas.discardActiveObject();
     //不可编辑
     if(isEdit){
@@ -343,6 +419,9 @@ class OpenPose {
           const rleft = target.left;
           for (const item of target._objects) {
             let p = item;
+            if(p['itype']&&p['itype']=='hand'){
+              continue
+            }
             p.scaleX = 1;
             p.scaleY = 1;
             const top =
@@ -434,6 +513,7 @@ class OpenPose {
     });
 
     this.canvas.on("object:modified", () => {
+      console.log('object:modified取消的事件')
       if (
         this.lockMode ||
         (this.canvas.getActiveObject()&&this.canvas.getActiveObject().type == "activeSelection")
@@ -441,7 +521,8 @@ class OpenPose {
         return;
       
       this.changeIndexPose()
-      this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),'index':this.history_index});
+      this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
+            'hands':JSON.parse(JSON.stringify(this.hands)),'index':this.history_index});
       this.redo_history.length = 0;
       this.history_change = true;
     });
@@ -449,23 +530,28 @@ class OpenPose {
     this.canvas.on("selection:cleared", (e) => {
       if (this.lockMode)
           return;
-      if(e?.deselected?.length>1){
+      
+      if(e?.deselected?.length>1||(e?.deselected?.length==1&&e?.deselected[0].itype=="hand")){
         let json=this.getJSON();
         if (json["keypoints"].length>0&&json["keypoints"].length >1) {
             this.changeIndexPose()
-            this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),'index':this.history_index});
+            this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
+            'hands':JSON.parse(JSON.stringify(this.hands)),'index':this.history_index});
             this.redo_history.length = 0;
             this.history_change = true;
-            
         }
+        
       }
       console.log('selection:cleared取消的事件')
     });
 
     if (!LS_Poses[this.node.name].undo_history.length) {
       this.groups=[]
+      this.hands=[]
       this.addPose();
-      this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),'index':this.history_index});
+      this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
+      'hands':JSON.parse(JSON.stringify(this.hands)),
+      'index':this.history_index});
     }
     return this.canvas;
   }
@@ -501,7 +587,9 @@ class OpenPose {
     this.canvas.backgroundColor = "#000";
     this.groups=[]
     this.addPose();
-    this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),'index':this.history_index});
+    this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
+    'hands':JSON.parse(JSON.stringify(this.hands)),
+    'index':this.history_index});
   }
 
   updateHistoryData() {
@@ -513,8 +601,50 @@ class OpenPose {
     }
   }
 
+  getHands(){ //获取手势
+    let thi=this;
+    const addHandsBtn = async () => {
+      try {
+        const resp = await api.fetchApi(`/lam/getHeads`);
+        if (resp.status === 200) {
+          const data = await resp.json();
+          console.log(data)
+          let rightButtons = document.createElement("div");
+          rightButtons.className = "panelRightButtons comfy-menu-btns";
+          for(let i=0;i<data.length;i++){
+            var img = document.createElement('img');
+            img.src = `/lam/getImage?type=hands&&name=${data[i]}`;
+            img.alt = data[i];
+            img.style.width = "40px";
+            img.style.height = "40px";
+            img.addEventListener("dragend", (e) =>  {
+              let name=e.target.alt;
+              let x=e.x;
+              let y=e.y;
+              let width=thi.canvas.width;
+              let height=thi.canvas.height;
+              let oWidth=thi.canvas.upperCanvasEl.parentElement.offsetWidth
+              let oHeight=thi.canvas.upperCanvasEl.parentElement.offsetHeight
+              let left=thi.canvas.upperCanvasEl.parentElement.offsetLeft
+              let top=thi.canvas.upperCanvasEl.parentElement.offsetTop
+              x=(x-left)/oWidth*width
+              y=(y-top)/oHeight*height
+              thi.addHand({name:name,l:x,t:y})
+            });
+            rightButtons.appendChild(img);
+          }
+          thi.canvas.wrapperEl.appendChild(rightButtons);
+        } else {
+          alert(resp.status + " - " + resp.statusText);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    addHandsBtn();
+  }
+
   getImageOpse(image){ //上传图片识别骨骼姿态
-    this.lockMode=true;
     let thi=this;
     // 创建一个自定义的Loading控件
     var loading = (function() {
@@ -569,6 +699,7 @@ class OpenPose {
           for(let i = 0; i < data.groups.length; i++){
             this.groups.push(data.groups[i]);
             this.subsets.push(data.subsets[i]);
+            this.hands.push([]);
           }
 
           this.node.widgets[this.index].value = this.groups.length-1;
@@ -582,7 +713,6 @@ class OpenPose {
           alert(resp.status + " - " + resp.statusText);
           loading.hide();
         }
-        this.lockMode=false;
       } catch (error) {
         console.error(error);
         loading.hide();
@@ -605,6 +735,20 @@ class OpenPose {
         .map((item) => {
           return [Math.round(item.left), Math.round(item.top)];
         }),
+      hands:this.canvas
+      .getObjects()
+      .filter((item) => {
+        if (item.type === "image" && item.itype === "hand" && item.selectable ) return item;
+      })
+      .map((item) => {
+        let obj=item.getCenterPoint();
+        return Object.assign(obj,{left:item.left,top:item.top,
+            scaleX:item.scaleX,scaleY:item.scaleY,
+            flipX:item.flipX,flipY:item.flipY,
+            name:item.name,angle:item.angle
+        });
+      }),
+
     };
 
     return json;
@@ -696,28 +840,20 @@ function createOpenPose(node, inputName, inputData, app) {
     set: (x) => {
         node.openPose.canvas.setWidth(width.value);
         node.openPose.canvas.setHeight(height.value);
-        node.openPose.groups=JSON.parse(x);
-        let subsets=[]
-        for(let i = 0; i < node.openPose.groups.length; i++){
-          let group=node.openPose.groups[i]
-          let subset=[]
-          let index=[]
-          for(let j = 0; j < group.length; j++){
-            if(group[j][0]<0 || group[j][1]<0){
-              subset.push(-1)
-            }else{
-              subset.push(index++)
-            }
-          }
-          subsets.push(subset)
-        }
-        node.openPose.subsets=subsets
+        let data=JSON.parse(x)
+        node.openPose.groups=data.groups;
+        node.openPose.hands=data.hands;
+        node.openPose.subsets=data.subsets;
         index.value =0;
         index.options['max']=this.openPose.groups.length-1;
         node.openPose.setIndexPose(0,false)
     },
     get: () => {
-      return JSON.stringify(this.openPose.groups);
+      return JSON.stringify({
+        groups: this.openPose.groups,
+        subsets: this.openPose.subsets,
+        hands: this.openPose.hands,
+      });
     }
   });
 
@@ -729,6 +865,8 @@ function createOpenPose(node, inputName, inputData, app) {
     refButton = document.createElement("button"),
     undoButton = document.createElement("button"),
     redoButton = document.createElement("button"),
+    fliplfButton = document.createElement("button"),
+    fliptdButton = document.createElement("button"),
     historyClearButton = document.createElement("button");
 
   panelButtons.className = "panelButtons comfy-menu-btns";
@@ -738,6 +876,8 @@ function createOpenPose(node, inputName, inputData, app) {
   refButton.textContent = "img";
   undoButton.textContent = "<-";
   redoButton.textContent = "->";
+  fliplfButton.textContent = "↔";
+  fliptdButton.textContent = "↕";
   historyClearButton.textContent = "✖";
   addButton.title = "添加骨骼";
   delButton.title = "删除骨骼";
@@ -745,6 +885,8 @@ function createOpenPose(node, inputName, inputData, app) {
   refButton.title = "添加人物示例";
   undoButton.title = "上一步";
   redoButton.title = "下一步";
+  fliplfButton.title = "左右翻转";
+  fliptdButton.title = "上下翻转";
   historyClearButton.title = "清除历史";
 
   addButton.addEventListener("click", () => node.openPose.addPose());
@@ -753,12 +895,16 @@ function createOpenPose(node, inputName, inputData, app) {
   refButton.addEventListener("click", () => node.openPose.addPoseDemoInput.click());
   undoButton.addEventListener("click", () => node.openPose.undo());
   redoButton.addEventListener("click", () => node.openPose.redo());
+  fliplfButton.addEventListener("click", () => node.openPose.fliplf());
+  fliptdButton.addEventListener("click", () => node.openPose.fliptd());
   historyClearButton.addEventListener("click", () => {
-    if (confirm(`Delete all pose history of a node "${node.name}"?`)) {
+    if (confirm(`删除节点"${node.name}"的所有姿势历史记录 ?`)) {
       node.openPose.undo_history = [];
       node.openPose.redo_history = [];
       if(node.openPose.groups.length>0){
-        node.openPose.undo_history.push({'groups':JSON.parse(JSON.stringify(node.openPose.groups)),'index':node.openPose.history_index});
+        node.openPose.undo_history.push({'groups':JSON.parse(JSON.stringify(node.openPose.groups)),
+        'hands':JSON.parse(JSON.stringify(node.openPose.hands)),
+        'index':node.openPose.history_index});
       }
       node.openPose.groups=[]
       node.openPose.addPose();
@@ -772,21 +918,30 @@ function createOpenPose(node, inputName, inputData, app) {
   panelButtons.appendChild(refButton);
   panelButtons.appendChild(undoButton);
   panelButtons.appendChild(redoButton);
+  panelButtons.appendChild(fliplfButton);
+  panelButtons.appendChild(fliptdButton);
   panelButtons.appendChild(historyClearButton);
   node.openPose.canvas.wrapperEl.appendChild(panelButtons);
 
   document.body.appendChild(widget.openpose);
+  document.addEventListener('keydown', function(event) {
+      // console.log('按下了键:', event.key);
+      // console.log('键的码值:', event.keyCode);
+      // console.log('事件详情:', event);
+      if(event.key=='Delete'||event.key=='Backspace'){
+        let activeObject=node.openPose.canvas.getActiveObject()
+        if (activeObject) {
+          node.openPose.canvas.remove(activeObject);
+        }
+        node.openPose.setIndexPose(node.openPose.history_index,true)
+      }
+  });
   
-  
-  // node.addWidget("button", "Test", "Test", () => {
-  //   debugger;
-  //   console.log(node.openPose.getJSON());
-  // });
-  
-  // Add buttons Reference image
-  // node.addWidget("button", "Reference image", "reference_image", () => {
-  //  node.openPose.referenceImage();
-  //});
+  node.openPose.getHands()
+  node.addWidget("button", "Test", "Test", () => {
+    //node.openPose.addHand()
+    debugger;
+  });
   
   // Add customWidget to node
   node.addCustomWidget(widget);
@@ -838,7 +993,8 @@ app.registerExtension({
   async init(app) {
     // Any initial setup to run as soon as the page loads
     let style = document.createElement("style");
-    style.innerText = `.panelButtons{
+    style.innerText = `
+    .panelButtons{
       position: absolute;
       padding: 4px;
       display: flex;
@@ -847,6 +1003,21 @@ app.registerExtension({
       width: fit-content;
     }
     .panelButtons button:last-child{
+      border-color: var(--error-text);
+      color: var(--error-text) !important;
+    }
+    .panelRightButtons{
+      right: 0px;
+      overflow: auto;
+      height: 95%;
+      position: absolute;
+      padding: 4px;
+      display: flex;
+      gap: 4px;
+      flex-direction: column;
+      width: fit-content;
+    }
+    .panelRightButtons button:last-child{
       border-color: var(--error-text);
       color: var(--error-text) !important;
     }
@@ -868,7 +1039,9 @@ app.registerExtension({
           }else{
             n.openPose.groups=[]
             n.openPose.addPose();
-            n.openPose.undo_history.push({'groups':JSON.parse(JSON.stringify(n.openPose.groups)),'index':n.openPose.history_index});
+            n.openPose.undo_history.push({'groups':JSON.parse(JSON.stringify(n.openPose.groups)),
+            'hands':JSON.parse(JSON.stringify(n.openPose.hands)),
+            'index':n.openPose.history_index});
           }
         }
       });
