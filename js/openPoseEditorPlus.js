@@ -137,6 +137,7 @@ class OpenPose {
     let aobj=this.canvas.getActiveObject()
     if(!aobj){
       alert("请选择一只需要翻转的手")
+      return 
     }
     if(aobj&&aobj['itype']&&aobj['itype']=='hand'){
       this.canvas.getActiveObject().set('flipX', !this.canvas.getActiveObject().flipX);
@@ -150,6 +151,7 @@ class OpenPose {
     let aobj=this.canvas.getActiveObject()
     if(!aobj){
       alert("请选择一只需要翻转的手")
+      return 
     }
     if(aobj&&aobj['itype']&&aobj['itype']=='hand'){
       this.canvas.getActiveObject().set('flipX', !this.canvas.getActiveObject().flipX);
