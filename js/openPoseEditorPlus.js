@@ -940,10 +940,10 @@ function createOpenPose(node, inputName, inputData, app) {
   });
   
   node.openPose.getHands()
-  node.addWidget("button", "Test", "Test", () => {
-    //node.openPose.addHand()
-    debugger;
-  });
+  // node.addWidget("button", "Test", "Test", () => {
+  //   //node.openPose.addHand()
+  //   debugger;
+  // });
   
   // Add customWidget to node
   node.addCustomWidget(widget);
