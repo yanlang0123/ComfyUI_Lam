@@ -117,7 +117,6 @@ function addMultiGLIGENTextBoxApplyCanvas(node, app) {
 			ctx.stroke();
 			ctx.closePath();
 			// Draw currently selected zone
-			console.log(index)
 			let [x, y, w, h] = getDrawArea(values[index])
 
 			w = Math.max(32*scale, w)
@@ -249,7 +248,7 @@ app.registerExtension({
 							callback: () => {
 								this.addInput("text", "STRING")
 								
-								const inputLenth = this.inputs.length-1
+								const inputLenth = this.inputs.length-1-this.originalsize
 								const index = this.widgets[this.index].value+this.originalsize
 
 								for (let i = inputLenth; i > index; i--) {
@@ -268,8 +267,8 @@ app.registerExtension({
 							content: `${this.widgets[this.index].value}框后插入 \\/`,
 							callback: () => {
 								this.addInput("text", "STRING")
-								
-								const inputLenth = this.inputs.length-1
+
+								const inputLenth = this.inputs.length-1-this.originalsize
 								const index = this.widgets[this.index].value+this.originalsize
 
 								for (let i = inputLenth; i > index+1; i--) {
