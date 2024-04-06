@@ -104,6 +104,7 @@ class OpenPose {
     this.addPoseDemoInput.accept = "image/*";
     this.addPoseDemoInput.style.display = "none";
     this.addPoseDemoInput.addEventListener("change", this.addPoseDemo.bind(this));
+    this.yWidth=750
     document.body.appendChild(this.addPoseDemoInput);
 
     }
@@ -786,24 +787,26 @@ function createOpenPose(node, inputName, inputData, app) {
           .multiplySelf(ctx.getTransform())
           .translateSelf(margin, margin + y),
         w = (widgetWidth - margin * 2 - 3) * transform.a;
+      
+      let h=w/this.openpose.children[0].width*this.openpose.children[0].height
 
       Object.assign(this.openpose.style, {
         left: `${transform.a * margin + transform.e}px`,
         top: `${transform.d + transform.f}px`,
         width: w + "px",
-        height: w + "px",
+        height: h + "px",
         position: "absolute",
         zIndex: app.graph._nodes.indexOf(node),
       });
 
       Object.assign(this.openpose.children[0].style, {
         width: w + "px",
-        height: w + "px",
+        height: h + "px",
       });
 
       Object.assign(this.openpose.children[1].style, {
         width: w + "px",
-        height: w + "px",
+        height: h + "px",
       });
 
       Array.from(this.openpose.children[2].children).forEach((element) => {
@@ -822,6 +825,7 @@ function createOpenPose(node, inputName, inputData, app) {
   node.openPose = new OpenPose(node, canvasOpenPose);
   node.openPose.canvas.setWidth(512);
   node.openPose.canvas.setHeight(512);
+  node.setSize([node.openPose.yWidth, node.openPose.yWidth+250]);
   
   let index = node.widgets[node.widgets.findIndex(obj => obj.name === 'index')];
   let width = node.widgets[node.widgets.findIndex(obj => obj.name === 'width')];
@@ -831,9 +835,13 @@ function createOpenPose(node, inputName, inputData, app) {
   }
   width.callback = function (v) {
     node.openPose.canvas.setWidth(v);
+    let h=node.openPose.yWidth/node.openPose.canvas.width*node.openPose.canvas.height
+    node.setSize([node.openPose.yWidth, h+220]);
   }
   height.callback = function (v) {
     node.openPose.canvas.setHeight(v);
+    let h=512/node.openPose.canvas.width*node.openPose.canvas.height
+    node.setSize([node.openPose.yWidth, h+220]);
   }
 
   widget.openpose = node.openPose.canvas.wrapperEl;
@@ -1080,7 +1088,7 @@ app.registerExtension({
         createOpenPose.apply(this, [this, nodeNamePNG, {}, app]);
         
 
-        this.setSize([750, 900]);
+        this.setSize([750, 950]);
 
         return r;
       };

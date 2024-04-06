@@ -51,10 +51,7 @@ class MultiGLIGENTextBoxApply:
             k+=1
             
         return (conditioning, resolutionX, resolutionY)
-    def encode(self, clip, text):
-        tokens = clip.tokenize(text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        return ([[cond, {"pooled_output": pooled}]], )
+  
     def append(self, conditioning_to, clip, gligen_textbox_model, text, width, height, x, y):
         c = []
         cond, cond_pooled = clip.encode_from_tokens(clip.tokenize(text), return_pooled=True)

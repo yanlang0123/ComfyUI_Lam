@@ -10,6 +10,18 @@ export function CUSTOM_INT(node, inputName, val, func, config = {}) {
 	};
 }
 
+export function CUSTOM_COMBO(node, inputName, val, func, config = {}) {
+	return {
+		widget: node.addWidget(
+			"combo",
+			inputName,
+			val,
+			func, 
+			Object.assign({}, config)
+		),
+	};
+}
+
 export function recursiveLinkUpstream(node, type, depth, index=null) {
 	depth += 1
 	let connections = []

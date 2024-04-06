@@ -254,8 +254,8 @@ class openPoseEditorPlus:
 
     candidate=[[i[0]/float(width),i[1]/float(height)] for i in candidate ]
 
-    canvas = np.zeros(shape=(width, height, 3), dtype=np.uint8)
-    canvasHands = np.zeros(shape=(width, height, 3), dtype=np.uint8)
+    canvas = np.zeros(shape=(height,width, 3), dtype=np.uint8)
+    canvasHands = np.zeros(shape=(height,width, 3), dtype=np.uint8)
     for i in range(len(hands)):
         zhand=hands[i]
         for hand in zhand:
