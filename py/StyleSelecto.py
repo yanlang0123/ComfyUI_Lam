@@ -95,19 +95,29 @@ class StyleSelecto:
             if wprompt[unique_id]["inputs"]['styles']:
                 #分割字符串
                 values = wprompt[unique_id]["inputs"]['styles'].split(',')
+        styleName=''
         if i!=None:
-            keysl=list(self.styleAll.keys())
-            if 'prompt' in self.styleAll[keysl[i]]:
-                prompt=self.styleAll[keysl[i]]['prompt'].format(prompt=prompt)
-            if 'negative_prompt' in self.styleAll[keysl[i]]:
-                negative_prompt+=','+self.styleAll[keysl[i]]['negative_prompt']
-        for val in values:
-            if 'prompt' in self.styleAll[val]:
-                prompt=self.styleAll[val]['prompt'].format(prompt=prompt)
-            if 'negative_prompt' in self.styleAll[val]:
-                negative_prompt+=','+self.styleAll[val]['negative_prompt']
+            if len(values)>0:
+                styleName=values[i]
+                if 'prompt' in self.styleAll[values[i]]:
+                    prompt=self.styleAll[values[i]]['prompt'].format(prompt=prompt)
+                if 'negative_prompt' in self.styleAll[values[i]]:
+                    negative_prompt+=','+self.styleAll[values[i]]['negative_prompt']
+            else:
+                keysl=list(self.styleAll.keys())
+                styleName=keysl[i]
+                if 'prompt' in self.styleAll[keysl[i]]:
+                    prompt=self.styleAll[keysl[i]]['prompt'].format(prompt=prompt)
+                if 'negative_prompt' in self.styleAll[keysl[i]]:
+                    negative_prompt+=','+self.styleAll[keysl[i]]['negative_prompt']
+        else:
+            for val in values:
+                if 'prompt' in self.styleAll[val]:
+                    prompt=self.styleAll[val]['prompt'].format(prompt=prompt)
+                if 'negative_prompt' in self.styleAll[val]:
+                    negative_prompt+=','+self.styleAll[val]['negative_prompt']
 
-        return (prompt,negative_prompt,keysl[i] if i else '')
+        return (prompt,negative_prompt,styleName)
 
 # A dictionary that contains all nodes you want to export with their names
 # NOTE: names should be globally unique
