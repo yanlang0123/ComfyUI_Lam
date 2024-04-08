@@ -163,7 +163,7 @@ def add_image_to_background(background_image, small_image, location, size, angle
     
     # 计算小图片的放置位置
     (bx, by, bn) = background_image.shape
-    (sx, sy, sn) = rotated_image.shape
+    (sy, sx, sn) = rotated_image.shape
     start_x = location[0]
     start_y = location[1]
     end_x = start_x + sx
