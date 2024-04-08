@@ -5,6 +5,7 @@ import os
 import folder_paths
 import random
 import sys
+from .src.utils.uitls import AlwaysEqualProxy
 
 class ForInnerStart:
     def __init__(self):
@@ -19,16 +20,16 @@ class ForInnerStart:
                 "i": ("INT", {"default": 0, "min": 0, "max": 99999}),
             }
         }
-    RETURN_TYPES = ("INT","INT","INT","IMAGE",)
-    RETURN_NAMES = ("总数","循环次数","seed",'图片',)
+    RETURN_TYPES = ("INT","INT","INT",AlwaysEqualProxy("*"),)
+    RETURN_NAMES = ("总数","循环次数","seed",'回传数据',)
     FUNCTION = "for_start_fun"
 
     CATEGORY = "lam"
 
     def for_start_fun(self,total,stop,i, **kwargs):
-        images=kwargs['images'] if 'images' in kwargs else None
+        obj=kwargs['obj'] if 'obj' in kwargs else None
         random.seed(i)
-        return (total,i,random.randint(0,sys.maxsize),images,)
+        return (total,i,random.randint(0,sys.maxsize),obj,)
 
 NODE_CLASS_MAPPINGS = {
     "ForInnerStart": ForInnerStart
