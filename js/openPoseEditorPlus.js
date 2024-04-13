@@ -1,6 +1,10 @@
 import { app } from "../../../scripts/app.js";
 import { fabric } from "./fabric.js";
 import { api } from "../../../scripts/api.js";
+import {getDrawColor, hexToRgba} from "./utils.js"
+import {PainterWidget,createMessage,loadData,LS_PSave} from "./painter_node.js"
+
+const painters_settings_json = false;
 
 fabric.Object.prototype.transparentCorners = false;
 fabric.Object.prototype.cornerColor = "#108ce6";
@@ -94,20 +98,29 @@ class OpenPose {
     this.groups = [];
     this.subsets = [];
     this.hands = [];
-    this.index = 0
+    this.rects = [];
+    this.index = 1
     this.history_index = 0;
     this.history_change = false;
     this.canvas = this.initCanvas(canvasElement);
+    this.disabled=false
         // 创建用于选择图片的input元素
     this.addPoseDemoInput = document.createElement("input");
     this.addPoseDemoInput.type = "file";
     this.addPoseDemoInput.accept = "image/*";
     this.addPoseDemoInput.style.display = "none";
     this.addPoseDemoInput.addEventListener("change", this.addPoseDemo.bind(this));
-    this.yWidth=750
     document.body.appendChild(this.addPoseDemoInput);
-
     }
+
+  setCanvasWidth(width){
+    this.canvas.setWidth(width);
+    //this.painterCanvas.setWidth(width);
+  }
+  setCanvasHeight(height){
+    this.canvas.setHeight(height);
+    //this.painterCanvas.setHeight(height);
+  }
 
 	// 处理背景图片的加载
   addPoseDemo(e) {
@@ -126,10 +139,9 @@ class OpenPose {
                 opacity: 0.5
             });
             
-			this.canvas.setWidth(img.width);
-			this.canvas.setHeight(img.height);
-			
-            this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas));
+        this.setCanvasWidth(img.width)
+        this.setCanvasHeight(img.height)
+        this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas));
         });
     }
   
@@ -161,8 +173,28 @@ class OpenPose {
       alert("只有手能翻转")
     }
   }
+  addRect(){ //添加矩形遮罩
+    this.changeIndexPose()
+    this.groups.push({
+      left: 100, // 初始水平位置
+      top: 100, // 初始垂直位置
+      width: 100,          // 正方形的宽度
+      height: 100,         // 正方形的高度
+      fill: 'rgba(255,0,0,0.5)' // 填充颜色，这里设置为红色半透明
+    });
+    this.subsets.push({});
+    this.hands.push([]);
+    this.node.widgets[this.index].value = this.groups.length-1;
+    this.node.widgets[this.index].options['max']=this.groups.length-1;
+    for(let i=0;i<this.groups.length;i++){
+      if(!Array.isArray(this.groups[i])){
+        let indexColor=getDrawColor(i/this.groups.length,"7F") //hexToRgba(,0.5);
+        this.groups[i]['fill']=indexColor
+      }
+    }
+    this.setIndexPose(this.node.widgets[this.index].value,false);
+  }
   // 异步加载图片
-
   async addHand(obj,isEdit=true,group=undefined){
     // 引入fabric.js库
     let thi=this
@@ -208,12 +240,7 @@ class OpenPose {
     return img
   }
 
-  setCanvasWidth(width){
-    this.canvas.setWidth(width)
-  }
-  setCanvasHeight(height){
-    this.canvas.setHeight(height)
-  }
+  
   delIndexPose(){
     let delIndex=this.history_index
     this.groups.splice(delIndex,1)
@@ -258,20 +285,24 @@ class OpenPose {
     }
     this.canvas.discardActiveObject();
     let json=this.getJSON();
-    if (json["keypoints"].length>0&&json["keypoints"].length >1) {
-      let keypoints=json["keypoints"]
-      let group=[]
-      let subset=this.subsets[index]
-      for(let i = 0; i < subset.length; i ++){
-        if(subset[i]<0){
-          group.push([-1,-1])
-        }else{
-          group.push(keypoints[subset[i]])
+    let keypoints=json["keypoints"]
+    if(Array.isArray(keypoints)){
+      if(keypoints.length>1){
+        let group=[]
+        let subset=this.subsets[index]
+        for(let i = 0; i < subset.length; i ++){
+          if(subset[i]<0){
+            group.push([-1,-1])
+          }else{
+            group.push(keypoints[subset[i]])
+          }
         }
+        this.groups[index]=group
       }
-
-      this.groups[index]=group
+    }else{
+      this.groups[index]=keypoints
     }
+
     if(json['hands'].length>0){
       this.hands[index]=json['hands']
     }else{
@@ -312,96 +343,115 @@ class OpenPose {
       this.history_index=this.node.widgets[this.index].value
     }
 
-    const group = new fabric.Group();
-
-    const makeCircle = (
-      color,
-      left,
-      top,
-      line1,
-      line2,
-      line3,
-      line4,
-      line5
-    ) => {
-      let c = new fabric.Circle({
-        left: left,
-        top: top,
-        strokeWidth: 1,
-        radius: 5,
-        fill: color,
-        stroke: color,
-      });
-
-      c.hasControls = c.hasBorders = false;
-      c.line1 = line1;
-      c.line2 = line2;
-      c.line3 = line3;
-      c.line4 = line4;
-      c.line5 = line5;
-
-      return c;
-    };
-
-    const makeLine = (coords, color) => { 
-      return new fabric.Line(coords, {
-        fill: color,
-        stroke: color,
-        strokeWidth: 10,
-        selectable: false,
-        evented: false,
-      });
-    };
-
-    const lines = {};
-    const circles = [];
-    for (let i = 0; i < connect_keypoints.length; i++) {
-      // 连线
-      const item = connect_keypoints[i];
-      if(keypoints[item[0]][0]<0||keypoints[item[0]][1]<0||keypoints[item[1]][0]<0||keypoints[item[1]][1]<0){
-          continue;
+    if(!Array.isArray(keypoints)){
+      let nobj=Object.assign({
+        left: 100, // 初始水平位置
+        top: 100, // 初始垂直位置
+        width: 100,          // 正方形的宽度
+        height: 100,         // 正方形的高度
+        lockRotation: true,   // 设置不可旋转
+        selectable: isEdit,
+        evented: isEdit,
+      }, keypoints);
+      const square = new fabric.Rect(nobj);
+      this.canvas.add(square);
+      if(isEdit){
+        this.canvas.setActiveObject(square);
       }
-      const line = makeLine(
-        keypoints[item[0]].concat(keypoints[item[1]]),
-        `rgba(${connect_color[i].join(", ")}, 0.7)`
-      );
-      lines[i]=line;
-      this.canvas.add(line);
-    }
-
-    for (let i = 0; i < keypoints.length; i++) {
-      if(keypoints[i][0]<0||keypoints[i][1]<0){
-          continue;
-      }
-      let list = [];
-
-      connect_keypoints.filter((item, idx) => {
-        if (item.includes(i)) {
-          list.push(lines[idx]);
-          return idx;
+      // 渲染画布
+      this.canvas.renderAll();
+    }else{
+      const group = new fabric.Group();
+      const makeCircle = (
+        color,
+        left,
+        top,
+        line1,
+        line2,
+        line3,
+        line4,
+        line5
+      ) => {
+        let c = new fabric.Circle({
+          left: left,
+          top: top,
+          strokeWidth: 1,
+          radius: 5,
+          fill: color,
+          stroke: color,
+        });
+  
+        c.hasControls = c.hasBorders = false;
+        c.line1 = line1;
+        c.line2 = line2;
+        c.line3 = line3;
+        c.line4 = line4;
+        c.line5 = line5;
+  
+        return c;
+      };
+  
+      const makeLine = (coords, color) => { 
+        return new fabric.Line(coords, {
+          fill: color,
+          stroke: color,
+          strokeWidth: 10,
+          selectable: false,
+          evented: false,
+        });
+      };
+  
+      const lines = {};
+      const circles = [];
+      for (let i = 0; i < connect_keypoints.length; i++) {
+        // 连线
+        const item = connect_keypoints[i];
+        if(keypoints[item[0]][0]<0||keypoints[item[0]][1]<0||keypoints[item[1]][0]<0||keypoints[item[1]][1]<0){
+            continue;
         }
-      });
-      const circle = makeCircle(
-        `rgb(${connect_color[i].join(", ")})`,
-        keypoints[i][0],
-        keypoints[i][1],
-        ...list
-      );
-      circle["id"] = i;
-      circles.push(circle);
-      group.addWithUpdate(circle);
+        const line = makeLine(
+          keypoints[item[0]].concat(keypoints[item[1]]),
+          `rgba(${connect_color[i].join(", ")}, 0.7)`
+        );
+        lines[i]=line;
+        this.canvas.add(line);
+      }
+  
+      for (let i = 0; i < keypoints.length; i++) {
+        if(keypoints[i][0]<0||keypoints[i][1]<0){
+            continue;
+        }
+        let list = [];
+  
+        connect_keypoints.filter((item, idx) => {
+          if (item.includes(i)) {
+            list.push(lines[idx]);
+            return idx;
+          }
+        });
+        const circle = makeCircle(
+          `rgb(${connect_color[i].join(", ")})`,
+          keypoints[i][0],
+          keypoints[i][1],
+          ...list
+        );
+        circle["id"] = i;
+        circles.push(circle);
+        group.addWithUpdate(circle);
+      }
+      for(let i = 0; i < hands.length; i++){
+        await this.addHand(hands[i],true,group)
+      }
+      this.canvas.discardActiveObject();
+      //不可编辑
+      if(isEdit){
+          this.canvas.setActiveObject(group);
+          this.canvas.add(group);  
+          group.toActiveSelection(); 
+      }
+      this.canvas.requestRenderAll();
     }
-    for(let i = 0; i < hands.length; i++){
-      await this.addHand(hands[i],true,group)
-    }
-    this.canvas.discardActiveObject();
-    //不可编辑
-    if(isEdit){
-        this.canvas.setActiveObject(group);
-        this.canvas.add(group);  
-        group.toActiveSelection(); 
-    }
-    this.canvas.requestRenderAll();
+    
   }
 
   initCanvas() {
@@ -422,7 +472,7 @@ class OpenPose {
           const rleft = target.left;
           for (const item of target._objects) {
             let p = item;
-            if(p['itype']&&p['itype']=='hand'){
+            if((p['itype']&&p['itype']=='hand')||p.type=="rect"){
               continue
             }
             p.scaleX = 1;
@@ -536,7 +586,7 @@ class OpenPose {
       
       if(e?.deselected?.length>1||(e?.deselected?.length==1&&e?.deselected[0].itype=="hand")){
         let json=this.getJSON();
-        if (json["keypoints"].length>0&&json["keypoints"].length >1) {
+        if (!Array.isArray(json["keypoints"])||(json["keypoints"].length>0&&json["keypoints"].length >1)) {
             this.changeIndexPose()
             this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
             'hands':JSON.parse(JSON.stringify(this.hands)),'index':this.history_index});
@@ -733,9 +783,15 @@ class OpenPose {
       keypoints: this.canvas
         .getObjects()
         .filter((item) => {
-          if (item.type === "circle") return item;
+          if (item.type === "circle" || (item.type === "rect" && item.selectable)) return item;
         })
         .map((item) => {
+          if(item.type === "rect"){
+            return {left:item.left,top:item.top,
+              width:item['scaleX']?item.width*item['scaleX']:item.width,
+              height:item['scaleY']?item.height*item['scaleY']:item.height,
+              fill:item.fill};
+          }
           return [Math.round(item.left), Math.round(item.top)];
         }),
       hands:this.canvas
@@ -753,7 +809,10 @@ class OpenPose {
       }),
 
     };
-
+    if(json.keypoints.length==1&&!Array.isArray(json.keypoints[0])){
+      json.keypoints=json.keypoints[0];
+    }
+    console.log(json)
     return json;
   }
 
@@ -773,7 +832,7 @@ function createOpenPose(node, inputName, inputData, app) {
   const widget = {
     type: "openpose",
     name: `w${inputName}`,
-    value:[],
+    value:'',
 
     draw: function (ctx, _, widgetWidth, y, widgetHeight) {
       const margin = 10,
@@ -822,10 +881,10 @@ function createOpenPose(node, inputName, inputData, app) {
 
   // Fabric canvas
   let canvasOpenPose = document.createElement("canvas");
-  node.openPose = new OpenPose(node, canvasOpenPose);
-  node.openPose.canvas.setWidth(512);
-  node.openPose.canvas.setHeight(512);
-  node.setSize([node.openPose.yWidth, node.openPose.yWidth+250]);
+  let canvasPainter = document.createElement("canvas");
+  node.openPose = new OpenPose(node, canvasOpenPose,canvasPainter);
+  node.openPose.setCanvasWidth(512)
+  node.openPose.setCanvasHeight(512)
   
   let index = node.widgets[node.widgets.findIndex(obj => obj.name === 'index')];
   let width = node.widgets[node.widgets.findIndex(obj => obj.name === 'width')];
@@ -834,22 +893,21 @@ function createOpenPose(node, inputName, inputData, app) {
     node.openPose.setIndexPose(v)
   }
   width.callback = function (v) {
-    node.openPose.canvas.setWidth(v);
-    let h=node.openPose.yWidth/node.openPose.canvas.width*node.openPose.canvas.height
-    node.setSize([node.openPose.yWidth, h+220]);
+    node.openPose.setCanvasWidth(v)
+    node.painter.setCanvasSize(v,node.painter.canvas.height)
   }
   height.callback = function (v) {
-    node.openPose.canvas.setHeight(v);
-    let h=512/node.openPose.canvas.width*node.openPose.canvas.height
-    node.setSize([node.openPose.yWidth, h+220]);
+    node.openPose.setCanvasHeight(v)
+    node.painter.setCanvasSize(node.painter.canvas.width,v)
   }
 
   widget.openpose = node.openPose.canvas.wrapperEl;
   widget.parent = node;
   Object.defineProperty(widget, "value", {
     set: (x) => {
-        node.openPose.canvas.setWidth(width.value);
-        node.openPose.canvas.setHeight(height.value);
+        node.openPose.setCanvasWidth(width.value)
+        node.openPose.setCanvasHeight(height.value)
+        node.painter.setCanvasSize(width.value,height.value)
         let data=JSON.parse(x)
         node.openPose.groups=data.groups;
         node.openPose.hands=data.hands;
@@ -877,6 +935,7 @@ function createOpenPose(node, inputName, inputData, app) {
     redoButton = document.createElement("button"),
     fliplfButton = document.createElement("button"),
     fliptdButton = document.createElement("button"),
+    rectButton = document.createElement("button"),
     historyClearButton = document.createElement("button");
 
   panelButtons.className = "panelButtons comfy-menu-btns";
@@ -888,6 +947,7 @@ function createOpenPose(node, inputName, inputData, app) {
   redoButton.textContent = "->";
   fliplfButton.textContent = "↔";
   fliptdButton.textContent = "↕";
+  rectButton.textContent = "□";
   historyClearButton.textContent = "✖";
   addButton.title = "添加骨骼";
   delButton.title = "删除骨骼";
@@ -897,6 +957,7 @@ function createOpenPose(node, inputName, inputData, app) {
   redoButton.title = "下一步";
   fliplfButton.title = "左右翻转";
   fliptdButton.title = "上下翻转";
+  rectButton.title="矩形遮罩";
   historyClearButton.title = "清除历史";
 
   addButton.addEventListener("click", () => node.openPose.addPose());
@@ -907,6 +968,7 @@ function createOpenPose(node, inputName, inputData, app) {
   redoButton.addEventListener("click", () => node.openPose.redo());
   fliplfButton.addEventListener("click", () => node.openPose.fliplf());
   fliptdButton.addEventListener("click", () => node.openPose.fliptd());
+  rectButton.addEventListener("click", () => node.openPose.addRect());
   historyClearButton.addEventListener("click", () => {
     if (confirm(`删除节点"${node.name}"的所有姿势历史记录 ?`)) {
       node.openPose.undo_history = [];
@@ -930,14 +992,15 @@ function createOpenPose(node, inputName, inputData, app) {
   panelButtons.appendChild(redoButton);
   panelButtons.appendChild(fliplfButton);
   panelButtons.appendChild(fliptdButton);
+  panelButtons.appendChild(rectButton);
   panelButtons.appendChild(historyClearButton);
   node.openPose.canvas.wrapperEl.appendChild(panelButtons);
 
   document.body.appendChild(widget.openpose);
   document.addEventListener('keydown', function(event) {
-      // console.log('按下了键:', event.key);
-      // console.log('键的码值:', event.keyCode);
-      // console.log('事件详情:', event);
+      if(node.openPose.disabled){
+        return;
+      }
       if(event.key=='Delete'||event.key=='Backspace'){
         let activeObject=node.openPose.canvas.getActiveObject()
         if (activeObject) {
@@ -945,13 +1008,30 @@ function createOpenPose(node, inputName, inputData, app) {
         }
         node.openPose.setIndexPose(node.openPose.history_index,true)
       }
+      if(event.key=='ArrowLeft'){
+        node.widgets[node.openPose.index].value=node.widgets[node.openPose.index].value!=0?node.widgets[node.openPose.index].value-1:node.widgets[node.openPose.index].options['max']
+        node.openPose.setIndexPose(node.widgets[node.openPose.index].value)
+      }
+      if(event.key=='ArrowRight'){
+        node.widgets[node.openPose.index].value=node.widgets[node.openPose.index].value!=node.widgets[node.openPose.index].options['max']?node.widgets[node.openPose.index].value+1:0
+        node.openPose.setIndexPose(node.widgets[node.openPose.index].value)
+      }
+      
   });
   
   node.openPose.getHands()
-  // node.addWidget("button", "Test", "Test", () => {
-  //   //node.openPose.addHand()
-  //   debugger;
-  // });
+  node.addWidget("button", "显/隐画板", "ShowPainter", () => {
+    node.painter.disabled=!node.painter.disabled
+    node.openPose.disabled=!node.openPose.disabled
+    
+    if(node.openPose.disabled){
+      panelButtons.style.display="none"
+      node.openPose.canvas.wrapperEl.querySelectorAll('.panelRightButtons')[0].style.display="none"
+    }else{
+      panelButtons.style.display="flex"
+      node.openPose.canvas.wrapperEl.querySelectorAll('.panelRightButtons')[0].style.display="flex"
+    }
+  });
   
   // Add customWidget to node
   node.addCustomWidget(widget);
@@ -967,11 +1047,15 @@ function createOpenPose(node, inputName, inputData, app) {
       if (node.widgets[y].openpose) {
         node.widgets[y].openpose.remove();
       }
+      if (node.widgets[y].painter_wrap) {
+        node.widgets[y].painter_wrap.remove();
+      }
     }
   };
 
   widget.onRemove = () => {
     widget.openpose?.remove();
+    widget.painter_wrap?.remove();
   };
 
   app.canvas.onDrawBackground = function () {
@@ -1031,6 +1115,217 @@ app.registerExtension({
       border-color: var(--error-text);
       color: var(--error-text) !important;
     }
+    .panelPaintBox {
+      position: absolute;
+      width: 100%;
+    }
+    .comfy-menu-btns button.active {
+      color: var(--error-text) !important;
+      font-weight: bold;
+      border: 1px solid;
+    }
+    .painter_manipulation_box {
+      position: absolute;
+      left: 50%;
+      top: -40px;
+      transform: translateX(-50%);
+    }
+    .painter_manipulation_box > div {
+      display: grid;
+      gap: 2px;
+      grid-template-columns: 0.1fr 0.1fr 0.1fr 0.1fr 0.1fr;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+    .painter_manipulation_box > div button {
+      font-size: 0.5rem;
+    }
+    .painter_manipulation_box > div button[id^=zpos]:active {
+      background-color: #484848;
+    }
+    .painter_drawning_box {
+      position: absolute;
+      top: -40px;
+      width: 88px;
+    }
+    .painter_drawning_box button {
+      width: 24px;
+    }
+    .painter_drawning_box_property {
+      position: absolute;
+      top: -36px;
+    }
+    .painter_drawning_box_property select {
+      color: var(--input-text);
+      background-color: var(--comfy-input-bg);
+      border-radius: 4px;
+      border-color: var(--border-color);
+      border-style: solid;
+    }
+    .separator {
+      width: 1px;
+      height: 25px;
+      background-color: var(--border-color);
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0 4px 0 4px;
+  }
+    .painter_drawning_box > div {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: center;
+    }
+    .painter_drawning_box input[type="number"] {
+      width: 2.6rem;
+      color: var(--input-text);
+      background-color: var(--comfy-input-bg);
+      border-radius: 8px;
+      border-color: var(--border-color);
+      border-style: solid;
+      font-size: inherit;
+    }
+    .painter_colors_box input[type="color"], .painter_bg_setting input[type="color"] {
+      width: 1.5rem;
+      height: 1.5rem;
+      padding: 0;
+      margin-bottom: 5px;
+      color: var(--input-text);
+      background-color: var(--comfy-input-bg);
+      border-radius: 8px;
+      border-color: var(--border-color);
+      border-style: solid;
+      font-size: inherit;
+    }
+
+    .painter_bg_setting button{
+      width: 40px;
+      height: 20px;
+    }
+    .painter_bg_setting #bgColor:after {
+      content: attr(data-label);
+      position: absolute;
+      color: var(--input-text);
+      left: 70%;
+      font-size: 0.5rem;
+      margin-top: -18%;
+    }
+    .painter_colors_box input[type="color"]::-webkit-color-swatch-wrapper, .painter_bg_setting input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 1px !important;
+    }
+    .painter_grid_style {
+      display: grid;
+      gap: 3px;
+      font-size: 0.55rem;
+      text-align: center;
+      align-items: start;
+      justify-items: center;
+    }
+    .painter_shapes_box {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    .painter_colors_alpha {
+      grid-template-columns: 0.7fr 0.7fr;
+    }
+    .fieldset_box {
+      padding: 2px;
+      margin: 15px 0 2px 0;
+      position: relative;
+      text-align: center;
+    }
+    .fieldset_box:before {
+      content: attr(f_name) ":";
+      font-size: 0.6rem;
+      position: absolute;
+      top: -10px;
+      color: yellow;
+      left: 0;
+      right: 0;
+    }
+    .list_objects_panel {
+      width: 90%;
+      font-size: 0.7rem;
+    }
+    .list_objects_panel__items {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+      max-height: 350px;
+    }
+    .list_objects_panel__items button {
+      width: 80% !important;
+    }
+    .list_objects_panel__items::-webkit-scrollbar {
+      width: 8px;
+    }
+    .list_objects_panel__items::-webkit-scrollbar-track {
+      background-color: var(--descrip-text);
+    }
+    .list_objects_panel__items::-webkit-scrollbar-thumb {
+      background-color: var(--fg-color);
+    }
+    .list_objects_align {
+      display: flex;
+      flex-direction: column;
+      text-align: center;
+      justify-content: space-between;
+      height: 430px;
+   }
+   .list_objects_align > div{
+    flex: 1;
+   }
+   .painter_history_panel {
+    position: absolute;
+    padding: 4px;
+    display: flex;
+    gap: 4px;
+    right: 0;
+    opacity: 0.8;
+    flex-direction: row;
+    width: fit-content;
+  }
+  .painter_history_panel > button {
+    background: transparent;
+  }
+  .painter_history_panel > button:hover:enabled {
+    opacity: 1;
+    border-color: var(--error-text);
+    color: var(--error-text) !important;
+  }
+  .painter_history_panel > button:disabled {
+    opacity: .5;
+  }
+  .painter_stroke_box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .painter_stroke_box > label span {
+    margin-right: 9px;
+    vertical-align: middle;
+    font-size: 10px;
+    color: var(--input-text);
+  }
+  .property_brushesBox, .property_brushesSecondBox {
+    display: flex;
+    gap: 5px;
+  }
+  .property_brushesSecondBox > button {
+    min-width: 30px;
+    font-size: 0.5rem;
+  }
+  .property_brushesSecondBox svg {
+    width: 100%;
+    height: 100%;
+  }
+  .active svg > .cls-2 {
+    fill: var(--error-text);
+  }
+  .active svg > * {
+    stroke: var(--error-text);
+  }
     
     `;
     document.head.appendChild(style);
@@ -1059,6 +1354,23 @@ app.registerExtension({
   },
   async beforeRegisterNodeDef(nodeType, nodeData, app) {
     if (nodeData.name === "LAM.OpenPoseEditorPlus") {
+      if (painters_settings_json) {
+        const message = createMessage(
+          "Loading",
+          "Please wait, <span style='font-weight: bold; color: orange'>Painter node</span> settings are loading. Loading times may take a long time if large images have been added to the canvas!"
+        );
+        LS_Painters = await loadData();
+        document.body.removeChild(message);
+      } else {
+        LS_Painters =
+          localStorage.getItem("ComfyUI_Painter") &&
+          JSON.parse(localStorage.getItem("ComfyUI_Painter"));
+
+        if (!LS_Painters || LS_Painters === undefined) {
+          localStorage.setItem("ComfyUI_Painter", JSON.stringify({}));
+          LS_Painters = JSON.parse(localStorage.getItem("ComfyUI_Painter"));
+        }
+      }
       const onNodeCreated = nodeType.prototype.onNodeCreated;
       nodeType.prototype.onNodeCreated = function () {
         const r = onNodeCreated
@@ -1084,12 +1396,19 @@ app.registerExtension({
           };
           LS_Save();
         }
+        if (LS_Painters && !Object.hasOwn(LS_Painters, nodeNamePNG)) {
+          LS_Painters[nodeNamePNG] = {
+            undo_history: [],
+            redo_history: [],
+            canvas_settings: { background: "#000000" },
+            settings: {},
+          };
+          LS_PSave();
+        }
 
         createOpenPose.apply(this, [this, nodeNamePNG, {}, app]);
-        
-
+        PainterWidget.apply(this, [this, nodeNamePNG, {}, app]);
         this.setSize([750, 950]);
-
         return r;
       };
     }

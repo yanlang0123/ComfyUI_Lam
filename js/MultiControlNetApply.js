@@ -29,6 +29,25 @@ const widget = {
         ctx.lineWidth = 1;
         ctx.strokeStyle = "white";
         ctx.stroke();
+        if (node.selected) {
+            const connectedNodes = recursiveLinkUpstream(node, node.inputs[index+node.originalsize].type, 0, index+node.originalsize)
+            
+            if (connectedNodes.length !== 0) {
+                for (let [node_ID, depth] of connectedNodes) {
+                    let connectedNode = node.graph._nodes_by_id[node_ID]
+                    if (connectedNode.type != node.type) {
+                        const [x, y] = connectedNode.pos
+                        const [w, h] = connectedNode.size
+                        const offset = 5
+                        const titleHeight = LiteGraph.NODE_TITLE_HEIGHT * (connectedNode.type === "Reroute"  ? 0 : 1)
+
+                        ctx.strokeStyle = selectedColor
+                        ctx.lineWidth = 5;
+                        ctx.strokeRect(x-offset-node.pos[0], y-offset-node.pos[1]-titleHeight, w+offset*2, h+offset*2+titleHeight)
+                    }
+                }
+            }
+        }
     },
 };
 
@@ -59,6 +78,7 @@ app.registerExtension({
                 this.inputType="IMAGE"
                 this.inputPrefix="image"
                 this.outputPrefix=""
+                this.selected=false;
                 
                 control_net_name.callback = function (v,_, node) {
                     node.properties["values"][node.widgets[node.index].value][0] = this.value
