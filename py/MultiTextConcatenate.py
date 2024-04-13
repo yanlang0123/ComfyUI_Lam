@@ -16,7 +16,7 @@ class MultiTextConcatenate:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = ("STRING","LIST",)
     FUNCTION = "text_concatenate"
 
     CATEGORY = "lam"
@@ -29,16 +29,18 @@ class MultiTextConcatenate:
             else:
                 return base_text + delimiter + new_text
         return_text=''
+        strList=[]
         for arg in kwargs:
             if type(kwargs[arg]) != str: 
                 continue
             if arg.startswith('text'):
+                strList.append(kwargs[arg])
                 if return_text=='':
                     return_text = kwargs[arg]
                 else:
                     return_text = append_text(return_text, kwargs[arg])
 
-        return (return_text, )
+        return (return_text,strList, )
     
 NODE_CLASS_MAPPINGS = {
     "MultiTextConcatenate": MultiTextConcatenate

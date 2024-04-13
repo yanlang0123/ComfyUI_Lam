@@ -29,6 +29,26 @@ const widget = {
         ctx.lineWidth = 1;
         ctx.strokeStyle = "white";
         ctx.stroke();
+
+        if (node.selected) {
+            const connectedNodes = recursiveLinkUpstream(node, node.inputs[index+node.originalsize].type, 0, index+node.originalsize)
+            
+            if (connectedNodes.length !== 0) {
+                for (let [node_ID, depth] of connectedNodes) {
+                    let connectedNode = node.graph._nodes_by_id[node_ID]
+                    if (connectedNode.type != node.type) {
+                        const [x, y] = connectedNode.pos
+                        const [w, h] = connectedNode.size
+                        const offset = 5
+                        const titleHeight = LiteGraph.NODE_TITLE_HEIGHT * (connectedNode.type === "Reroute"  ? 0 : 1)
+
+                        ctx.strokeStyle = selectedColor
+                        ctx.lineWidth = 5;
+                        ctx.strokeRect(x-offset-node.pos[0], y-offset-node.pos[1]-titleHeight, w+offset*2, h+offset*2+titleHeight)
+                    }
+                }
+            }
+        }
     },
 };
 
@@ -46,15 +66,26 @@ app.registerExtension({
     name: "Comfy.lam.MultiTextSetMask",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         
-        var names=["MultiTextSetMask"]
+        var names=["MultiTextSetMask","MultiTextSetArea","MultiTextSetGligen"]
         if (names.indexOf(nodeData.name)>=0) {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
 			nodeType.prototype.onNodeCreated = function () {
 				const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
-
-                this.setProperty("values", [[1.0,"default"],[1.0,"default"]])
-                this.index=3
-				this.originalsize=3 
+                this.selected=false;
+                this.defaultValue=null
+                this.index=2
+				this.originalsize=4 
+                if('MultiTextSetGligen'==nodeData.name){
+                    this.originalsize=5 
+                    this.defaultValue=1.0;
+                }else if('MultiTextSetArea'==nodeData.name){
+                    this.defaultValue=1.0;
+                }else if('MultiTextSetMask'==nodeData.name){
+                    this.defaultValue=[1.0,"default"];
+                }
+                if(this.defaultValue){
+                    this.setProperty("values", [this.defaultValue,this.defaultValue])
+                }
                 this.inputType="STRING"
                 this.inputPrefix="text"
                 this.outputPrefix=""
@@ -65,16 +96,23 @@ app.registerExtension({
 					0,
 					function (v, _, node) {
 						let values = node.properties["values"]
-
-						node.widgets[node.index+1].value = values[v][0]
-						node.widgets[node.index+2].value = values[v][1]
+                        if(Array.isArray(values[v])){
+                            for(let i=0;i<values[v].length;i++){
+                                node.widgets[node.index+i+1].value =values[v][i]
+                            }
+                        }else{
+                            node.widgets[node.index+1].value =values[v]
+                        }
 					},
 					{ step: 10, max: 1 }
 
 				)
-
-                CUSTOM_INT(this, "strength", 1.0,function (v, _, node) {node.properties["values"][node.widgets[node.index].value][0] = this.value},{"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01,precision: 2 })
-				CUSTOM_COMBO(this, "set_cond_area", "default",function (v, _, node) {node.properties["values"][node.widgets[node.index].value][1] = this.value},{values:["default", "mask bounds"]}).widget;
+                if('MultiTextSetMask'==nodeData.name || 'MultiTextSetArea'==nodeData.name){
+                    CUSTOM_INT(this, "strength", 1.0,function (v, _, node) {node.properties["values"][node.widgets[node.index].value][0] = this.value},{"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01,precision: 2 })
+                }
+                if('MultiTextSetMask'==nodeData.name){
+                    CUSTOM_COMBO(this, "set_cond_area", "default",function (v, _, node) {node.properties["values"][node.widgets[node.index].value][1] = this.value},{values:["default", "mask bounds"]}).widget;
+                }
                 addMultiTextSetMaskSelectCanvas(this, app)
                 
                 this.getExtraMenuOptions = function(_, options) {
@@ -91,7 +129,7 @@ app.registerExtension({
                                     swapInputs(this, i, i-1)
                                 }
                                 renameNodeInputs(this, this.inputPrefix,this.originalsize)
-                                this.properties["values"].splice(index, 0, [1.0,"default"])
+                                this.properties["values"].splice(index, 0, this.defaultValue)
 								this.widgets[this.index].options.max = inputLenth
                                 this.setDirtyCanvas(true);
                             },
@@ -105,7 +143,7 @@ app.registerExtension({
                                 const index = this.widgets[this.index].value+this.originalsize
 
                                 renameNodeInputs(this, this.inputPrefix,this.originalsize)
-                                this.properties["values"].splice(index, 0, [1.0,"default"])
+                                this.properties["values"].splice(index, 0, this.defaultValue)
 								this.widgets[this.index].options.max = inputLenth
                                 this.setDirtyCanvas(true);
                             },

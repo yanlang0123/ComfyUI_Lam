@@ -1,5 +1,5 @@
 
-class MultiTextSetMask:
+class MultiTextSetArea:
     def __init__(self):
         pass
 
@@ -9,7 +9,7 @@ class MultiTextSetMask:
              "required": {
                 "conditioning_to": ("CONDITIONING", ),
                 "clip": ("CLIP", ),
-                "body_masks": ("MASKS",),
+                "body_boxs": ("BOXS",),
             },
             "optional": {
                 "textList": ("LIST",),
@@ -20,11 +20,11 @@ class MultiTextSetMask:
         }
 
     RETURN_TYPES = ("CONDITIONING",)
-    FUNCTION = "multi_text_set_masks"
+    FUNCTION = "multi_text_set_area"
 
     CATEGORY = "lam"
 
-    def multi_text_set_masks(self,conditioning_to,clip,body_masks, extra_pnginfo, unique_id,textList=[],**kwargs):
+    def multi_text_set_area(self,conditioning_to,clip,body_boxs,extra_pnginfo, unique_id,textList=[],**kwargs):
         values=[]
         for node in extra_pnginfo["workflow"]["nodes"]:
             if node["id"] == int(unique_id):
@@ -38,13 +38,14 @@ class MultiTextSetMask:
 
         if len(textList)==0:
             raise Exception('至少要输入一个文本')
-        
-        minSize=min([len(body_masks),len(textList)])
+
+        minSize=min([len(body_boxs),len(textList)])
         conditioning=conditioning_to
         for i in range(minSize):
+            w,h,x,y=body_boxs[i]
             conditioning_1=self.encode(clip,textList[i])
-            conditioning_3=self.condAppend(conditioning_1,body_masks[i],values[i][0],values[i][1])
-            conditioning=conditioning+conditioning_3
+            conditioning_2=self.appendArea(conditioning_1,w,h,x,y,values[i])
+            conditioning=conditioning+conditioning_2
 
         return (conditioning,)
 
@@ -53,26 +54,20 @@ class MultiTextSetMask:
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
         return [[cond, {"pooled_output": pooled}]]
     
-    def condAppend(self, conditioning, mask, strength, set_cond_area):
+    def appendArea(self, conditioning, width, height, x, y, strength):
         c = []
-        set_area_to_bounds = False
-        if set_cond_area != "default":
-            set_area_to_bounds = True
-        if len(mask.shape) < 3:
-            mask = mask.unsqueeze(0)
         for t in conditioning:
             n = [t[0], t[1].copy()]
-            _, h, w = mask.shape
-            n[1]['mask'] = mask
-            n[1]['set_area_to_bounds'] = set_area_to_bounds
-            n[1]['mask_strength'] = strength
+            n[1]['area'] = (height // 8, width // 8, y // 8, x // 8)
+            n[1]['strength'] = strength
+            n[1]['set_area_to_bounds'] = False
             c.append(n)
         return c
     
 NODE_CLASS_MAPPINGS = {
-    "MultiTextSetMask": MultiTextSetMask
+    "MultiTextSetArea": MultiTextSetArea
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "MultiTextSetMask": "多文本遮罩条件设置"
+    "MultiTextSetArea": "多文本区域条件设置"
 }
