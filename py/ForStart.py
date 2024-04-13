@@ -26,7 +26,6 @@ class ForStart:
     CATEGORY = "lam"
 
     def for_start_fun(self,total,stop,i):
-        i+=stop
         random.seed(i)
         return (total,i,random.randint(0,sys.maxsize),)
 

@@ -26,9 +26,7 @@ class ForEnd:
     CATEGORY = "lam"
 
     def for_end_fun(self,total,i,port,obj):
-        if i>=total:
-            return { "ui": { "text":'循环结束' } }
-
+        
         r = requests.get("http://127.0.0.1:"+str(port)+"/queue")
         result = r.text
         #print(result)
@@ -43,9 +41,12 @@ class ForEnd:
             pdata['prompt']=rdata[2]
             for key in list(pdata['prompt'].keys()):
                 if pdata['prompt'][key]['class_type']=='ForStart':
-                    pdata['prompt'][key]['inputs']['i']=i
                     index=i//pdata['prompt'][key]['inputs']['stop']
+                    i=i+pdata['prompt'][key]['inputs']['stop']
+                    pdata['prompt'][key]['inputs']['i']=i
                     break
+            if i>=total:
+                return { "ui": { "text":'循环结束' } }
             r = requests.post("http://127.0.0.1:"+str(port)+"/prompt",json=pdata)
             result = r.text
 
