@@ -180,7 +180,8 @@ app.registerExtension({
         }
     },
     loadedGraphNode(node, _) {
-		if (node.type === "MultiTextSetMask") {
+        var names=["MultiTextSetMask","MultiTextSetArea","MultiTextSetGligen"]
+		if (names.indexOf(node.type)>=0) {
 			node.widgets[node.index].options["max"] = node.properties["values"].length-1
 		}
 	},
