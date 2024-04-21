@@ -1,0 +1,142 @@
+{
+    "3": {
+      "inputs": {
+        "seed": 801899397770458,
+        "steps": 4,
+        "cfg": 1,
+        "sampler_name": "lcm",
+        "scheduler": "karras",
+        "denoise": 1,
+        "model": [
+          "14",
+          0
+        ],
+        "positive": [
+          "12",
+          0
+        ],
+        "negative": [
+          "12",
+          1
+        ],
+        "latent_image": [
+          "12",
+          2
+        ]
+      },
+      "class_type": "KSampler"
+    },
+    "8": {
+      "inputs": {
+        "samples": [
+          "3",
+          0
+        ],
+        "vae": [
+          "15",
+          2
+        ]
+      },
+      "class_type": "VAEDecode"
+    },
+    "12": {
+      "inputs": {
+        "width": [
+          "30",
+          0
+        ],
+        "height": [
+          "30",
+          1
+        ],
+        "video_frames": 25,
+        "motion_bucket_id": 127,
+        "fps": 6,
+        "augmentation_level": 0,
+        "clip_vision": [
+          "15",
+          1
+        ],
+        "init_image": [
+          "38",
+          0
+        ],
+        "vae": [
+          "15",
+          2
+        ]
+      },
+      "class_type": "SVD_img2vid_Conditioning"
+    },
+    "14": {
+      "inputs": {
+        "min_cfg": 1,
+        "model": [
+          "33",
+          0
+        ]
+      },
+      "class_type": "VideoLinearCFGGuidance"
+    },
+    "15": {
+      "inputs": {
+        "ckpt_name": "AnimateLCM-SVD-xt-1-1_fp16_comfy.safetensors"
+      },
+      "class_type": "ImageOnlyCheckpointLoader"
+    },
+    "25": {
+      "inputs": {
+        "frame_rate": 8,
+        "loop_count": 0,
+        "filename_prefix": "AnimateDiff",
+        "format": "video/h265-mp4",
+        "pingpong": false,
+        "save_image": true,
+        "Sync playback": null,
+        "images": [
+          "8",
+          0
+        ]
+      },
+      "class_type": "VHS_VideoCombine"
+    },
+    "30": {
+      "inputs": {
+        "image": [
+          "31",
+          0
+        ]
+      },
+      "class_type": "Get image size"
+    },
+    "31": {
+      "inputs": {
+        "upscale_method": "nearest-exact",
+        "scale_by": 0.7000000000000001,
+        "image": [
+          "38",
+          0
+        ]
+      },
+      "class_type": "ImageScaleBy"
+    },
+    "33": {
+      "inputs": {
+        "lora_name": "lcm-lora-sdv1-5.safetensors",
+        "strength_model": 1,
+        "model": [
+          "15",
+          0
+        ]
+      },
+      "class_type": "LoraLoaderModelOnly"
+    },
+    "38": {
+      "inputs": {
+        "image_path": "http://127.0.0.1:8188/view?filename=ComfyUI_00402_.png&type=input&subfolder=&rand=0.9232966295130483",
+        "RGBA": "false",
+        "filename_text_extension": "true"
+      },
+      "class_type": "LamLoadPathImage"
+    }
+  }

@@ -1,0 +1,809 @@
+<!DOCTYPE>
+<!--解决idea thymeleaf 表达式模板报红波浪线-->
+<!--suppress ALL -->
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <title>欢迎{{openId}}</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <!-- jquery在线版本 -->
+    <script src="http://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="../extensions/ComfyUI_Lam/static/js/qn-rtplayer-web.js"></script>
+    <!--引入样式-->
+    <link rel="stylesheet" href="../extensions/ComfyUI_Lam/static/css/app.css" />
+    <style>
+        :where(.css-3m4nqy).ant-select-single .ant-select-selector .ant-select-selection-search {
+            position: absolute;
+            top: 0;
+            inset-inline-start: 11px px;
+            inset-inline-end: 11px;
+            bottom: 0;
+        }
+
+        :where(.css-3m4nqy).ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+            width: 100%;
+            height: 32px;
+            padding: 0 11px;
+        }
+
+        :where(.css-3m4nqy).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+            position: relative;
+            background-color: #ffffff;
+            border: 1px solid #d9d9d9;
+            transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+
+        :where(.css-3m4nqy).ant-select-single .ant-select-selector {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            color: rgba(0, 0, 0, 0.88);
+            font-size: 14px;
+            line-height: 1.5714285714285714;
+            list-style: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            display: flex;
+            border-radius: 6px;
+        }
+
+        :where(.css-3m4nqy)[class^="ant-select"] [class^="ant-select"],
+        :where(.css-3m4nqy)[class*=" ant-select"] [class^="ant-select"],
+        :where(.css-3m4nqy)[class^="ant-select"] [class*=" ant-select"],
+        :where(.css-3m4nqy)[class*=" ant-select"] [class*=" ant-select"] {
+            box-sizing: border-box;
+        }
+
+        :where(.css-3m4nqy).ant-select-dropdown .ant-select-item {
+            position: relative;
+            display: block;
+            min-height: 32px;
+            padding: 5px 12px;
+            color: rgba(250, 250, 250, 0.88);
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 1.5714285714285714;
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            border-radius: 4px;
+        }
+
+        :where(.css-3m4nqy)[class^="ant-input"] [class^="ant-input"],
+        :where(.css-3m4nqy)[class*=" ant-input"] [class^="ant-input"],
+        :where(.css-3m4nqy)[class^="ant-input"] [class*=" ant-input"],
+        :where(.css-3m4nqy)[class*=" ant-input"] [class*=" ant-input"] {
+            box-sizing: border-box;
+        }
+
+        :where(.css-3m4nqy).ant-input-number .ant-input-number-input {
+            width: 100%;
+            height: 30px;
+            padding: 0 11px;
+            text-align: start;
+            background-color: transparent;
+            border: 0;
+            border-radius: 6px;
+            outline: 0;
+            transition: all 0.2s linear;
+            appearance: textfield;
+            color: rgba(0, 0, 0, 0.88);
+            font-size: inherit;
+            vertical-align: top;
+        }
+
+        :where(.css-3m4nqy).ant-select .ant-select-arrow {
+            display: flex;
+            align-items: center;
+            color: rgba(0, 0, 0, 0.25);
+            font-style: normal;
+            line-height: 1;
+            text-align: center;
+            text-transform: none;
+            vertical-align: -0.125em;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: absolute;
+            top: 50%;
+            inset-inline-start: auto;
+            inset-inline-end: 11px;
+            height: 12px;
+            margin-top: -6px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        :where(.css-3m4nqy)[class^="ant-select"] [class^="ant-select"],
+        :where(.css-3m4nqy)[class*=" ant-select"] [class^="ant-select"],
+        :where(.css-3m4nqy)[class^="ant-select"] [class*=" ant-select"],
+        :where(.css-3m4nqy)[class*=" ant-select"] [class*=" ant-select"] {
+            box-sizing: border-box;
+        }
+
+        :where(.css-3m4nqy).ant-popover {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            color: rgba(0, 0, 0, 0.88);
+            font-size: 14px;
+            line-height: 1.5714285714285714;
+            list-style: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1030;
+            font-weight: normal;
+            white-space: normal;
+            text-align: start;
+            cursor: auto;
+            user-select: text;
+            --antd-arrow-background-color: #ffffff;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" data-v-app="">
+        <section class="aigc-layout">
+            <div class="aigc-head">
+                <div style="color: aliceblue;font-size: x-large;">降维AI|创作平台</div>
+                <div class="aigc-head__left-block"></div>
+                <div class="aigc-head__right-block">
+                    <div style="color: aliceblue;" id="contact_administrator"
+                        class="aigc-head__right-block--qun aigc-head__right-block--commonbtn aigc-head__right-block--hover">
+                        联系管理员 </div><!---->
+                    <div class="aigc-head__right-block--avatarbox"><img class="aigc-head__right-block--avatar"
+                            src="https://himg.bdimg.com/sys/portraith/item/public.1.e8294af1.YF07P1v3sOMXm56wbOMh9w">
+                    </div><!---->
+                </div>
+            </div>
+            <div>
+                <div><!---->
+                    <div class="ant-popover pop-com soci css-3m4nqy ant-popover-placement-bottomRight"
+                        style="left: 968px; top: 43px; transform-origin: 203px 0px;display: none;" id="contact_administrator_popover">
+                        <div class="ant-popover-content">
+                            <div class="ant-popover-arrow"><span class="ant-popover-arrow-content"></span></div>
+                            <div class="ant-popover-inner" role="tooltip"><!---->
+                                <div class="ant-popover-inner-content">
+                                    <div class="add-soci">
+                                        <div class="add-text">扫码添加管理员微信</div><img class="qr-code"
+                                            src="/lam/getImage?type=wechat&&name=admin_qr_code.jpg">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div data-v-ada5c28e="" class="aigc-tab" style="--688ac256: 0px;" id="comand_div_id">
+                <!-- 功能菜单 -->
+            </div>
+            <section data-v-d1097eb1="" class="aigc-main">
+                <div data-v-d1097eb1="" class="aigc-main__left-content">
+                    <div data-v-d1097eb1="" class="aigc-main__left-content--top-wrap">
+                        <div data-v-d1097eb1="" class="aigc-main__left-content--top-left" id="upload_image_div_id"
+                            style="display: none;">
+                            <div data-v-23e1e235="" data-v-d1097eb1="" class="aigc-upload step_1"><!---->
+                                <span data-v-23e1e235="" class="ant-upload-wrapper aigc-upload__ant-upload css-3m4nqy"
+                                    id="upload_image_btn_parent_id">
+                                    <div class="ant-upload ant-upload-drag aigc-upload__ant-upload css-3m4nqy"
+                                        style="padding-top: 150px;" id="upload_image_btn_id"><span
+                                            class="ant-upload ant-upload-btn" role="button" tabindex="0">
+                                            <input type="file" accept="" id="upload_image_input_id"
+                                                style="display: none;">
+                                            <div data-v-23e1e235="" class="aigc-upload__not-upload"
+                                                onclick="clickUpload()">
+                                                <div data-v-23e1e235="" style="color: aliceblue;"
+                                                    class="aigc-upload__icon-coll--guide-btn">上传图片
+                                                </div>
+                                            </div>
+                                        </span>
+                                    </div><!---->
+                                    <div class="aigc-loading aigc-main__left-content--loading"
+                                        id="upload_image_loading_id" style="display: none;">
+                                        <div data-v-e4fb7b31="" class="aigc-loading__mask">
+                                            <div data-v-e4fb7b31="" role="progressbar"
+                                                class="ant-progress ant-progress-circle ant-progress-status-normal ant-progress-24 css-3m4nqy">
+                                                <div class="ant-progress-inner"
+                                                    style="width: 24px; height: 24px; font-size: 9.6px;"><svg
+                                                        class="ant-progress-circle" viewBox="0 0 100 100"><!---->
+                                                        <path d="M 50,50 m 0,-46 a 46,46 0 1 1 0,92 a 46,46 0 1 1 0,-92"
+                                                            stroke="#d8d8d8" stroke-linecap="round" stroke-width="8"
+                                                            fill-opacity="0" class="ant-progress-circle-trail"
+                                                            style="stroke: rgb(216, 216, 216); stroke-dasharray: 289.027px, 289.027px; stroke-dashoffset: 0px; transition: stroke-dashoffset 0.3s ease 0s, stroke-dasharray 0.3s ease 0s, stroke 0.3s ease 0s, stroke-width 0.06s ease 0.3s, opacity 0.3s ease 0s;">
+                                                        </path>
+                                                    </svg><!---->
+                                                </div>
+                                            </div><!---->
+                                            <div data-v-e4fb7b31="" class="aigc-loading__describe">上传中</div>
+                                        </div>
+                                    </div>
+                                </span>
+                                <section data-v-e19f253b="" data-v-23e1e235="" class="aigc-preview"
+                                    id="upload_image_preview_parend_id" style="display: none;">
+                                    <div data-v-e19f253b="" onclick="clickUpload()" class="aigc-preview__img"
+                                        id="upload_image_preview_id"
+                                        style="background-image: url(&quot;http://127.0.0.1:8189/view?filename=ComfyUI_00819_.png&type=input&subfolder=&rand=0.9293840121020174&quot;);">
+                                        <!----><!----><!---->
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                        <div data-v-d1097eb1="" class="aigc-main__left-content--top-right step_5 step_7">
+                            <div data-v-d1097eb1="" class="aigc-main__left-content--nodata"  id="no_add_task_div">
+                                <p data-v-d1097eb1="">生成预览区</p>
+                            </div><!---->
+                            <div data-v-e4fb7b31="" data-v-d1097eb1=""
+                                class="aigc-loading aigc-main__left-content--loading" style="display: none;" id="yes_add_task_div">
+                                <div data-v-e4fb7b31="" class="aigc-loading__mask">
+                                    <div data-v-e4fb7b31="" role="progressbar"
+                                        class="ant-progress ant-progress-circle ant-progress-status-normal ant-progress-24 css-3m4nqy">
+                                        <div class="ant-progress-inner"
+                                            style="width: 24px; height: 24px; font-size: 9.6px;"><svg
+                                                class="ant-progress-circle" viewBox="0 0 100 100"><!---->
+                                                <path d="M 50,50 m 0,-46 a 46,46 0 1 1 0,92 a 46,46 0 1 1 0,-92"
+                                                    stroke="#d8d8d8" stroke-linecap="round" stroke-width="8"
+                                                    fill-opacity="0" class="ant-progress-circle-trail"
+                                                    style="stroke: rgb(216, 216, 216); stroke-dasharray: 289.027px, 289.027px; stroke-dashoffset: 0px; transition: stroke-dashoffset 0.3s ease 0s, stroke-dasharray 0.3s ease 0s, stroke 0.3s ease 0s, stroke-width 0.06s ease 0.3s, opacity 0.3s ease 0s;">
+                                                </path>
+                                            </svg><!---->
+                                        </div>
+                                    </div><!---->
+                                    <div data-v-e4fb7b31="" class="aigc-loading__describe">效果绘制中</div>
+                                </div>
+                            </div>
+                            <section data-v-e19f253b="" data-v-d1097eb1="" class="aigc-preview" style="display: none;" id="wcomplete_add_task_div">
+                                <div data-v-e19f253b="" onclick="openViewNow(this)" class="aigc-preview__img" id="wcomplete_add_task_img_div"
+                                    style="background-image: url(&quot;https://pcsdata.baidu.com/thumbnail/6a9bc2ee8fb8cf53f0d23d6fa4b31143?fid=3878105166-16051585-1026667930322733&amp;time=1713502800&amp;rt=pr&amp;sign=FDTAER-yUdy3dSFZ0SVxtzShv1zcMqd-oTE9DBFqjwgK6eAiBoZIZhTdKU0%3D&amp;expires=48h&amp;chkv=0&amp;chkbd=0&amp;chkpc=&amp;dp-logid=235267649399325916&amp;dp-callid=0&amp;size=c1600_u1600&amp;quality=100&amp;vuk=&amp;ft=video&amp;imgtimes=1713505888030&quot;);">
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                    <div data-v-d1097eb1="" class="aigc-main__left-content--bottom-wrap step_2_empty">
+                        <div data-v-622eff0c="" data-v-d1097eb1="" class="aigc-container">
+                            <div data-v-622eff0c="" class="aigc-container__formula">
+                                <div data-v-622eff0c="" class="aigc-container__tabs-box">
+                                    <div data-v-622eff0c="" class="aigc-container__sub-tab active-sub-tab">历史记录</div>
+                                </div>
+                                <div data-v-622eff0c="" class="aigc-container__recomm-fml" id="historys_div_id">
+                                    
+                                </div><!---->
+                            </div><!----><!----><!----><!---->
+                        </div>
+                    </div>
+                </div>
+                <div data-v-d1097eb1="" class="aigc-main__right-params">
+                    <div data-v-fe0dcf7c="" data-v-d1097eb1="" class="aigc-layright step_3" id="rightBoxRef">
+                        <div data-v-fe0dcf7c="" class="aigc-layright__top">
+                            <div data-v-d25ec045="" data-v-fe0dcf7c="" class="aigc-top">
+                                <div id="select_container_div">
+
+                                </div>
+                                <div class="aigc-prompt" id="prompt-container" style="display: none;">
+                                    <div class="aigc-prompt__head">
+                                        <div class="aigc-prompt__head--text">正向提示词</div>
+                                        <div class="aigc-prompt__head--clear"
+                                            onclick="$('#prompt').html('');userParams['prompt']='';$('#prompt').attr('placeholder',$('#prompt').html().length>0?'':'输入中文或英文提示词');"> 清除 </div>
+                                    </div>
+                                    <div class="aigc-prompt__base--textarea">
+                                        <div class="textarea" id="prompt" contenteditable="true"
+                                            oninput="userParams['prompt']=$(event.target).html();$(event.target).attr('placeholder',$(event.target).html().length>0?'':'输入中文或英文提示词');"
+                                            placeholder="输入中文或英文提示词" style="height: 130px;"></div>
+                                    </div>
+                                </div>
+                                <div class="aigc-prompt" id="negative-container" style="display: none;">
+                                    <div class="aigc-prompt__head">
+                                        <div class="aigc-prompt__head--text">反向提示词</div>
+                                        <div class="aigc-prompt__head--clear"
+                                            onclick="$('#negative').html('');userParams['negative']='';$('#negative').attr('placeholder',$('#negative').html().length>0?'':'输入中文或英文提示词');"> 清除
+                                        </div>
+                                    </div>
+                                    <div class="aigc-prompt__base--textarea">
+                                        <div class="textarea" id="negative" contenteditable="true"
+                                            oninput="userParams['negative']=$(event.target).html();$(event.target).attr('placeholder',$(event.target).html().length>0?'':'输入中文或英文提示词');"
+                                            placeholder="输入中文或英文提示词" style="height: 130px;"></div>
+                                    </div>
+                                </div>
+                                <div data-v-fe0dcf7c="" class="aigc-layright__bottom" id="other_params_parent_div"
+                                    style="display: none;">
+                                    <div data-v-fea6429a="" data-v-fe0dcf7c="" class="aigc-advanced">
+                                        <div data-v-fea6429a="" class="aigc-advanced__mid--text"
+                                            style="font-weight: bold;"> 其他参数 </div>
+                                        <div data-v-fea6429a="" class="aigc-advanced__midexpend"
+                                            id="other_params_div_id">
+                                            <div data-v-fea6429a="" class="aigc-advanced__midexpend--process"> 生成步数 <div
+                                                    data-v-fea6429a=""
+                                                    class="ant-input-number aigc-advanced__midexpend--input css-3m4nqy">
+                                                    <div class="ant-input-number-input-wrap"><input autocomplete="off"
+                                                            role="spinbutton" aria-valuenow="30" step="1" type="number"
+                                                            value="30" class="ant-input-number-input"></div>
+                                                </div>
+                                            </div>
+                                            <div data-v-fea6429a="" class="aigc-advanced__midexpend--process"> 提示词引导系数
+                                                <div data-v-fea6429a=""
+                                                    class="ant-input-number aigc-advanced__midexpend--inputshort css-3m4nqy"
+                                                    style="margin-left: 16px;">
+                                                    <div class="ant-input-number-input-wrap"><input autocomplete="off"
+                                                            role="spinbutton" aria-valuemin="1" aria-valuemax="20"
+                                                            aria-valuenow="7" step="1" type="number" value="0"
+                                                            class="ant-input-number-input"></div>
+                                                </div>
+                                            </div>
+                                            <div data-v-fea6429a="" style="white-space: nowrap;"
+                                                class="aigc-advanced__midexpend--process"> 随机种子
+                                                <input data-v-fea6429a="" type="text"
+                                                    class="ant-input css-3m4nqy aigc-advanced__midexpend--input">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div data-v-d1097eb1="" class="aigc-main__btn-box step_4">
+                        <div data-v-d1097eb1="" class="aigc-main__btn-box--merge" id="add_task_btn_id" onclick="addTask(this)"><!---->
+                            <div data-v-d1097eb1="" class="text"><span data-v-d1097eb1="" class="upper">立即生成</span>
+                            </div>
+                        </div>
+                    </div>
+                </div><!---->
+                <div data-v-51fd3d7a="" data-v-d1097eb1="" class="modal" style="display:none;" id="pop_frame_div_parent_id">
+                    <div data-v-51fd3d7a="" class="content-wrap">
+                        <img data-v-51fd3d7a="" class="cross-icon" id="pop_frame_div_id" onclick="$('#pop_frame_div_parent_id').hide()"
+                        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7bNHAAAACXBIWXMAACE4AAAhOAFFljFgAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAGkSURBVHgB7dptbcNADMZxQyiEQCqEMBiEjcHGYGMSCIUQCIHgXaRY8rSmeff5zs9fivrtbP1UVY0SIoQQQgghhBBCCAWJmd/T1aXrO10NOSvtdEvX17TjG1mWBn7y33pPSOMu0066D7IqDRv4fy6QZnDGBrIqDXvw87IivcAZe5BVadid5+tzIC3gjN3JsjSw9YK0AqelHHlAcoujFsyG5B5HyoFUDI5kiVQcjmSBVCyOdCVS8TjSFUjV4EhnIlWHI52BVC2OdASpehxpD1IYHGkLUjgcaQ1SWBxpBVIfFkdaQIqNI21EailiK5Faihov/yCPDwcaitgKHKkPh7QBJx7SDpw4SCtwWnb0tMQ03vAPORwS77h9CIPEB+6tqkc6gqPOqBPpDBx1Vl1IZ+KoM+tAugJHnV020pU4akaZSBY4alZZSJY4amYZSDlw1GzfSDlx1A4+kTzgqF18IXnCUTv5QUrDfjzhqL1eIXVkFT9/kTwrjtptDsn0RfLOI440g2T6DdK/QYMnHGlCkh3Hz4asm6Bu5Dj2euuBEEIIIYQQitwvJD8kAp6CtMQAAAAASUVORK5CYII=">
+                        <div data-v-d1097eb1="" class="title"  id="pop_frame_div_title_id"></div>
+                        <div data-v-d1097eb1="" class="desc"  id="pop_frame_div_desc_id">
+                        </div>
+                        <div data-v-51fd3d7a="" class="bottom-box" id="pop_frame_div_btn_id">
+                            <div data-v-51fd3d7a="" class="cancel-btn btn" id="pop_frame_div_btn_cancel_id">取消</div>
+                            <div data-v-51fd3d7a="" class="confirm-btn btn" id="pop_frame_div_btn_ok_id">确认</div>
+                        </div>
+                    </div>
+                </div>
+            </section><!---->
+        </section>
+    </div>
+</body>
+<script src="../extensions/ComfyUI_Lam/static/js/app.js"></script>
+<script>
+    var openId = '{{openId}}';
+    var websocket = null;
+
+    // 判断当前浏览器是否支持WebSocket， springboot是项目名
+    if ('WebSocket' in window) {
+        var host = window.location.host;
+        websocket = new WebSocket("ws://" + host + '/ws?clientId=' + openId);
+    } else {
+        console.error("不支持WebSocket");
+    }
+
+    // 连接发生错误的回调方法
+    websocket.onerror = function (e) {
+        console.error("WebSocket连接发生错误");
+    };
+
+    // 连接成功建立的回调方法
+    websocket.onopen = function () {
+        // 获取所有在线用户
+        console.log("WebSocket连接成功");
+        //var username = randomString(10);
+        //sendIssue({ "userName": username, "comType": "login" });
+        //$("#talks").html(username);
+    }
+
+    // 接收到消息的回调方法
+    websocket.onmessage = async function (event) {
+        if (event.data == null || event.data == "" || event.data instanceof Blob) {
+            return;
+        }
+        var messageJson = eval("(" + event.data + ")");
+        if(messageJson['type']=='executing'){
+            $("#add_task_btn_id").removeClass("disabled");
+            getHistorys()
+        }
+        console.log(new Date().format("yyyy-MM-dd hh:mm:ss"), messageJson);
+
+    }
+
+    // 连接关闭的回调方法
+    websocket.onclose = function () {
+        // alert("WebSocket连接关闭");
+    }
+
+    // 发送消息
+    function sendIssue(msg) {
+        websocket.send(JSON.stringify(msg));
+    }
+    var userParams = {}
+    var comands = {}
+    $(function () {
+        $('#contact_administrator').mouseenter(function(event) {
+            var mouseX = event.pageX; // 鼠标相对于页面的X坐标
+            var mouseY = event.pageY; // 鼠标相对于页面的Y坐标
+            mouseX=mouseX-$('#contact_administrator_popover').width()
+            $('#contact_administrator_popover').css({
+                'top': mouseY + 'px',
+                'left': mouseX + 'px'
+            });
+            $('#contact_administrator_popover').show()
+        }).mouseleave(function() {
+            // 鼠标离开时的操作
+            $('#contact_administrator_popover').hide()
+        });
+        $.get('/wechatauth/getCommands', {}, function (res) {
+            comands = res;
+            $("#comand_div_id").html('')
+            for (var key of Object.keys(res)) {
+                $("#comand_div_id").append('<div id="'+btoa(encodeURIComponent(key))+'" data-v-ada5c28e="" class="aigc-tab__item " onclick="setComand(\'' + key + '\')"><span data-v-ada5c28e="">' + key + '</span></div>')
+            }
+            if (Object.keys(res).length > 0) {
+                $("#comand_div_id").children().eq(0).click()
+            }
+        })
+        getHistorys()
+    })
+    var historyObj={}
+    function getHistorys(){
+        $.get('/wechatauth/getHistorys', {'openId':openId}, function (res) {
+            console.log(res)
+            var historyHtml='';
+            for(var i = 0; i < res.length; i++){
+                var command=JSON.parse(res[i][2])
+                if (res[i][4] == 'waiting'){
+                    setComand(command['command'],command)
+                    continue
+                }
+                var outputs=JSON.parse(res[i][7])
+                
+                historyObj[command['prompt_id']]=command
+                for(var node_id of Object.keys(outputs)){
+                    node_output = outputs[node_id]
+                    if(Object.keys(node_output).indexOf("images") >= 0){
+                        for(var j = 0; j < node_output.images.length; j++){
+                            var img=node_output.images[j]
+                            var url = '/view?filename=' + img.filename + '&type=' + img.type + '&subfolder='+ img.subfolder
+                            historyHtml+=`<div data-v-ae8b2cf0="" data-v-622eff0c="" onclick="openView('image','`+url+`','`+command['prompt_id']+`')"
+                                class="item-box step_2 aigc-container__fml-item"><img data-v-ae8b2cf0=""
+                                    class="cover-img"
+                                    src="`+url+`">
+                                <div data-v-ae8b2cf0="" class="bottom">
+                                    <div data-v-ae8b2cf0="" title="`+command['command']+`" class="title">`+command['command']+`</div>
+                                </div>
+                            </div>`
+                            if(userParams['prompt_id']==command['prompt_id']){
+                                $("#no_add_task_div").hide()
+                                $("#yes_add_task_div").hide()
+                                $("#wcomplete_add_task_img_div").css("background-image", "url(" + url + ")")
+                                $("#wcomplete_add_task_img_div").html('');
+                                $("#wcomplete_add_task_img_div").attr('url',url);
+                                $("#wcomplete_add_task_img_div").attr('type','image');
+                                $("#wcomplete_add_task_div").show()
+                            }
+                        }
+                    }else if(Object.keys(node_output).indexOf("gifs") >= 0){
+                        for(var j = 0; j < node_output.gifs.length; j++){
+                            var video=node_output.gifs[j]
+                            var url = '/view?filename=' + video.filename + '&type=' + video.type + '&subfolder='+ video.subfolder
+                            var imgUrl='/lam/getImage?type=wechat&&name=video_play.jpeg'
+                            var backgroundImg=''
+                            if(Object.keys(command).indexOf('image')>=0){
+                                if(command['image'].indexOf('view?filename')>=0){
+                                    backgroundImg='/view?'+command['image'].split('?')[1]
+                                }
+                            }
+                            if(userParams['prompt_id']==command['prompt_id']){
+                                $("#no_add_task_div").hide()
+                                $("#yes_add_task_div").hide()
+                                //修改背景图片
+                                $("#wcomplete_add_task_img_div").css("background-image", "url(" + backgroundImg + ")")
+                                $("#wcomplete_add_task_img_div").html('<img src="'+imgUrl+'" style="width: auto;height: 100%;">')
+                                $("#wcomplete_add_task_img_div").attr('url',url);
+                                $("#wcomplete_add_task_img_div").attr('type','video');
+                                $("#wcomplete_add_task_div").show()
+                            }
+                            historyHtml+=`<div data-v-ae8b2cf0="" data-v-622eff0c="" style="background-image: url(&quot;`+backgroundImg+`&quot;);background-size: cover;background-position: center;"
+                                    class="item-box step_2 aigc-container__fml-item" onclick="openView('video','`+url+`','`+command['prompt_id']+`')" ><img data-v-ae8b2cf0=""
+                                    class="cover-img" data-video="`+url+`"
+                                    src="`+imgUrl+`">
+                                <div data-v-ae8b2cf0="" class="bottom">
+                                    <div data-v-ae8b2cf0="" title="`+command['command']+`" class="title">`+command['command']+`</div>
+                                </div>
+                            </div>`
+                        }
+                    }
+                }
+            }
+            $("#historys_div_id").html(historyHtml);
+        })
+    }
+    function setComand(name,comand) {
+        userParams = comand?comand:{ 'openId': openId }
+        userParams['command'] = name
+        $("#"+btoa(encodeURIComponent(name))).addClass("active").siblings().removeClass("active")
+        if ("prompt" in comands[name].params) {
+            if(comand &&'prompt' in comand){
+                $("#prompt").html(comand['prompt'])
+            }else{
+                userParams['prompt'] = ''
+            }
+            $('#prompt').attr('placeholder',$('#prompt').html().length>0?'':'输入中文或英文提示词');
+            $("#prompt-container").show()
+        } else {
+            $("#prompt-container").hide()
+        }
+        if ("negative" in comands[name].params) {
+            if(comand &&'negative' in comand){
+                $("#negative").html(comand['negative'])
+            }else{
+                userParams['negative'] = ''
+            }
+            $('#negative').attr('placeholder',$('#negative').html().length>0?'':'输入中文或英文提示词');
+            $("#negative-container").show()
+        } else {
+            $("#negative-container").hide()
+        }
+        if ('image' in comands[name].params) {
+            if(comand &&'image' in comand){
+                if(comand['image'].indexOf('view?filename')>=0){
+                    url='/view?'+comand['image'].split('?')[1]
+                    $("#upload_image_btn_parent_id").hide()
+                    $("#upload_image_preview_parend_id").show()
+                    //修改div的背景图片
+                    $("#upload_image_preview_id").css("background-image", "url(" + url + ")")
+                    var host = window.location.host;
+                    imageUrl = 'http://' + host + url
+                    userParams['image'] = imageUrl
+                }else{
+                    userParams['image'] = ''
+                }
+            }else{
+                userParams['image'] = ''
+            }
+            $("#upload_image_div_id").show()
+        } else {
+            $("#upload_image_div_id").hide()
+        }
+        var comandHtml = ''
+        var otherHtml = ''
+        console.log(comands[name].params)
+        var paichuKeys = ['prompt', 'negative', 'image']
+        for (var key of Object.keys(comands[name].params)) {
+            if (paichuKeys.indexOf(key) >= 0) {
+                continue
+            }
+            if ('options' in comands[name].params[key]) {
+                var selName=''
+                if(comand && key in comand){
+                    selName= Object.keys(comands[name].params[key]["options"]).find(opName => comands[name].params[key]["options"][opName] == comand[key]);
+                }else{
+                    selName= Object.keys(comands[name].params[key]["options"])[0]
+                    userParams[key] = comands[name].params[key]['options'][selName]                           
+                }  
+                comandHtml += `<div data-v-d25ec045="" class="aigc-top__base">
+            <div data-v-d25ec045="" class="aigc-top__base--text" style="font-weight: bold;">
+                `+ comands[name].params[key]['zhName'] + ` </div>
+            <div data-v-d25ec045=""
+                class="ant-select css-3m4nqy aigc-top__base--select ant-select-single ant-select-show-arrow"
+                style="width: 100%;"><!---->
+                <div class="ant-select-selector" onclick="$('#params_`+ key + `_options').toggle()">
+                    <span class="ant-select-selection-search" style="position: unset;" id="params_`+ key + `" >
+                        `+ selName + `
+                    </span>
+                </div>
+            </div>
+            <div>
+                <div><!---->
+                    <div class="ant-select-dropdown css-3m4nqy ant-select-dropdown-placement-bottomLeft"
+                        style="min-width: 268px; width: 268px; left: 0px; top: 36px;display: none;" id="params_`+ key + `_options">
+                        <div>
+                            <div class="rc-virtual-list" style="position: relative;">
+                                <div class="rc-virtual-list-holder"
+                                    style="max-height: 256px; overflow-y: hidden; overflow-anchor: none;">
+                                    <div><div class="rc-virtual-list-holder-inner"
+                                            style="display: flex; flex-direction: column;">`
+                                         
+                for (var option of Object.keys(comands[name].params[key]["options"])) {
+                    classStr = comands[name].params[key]["options"][option] == userParams[key] ? 'ant-select-item-option-selected' : ''
+                    comandHtml += `<div aria-selected="true"
+                    class="ant-select-item ant-select-item-option `+ classStr + `" onclick="setOption(this,'` + comands[name].params[key]['options'][option] + `','` + key + `','` + option + `')">
+                    <div class="ant-select-item-option-content">
+                        <div data-v-d25ec045="">`+ option + `</div>
+                    </div>
+                </div>
+                `
+                }
+                comandHtml += `                   </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            `
+            } else if ('type' in comands[name].params[key]) {
+                if (comands[name].params[key]['type'] == 'number') {
+                    if(!comand||!(key in comand)){
+                        userParams[key] = comands[name].params[key]['default']
+                    }
+                    otherHtml += `
+                    <div data-v-fea6429a="" class="aigc-advanced__midexpend--process">`+ comands[name].params[key]['zhName'] + `<div
+                            data-v-fea6429a=""
+                            class="ant-input-number aigc-advanced__midexpend--input css-3m4nqy">
+                            <div class="ant-input-number-input-wrap">
+                                <input autocomplete="off" oninput="userParams['`+ key + `']=event.target.value"
+                                    role="spinbutton"  step="1" type="number" aria-valuemin="`+ comands[name].params[key]['min'] + `" aria-valuemax="` + comands[name].params[key]['max'] + `"
+                                    value="`+ userParams[key] + `" class="ant-input-number-input"></div>
+                        </div>
+                    </div>
+                    `
+                } else {
+                    if(!comand||!(key in comand)){
+                        userParams[key] = comands[name].params[key]['default']
+                    }
+                    otherHtml += `
+                    <div data-v-fea6429a="" style="white-space: nowrap;" class="aigc-advanced__midexpend--process"> `+ comands[name].params[key]['zhName'] + `
+                        <input data-v-fea6429a="" type="text" value="`+ userParams[key] + `"
+                        oninput="userParams['`+ key + `']=event.target.value" class="ant-input css-3m4nqy aigc-advanced__midexpend--input">
+                    </div>
+                    `
+
+                }
+            }
+
+        }
+        $("#select_container_div").html(comandHtml)
+        if (otherHtml != '') {
+            $("#other_params_div_id").html(otherHtml)
+            $("#other_params_parent_div").show();
+        } else {
+            $("#other_params_parent_div").hide()
+        }
+
+        //console.log(comands[name].params)
+    }
+    function setOption(thi,val, key, option) {
+        userParams[key] = val
+        $("#params_" + key).html(option)
+        $(thi).addClass("ant-select-item-option-selected").siblings().removeClass("ant-select-item-option-selected")
+        $("#params_" + key + "_options").hide()
+    }
+    function clickUpload() {
+        const myFile = $("#upload_image_input_id")
+        // 触发
+        myFile.click()
+        // 监听change事件 
+        myFile[0].addEventListener('change', function (e) {
+            var filesList = document.querySelector('#upload_image_input_id').files;
+            if (filesList.length == 0) { //如果取消上传，则上传文件的长度为0
+                console.log("没有上传任何文件");
+                return;
+            } else {
+                //判断div是否显示
+                $("#upload_image_btn_parent_id").show()
+                $("#upload_image_btn_id").hide()
+                $("#upload_image_loading_id").show()
+                //如果有文件上传，这在这里面进行
+                uploadImage(filesList[0])
+            }
+        });
+    }
+    function uploadImage(image) {
+        //上传文件
+        let formData = new FormData();
+        formData.append("image", image, image.name);
+        formData.append("overwrite", "true");
+        formData.append("type", "input");
+
+        //发起jquery  ajax请求
+        $.ajax({
+            method: 'post',
+            url: '/upload/image',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                $("#upload_image_btn_parent_id").hide()
+                $("#upload_image_preview_parend_id").show()
+                //修改div的背景图片
+                var url = '/view?filename=' + res.name + '&type=' + res.type + '&subfolder='
+                $("#upload_image_preview_id").css("background-image", "url(" + url + ")")
+                var host = window.location.host;
+                imageUrl = 'http://' + host + url
+                userParams['image'] = imageUrl
+                console.log(imageUrl);
+            }
+        })
+    }
+    function openViewNow(thi){
+        var url=$(thi).attr('url')
+        var type=$(thi).attr('type')
+        var options={'url':url}
+        alertWindow(type,options)
+    }
+    function openView(type,url,prompt_id){
+        var options={'url':url,'okName':'应用参数'}
+        alertWindow(type,options,function(){
+            if(prompt_id){
+                setComand(historyObj[prompt_id]['command'],historyObj[prompt_id])
+                //getHistorys()
+            }
+        })
+    }
+    function alertWindow(type,options,okFun,cancelFun){
+        $("#pop_frame_div_title_id").html('')
+        $("#pop_frame_div_desc_id").html('')
+        if(type=='image'){
+            $("#pop_frame_div_desc_id").html('<img src="'+options.url+'" style="width:100%;height:100%;">')
+        }else if(type=='video'){
+            $("#pop_frame_div_desc_id").html('<video src="'+options.url+'" style="width:100%;height:100%;" controls="controls"></video>')
+        }else if(type=='confirm'){
+            $("#pop_frame_div_title_id").html(options.title)
+            $("#pop_frame_div_desc_id").html(options.desc)
+        }
+        if('okName' in options){
+            $("#pop_frame_div_btn_ok_id").html(options.okName)
+            $("#pop_frame_div_btn_ok_id").show();
+            $("#pop_frame_div_btn_ok_id").click(function(){
+                $("#pop_frame_div_parent_id").hide();
+                if(okFun){
+                    okFun();
+                }
+            })
+        }else{
+            $("#pop_frame_div_btn_ok_id").hide();
+        }
+        if('cancelName' in options){
+            $("#pop_frame_div_btn_cancel_id").html(options.cancelName)
+            $("#pop_frame_div_btn_cancel_id").show();
+            $("#pop_frame_div_btn_cancel_id").click(function(){
+                $("#pop_frame_div_parent_id").hide();
+                if(cancelFun){
+                    cancelFun();
+                }
+            })
+        }else{
+            $("#pop_frame_div_btn_cancel_id").hide();
+        }
+        $("#pop_frame_div_parent_id").show();
+    }
+    function addTask(thi){ //提交任务
+        $(thi).addClass('disable');
+        let formData = new FormData();
+        for (const key in userParams) {
+            if (Object.hasOwnProperty.call(userParams, key)) {
+                const element = userParams[key];
+                if(element){
+                    formData.append(key, element)
+                }
+            }
+        }
+        $.ajax({
+            method: 'post',
+            url: '/wechatauth/addTask',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                console.log(res)
+                if(res.success){
+                    userParams['prompt_id']=res.prompt_id
+                    $("#no_add_task_div").hide()
+                    $("#wcomplete_add_task_div").hide()
+                    $("#yes_add_task_div").show()
+                }else{
+                    alertWindow('confirm',{'title':'提示','desc':res.msg,'okName':'确定'})
+                }
+                
+            }
+        })
+        
+    }
+
+</script>
+
+</html>

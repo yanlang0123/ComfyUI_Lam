@@ -16,3 +16,5 @@ unpackage/dist/dev/
 *.pyc
 config/baidu.json
 ckpts/*
+config/lamWeChat.db
+config/weChat.yaml
