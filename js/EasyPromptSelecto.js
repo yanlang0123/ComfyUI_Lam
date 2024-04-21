@@ -292,6 +292,7 @@ app.registerExtension({
                         if(cat_values.join(',')!=Object.keys(pb_cache[prompt_type.value]).join(',')){
                             cat_values=Object.keys(pb_cache[prompt_type.value])
                             cat_value=''
+                            category.value=cat_values[0]
                         }
                         return cat_values;
                     }

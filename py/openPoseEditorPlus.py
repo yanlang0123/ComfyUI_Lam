@@ -24,8 +24,8 @@ if not os.path.exists(dir):
 
 # Directory node save settings
 CHUNK_SIZE = 1024
-dir_painter_node = os.path.dirname(__file__)
-extension_path = os.path.join(os.path.abspath(dir_painter_node))
+basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
+extension_path = os.path.join(basePath, 'ComfyUI_Lam', 'config')
 file_settings_path = os.path.join(extension_path,"settings_nodes.json")
 
 # Function create file json file
@@ -379,9 +379,13 @@ class openPoseEditorPlus:
 
         image_path = folder_paths.get_annotated_filepath(image)
 
-        i = Image.open(image_path)
-        i = ImageOps.exif_transpose(i)
-        painterImage = i.convert("RGB")
+        if os.path.exists(image_path):
+            i = Image.open(image_path)
+            i = ImageOps.exif_transpose(i)
+            painterImage = i.convert("RGB")
+        else:
+            painterImage = np.zeros(shape=(height, width, 3), dtype=np.uint8)
+            
         painterImage = np.array(painterImage).astype(np.float32) / 255.0
         painterImage = torch.from_numpy(painterImage)[None,]
 
