@@ -1,9 +1,9 @@
 wechat:
-  appid: wx1c2b19f7af1d6241                        #公众号appid 
-  secret: 915d587b5ae4e148e100429e11ca4d60         #公众号秘钥
-  serverAddress: http://139.9.53.208/ #服务器地址 微信公众配置地址的前缀
+  appid: wxa50ed345b253964d                        #公众号appid 
+  secret: 327ac9ba06d214d2fcfe2e9ed0520684         #公众号秘钥
+  serverAddress: http://119.123.205.233/ #服务器地址 微信公众配置地址的前缀
   freeSize: 3 #免费使用次数
-  isEnterprise: false #是否为企业微信
+  isEnterprise: true #是否为企业微信
   adminNo: b0pOVFM2dnRsZkdLeWl2Zlk2bG9MTFNjUTNGUQ== #管理员微信编号启动会后可发送我的编号获取
   adminWeChat: yanlang123456                        #管理员微信号
   access_token: '' #不用填系统用于保存临时值
