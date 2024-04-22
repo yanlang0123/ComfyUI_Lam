@@ -18,3 +18,4 @@ config/baidu.json
 ckpts/*
 config/lamWeChat.db
 config/weChat.yaml
+config/settings_nodes.json

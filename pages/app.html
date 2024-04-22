@@ -140,6 +140,9 @@
             user-select: text;
             --antd-arrow-background-color: #ffffff;
         }
+        .disable {
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -250,7 +253,7 @@
                                             </svg><!---->
                                         </div>
                                     </div><!---->
-                                    <div data-v-e4fb7b31="" class="aigc-loading__describe">效果绘制中</div>
+                                    <div data-v-e4fb7b31="" id="loading_text_id" class="aigc-loading__describe">排队中请等待</div>
                                 </div>
                             </div>
                             <section data-v-e19f253b="" data-v-d1097eb1="" class="aigc-preview" style="display: none;" id="wcomplete_add_task_div">
@@ -343,7 +346,7 @@
 
                     </div>
                     <div data-v-d1097eb1="" class="aigc-main__btn-box step_4">
-                        <div data-v-d1097eb1="" class="aigc-main__btn-box--merge" id="add_task_btn_id" onclick="addTask(this)"><!---->
+                        <div data-v-d1097eb1="" class="aigc-main__btn-box--merge" id="add_task_btn_id" onclick="addTask()"><!---->
                             <div data-v-d1097eb1="" class="text"><span data-v-d1097eb1="" class="upper">立即生成</span>
                             </div>
                         </div>
@@ -399,9 +402,26 @@
             return;
         }
         var messageJson = eval("(" + event.data + ")");
-        if(messageJson['type']=='executing'){
-            $("#add_task_btn_id").removeClass("disabled");
+        if(messageJson['type']=='executing' && !messageJson['data']['node']){
+            userParams['status']='wcomplete'
+            $("#add_task_btn_id").removeClass("disable");
             getHistorys()
+        }else if(messageJson['type']=='progress' || messageJson['type']=='executing'){
+            if($("#loading_text_id").attr('lineup')=='true'){
+                $("#loading_text_id").attr('lineup','false')
+                $("#loading_text_id").html('效果绘制中...')
+            }else{
+                var html=$("#loading_text_id").html()
+                var str=html.substring(0,1);
+                html=html.substring(1)+str;
+                $("#loading_text_id").html(html)
+            }
+        }else{
+            var html=$("#loading_text_id").html()
+            var str=html.substring(0,1);
+            html=html.substring(1)+str;
+            $("#loading_text_id").html(html)
+
         }
         console.log(new Date().format("yyyy-MM-dd hh:mm:ss"), messageJson);
 
@@ -454,6 +474,8 @@
                 if (res[i][4] == 'waiting'){
                     setComand(command['command'],command)
                     continue
+                }else if(res[i][4]=='wcomplete'){
+                    command['status']='wcomplete'
                 }
                 var outputs=JSON.parse(res[i][7])
                 
@@ -519,8 +541,16 @@
         })
     }
     function setComand(name,comand) {
-        userParams = comand?comand:{ 'openId': openId }
+        userParams = comand?comand:{ 'openId': openId,'status': 'prepare'}
         userParams['command'] = name
+        if(userParams['status']=='waiting'){
+            $("#loading_text_id").attr('lineup','true')
+            $("#loading_text_id").html('排队中请等待')
+            $("#add_task_btn_id").addClass('disable');
+            $("#no_add_task_div").hide()
+            $("#wcomplete_add_task_div").hide()
+            $("#yes_add_task_div").show()
+        }
         $("#"+btoa(encodeURIComponent(name))).addClass("active").siblings().removeClass("active")
         if ("prompt" in comands[name].params) {
             if(comand &&'prompt' in comand){
@@ -729,7 +759,11 @@
         var options={'url':url,'okName':'应用参数'}
         alertWindow(type,options,function(){
             if(prompt_id){
-                setComand(historyObj[prompt_id]['command'],historyObj[prompt_id])
+                if(userParams['status']=='waiting'){
+                    alertWindow('confirm',{'title':'提示','desc':'任务在队列中请稍候再试。','okName':'确定'})
+                }else{
+                    setComand(historyObj[prompt_id]['command'],historyObj[prompt_id])
+                }
                 //getHistorys()
             }
         })
@@ -771,8 +805,8 @@
         }
         $("#pop_frame_div_parent_id").show();
     }
-    function addTask(thi){ //提交任务
-        $(thi).addClass('disable');
+    function addTask(){ //提交任务
+        $("#add_task_btn_id").addClass('disable');
         let formData = new FormData();
         for (const key in userParams) {
             if (Object.hasOwnProperty.call(userParams, key)) {
@@ -792,12 +826,14 @@
                 console.log(res)
                 if(res.success){
                     userParams['prompt_id']=res.prompt_id
+                    userParams['status']='waiting'
+                    $("#loading_text_id").attr('lineup','true')
+                    $("#loading_text_id").html('排队中请等待')
                     $("#no_add_task_div").hide()
                     $("#wcomplete_add_task_div").hide()
                     $("#yes_add_task_div").show()
-                }else{
-                    alertWindow('confirm',{'title':'提示','desc':res.msg,'okName':'确定'})
                 }
+                alertWindow('confirm',{'title':'提示','desc':res.msg,'okName':'确定'})
                 
             }
         })

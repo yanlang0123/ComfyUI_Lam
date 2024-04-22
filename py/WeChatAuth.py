@@ -86,6 +86,7 @@ def update_dict(dictionary, keys, value):
         else:
             raise ValueError("Invalid data structure")
 def setPost(self,FromUserName):
+    self.user_command[FromUserName]['status']='waiting' #prepare:准备 waiting:待执行  wcomplete完成
     params=self.user_command[FromUserName]
     logging.info(str(params))
     basePath=folder_paths.folder_names_and_paths['custom_nodes'][0][0]
@@ -130,13 +131,13 @@ def setPost(self,FromUserName):
             self.prompt_queue.put((number, prompt_id, prompt, extra_data, outputs_to_execute))
             now = time.localtime()
             start_time = time.strftime("%Y-%m-%d %H:%M:%S", now)
-            self.user_command[FromUserName]['status']='waiting' #prepare:准备 waiting:待执行  wcomplete完成
             self.user_command[FromUserName]['prompt_id']=prompt_id 
             db=DataBaseUtil()
             db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
             db.close_con()
             return prompt_id
         else:
+            self.user_command[FromUserName]['status']='prepare' # prepare:准备 waiting:待执行  wcomplete完成
             logging.warning("invalid prompt: {}".format(valid[1]))
             return None
         
@@ -226,7 +227,7 @@ async def addTask(request):
     PromptServer.instance.user_command[openId]=userData
     resp=setPost(PromptServer.instance,openId)
     if resp!=None:
-        data={'msg':'任务已加入队列请等待...','prompt_id':resp,'success':True}
+        data={'msg':'任务成功加入队列请等待','prompt_id':resp,'success':True}
         return web.Response(text=json.dumps(data), content_type='application/json')
     
 @PromptServer.instance.routes.get("/wechatauth/getCommands")
