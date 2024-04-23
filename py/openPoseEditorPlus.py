@@ -12,7 +12,7 @@ from aiohttp import web
 import os
 import json
 import cv2
-from tools import annotator_ckpts_path, load_file_from_url
+from lam_tools import annotator_ckpts_path, load_file_from_url
 
 
 body_estimation = None
