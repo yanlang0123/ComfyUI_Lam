@@ -772,7 +772,7 @@
         $("#pop_frame_div_title_id").html('')
         $("#pop_frame_div_desc_id").html('')
         if(type=='image'){
-            $("#pop_frame_div_desc_id").html('<img src="'+options.url+'" style="width:100%;height:100%;">')
+            $("#pop_frame_div_desc_id").html('<img src="'+options.url+'" style="max-height:500px;">')
         }else if(type=='video'){
             $("#pop_frame_div_desc_id").html('<video src="'+options.url+'" style="width:100%;height:100%;" controls="controls"></video>')
         }else if(type=='confirm'){
