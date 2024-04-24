@@ -338,6 +338,7 @@ class openPoseEditorPlus:
                 body_masks.append(create_mask(whole, width, height))
                 min_x, min_y, mwidth, mheight=whole
                 body_boxs.append([mwidth, mheight,min_x, min_y])
+
             subset = []
             for i in range(len(g)):
                 if g[i][0] < 0 or g[i][1] < 0:
@@ -348,6 +349,13 @@ class openPoseEditorPlus:
                     index += 1
 
             subsets.append(subset)
+
+        #创建一个背景，减去前面遮罩得到背景遮罩
+        back_mask = solid_mask(1.0, width, height)
+        for mask in body_masks:
+            back_mask = mask_combine(back_mask, mask, 0, 0, operation="subtract")
+        
+        body_masks.append(back_mask)
 
         candidate = [[i[0]/float(width), i[1]/float(height)]
                      for i in candidate]
