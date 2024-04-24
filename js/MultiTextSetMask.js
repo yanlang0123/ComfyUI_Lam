@@ -66,7 +66,7 @@ app.registerExtension({
     name: "Comfy.lam.MultiTextSetMask",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         
-        var names=["MultiTextSetMask","MultiTextSetArea","MultiTextSetGligen"]
+        var names=["MultiTextSetMask","MultiTextSetArea","MultiTextSetGligen","MultiIPAdapterRegional"]
         if (names.indexOf(nodeData.name)>=0) {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
 			nodeType.prototype.onNodeCreated = function () {
@@ -75,6 +75,9 @@ app.registerExtension({
                 this.defaultValue=null
                 this.index=2
 				this.originalsize=4 
+                this.inputType="STRING"
+                this.inputPrefix="text"
+                this.outputPrefix=""
                 if('MultiTextSetGligen'==nodeData.name){
                     this.originalsize=5 
                     this.defaultValue=1.0;
@@ -82,13 +85,17 @@ app.registerExtension({
                     this.defaultValue=1.0;
                 }else if('MultiTextSetMask'==nodeData.name){
                     this.defaultValue=[1.0,"default"];
+                }else if('MultiIPAdapterRegional'==nodeData.name){
+                    this.index=0
+                    this.originalsize=1
+                    this.inputType="IMAGE"
+                    this.inputPrefix="image"
+                    this.defaultValue=[1.0,"linear",0.0,1.0]
                 }
                 if(this.defaultValue){
                     this.setProperty("values", [this.defaultValue,this.defaultValue])
                 }
-                this.inputType="STRING"
-                this.inputPrefix="text"
-                this.outputPrefix=""
+                
                 
                 CUSTOM_INT(
 					this,
@@ -112,6 +119,13 @@ app.registerExtension({
                 }
                 if('MultiTextSetMask'==nodeData.name){
                     CUSTOM_COMBO(this, "set_cond_area", "default",function (v, _, node) {node.properties["values"][node.widgets[node.index].value][1] = this.value},{values:["default", "mask bounds"]}).widget;
+                }
+                if('MultiIPAdapterRegional'==nodeData.name){
+                    var WEIGHT_TYPES = ["linear", "ease in", "ease out", 'ease in-out', 'reverse in-out', 'weak input', 'weak output', 'weak middle', 'strong middle', 'style transfer', 'composition', 'strong style transfer']
+                    CUSTOM_INT(this, "image_weight", 1.0,function (v, _, node) {node.properties["values"][node.widgets[node.index].value][0] = this.value},{"default": 1.0, "min": -1.0, "max": 3.0, "step": 0.05,precision: 2 })
+                    CUSTOM_COMBO(this, "weight_type", WEIGHT_TYPES[0],function (v, _, node) {node.properties["values"][node.widgets[node.index].value][1] = this.value},{values:WEIGHT_TYPES}).widget;
+                    CUSTOM_INT(this, "start_at", 1.0,function (v, _, node) {node.properties["values"][node.widgets[node.index].value][2] = this.value},{"default": 1.0, "min": -1.0, "max": 3.0, "step": 0.05,precision: 2 })
+                    CUSTOM_INT(this, "end_at", 1.0,function (v, _, node) {node.properties["values"][node.widgets[node.index].value][3] = this.value},{"default": 1.0, "min": -1.0, "max": 3.0, "step": 0.05,precision: 2 })
                 }
                 addMultiTextSetMaskSelectCanvas(this, app)
                 
@@ -180,7 +194,7 @@ app.registerExtension({
         }
     },
     loadedGraphNode(node, _) {
-        var names=["MultiTextSetMask","MultiTextSetArea","MultiTextSetGligen"]
+        var names=["MultiTextSetMask","MultiTextSetArea","MultiTextSetGligen","MultiIPAdapterRegional"]
 		if (names.indexOf(node.type)>=0) {
 			node.widgets[node.index].options["max"] = node.properties["values"].length-1
 		}
