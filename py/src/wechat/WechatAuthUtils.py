@@ -130,7 +130,9 @@ def receive_msg(msg, isPrepare=False, isWaiting=False):
         return 'query', msg
     elif isPrepare:
         if msg.find(':') != -1:
-            return tuple(msg.split(':'))
+            keyName=msg.split(':')[0]
+            value=msg[len(keyName)+1:]
+            return keyName,value
         elif (msg.lower().endswith(u'ok') or msg.lower() == 'ok'):
             return 'ok', msg[:-2]
         else:

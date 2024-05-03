@@ -52,6 +52,7 @@ def get_del_keys(key, prompt):
 ```python
     #循环添加代码----------开始----------
     startNum=None
+    startData={}
     delKeys=[]
     backhaul={}
     clTypes=['ForInnerEnd','IfInnerExecute']
@@ -59,12 +60,9 @@ def get_del_keys(key, prompt):
     if class_type in clTypes:
         oldPrompt=copy.deepcopy(prompt)
 
-    if class_type=='ForInnerStart':
-        print(class_type,'--------',prompt[unique_id]['inputs'])
     if class_type=='ForInnerEnd':
         startNum=prompt[unique_id]['inputs']['total'][0]
         inputNum=prompt[unique_id]['inputs']['obj'][0]
-        startInput=prompt[startNum]['inputs']
         maxKeyStr=sorted(list(prompt.keys()), key=lambda x: int(x.split(':')[0]))[-1]
         maxKey = int(maxKeyStr.split(':')[0])
         delKeys=list(set(get_del_keys(startNum,prompt)))
@@ -72,7 +70,21 @@ def get_del_keys(key, prompt):
         delKeys = list(filter(lambda x: x != inputNum, delKeys))
         for key in delKeys:
             outputs.pop(key, None)
-        for i in range(startInput['i']+1,startInput['total'],startInput['stop']):
+        
+        startInput=prompt[startNum]['inputs']
+        if isinstance(startInput['total'],list) or isinstance(startInput['stop'],list) or isinstance(startInput['i'],list):
+            result = recursive_execute(server, prompt, outputs, startNum, extra_data, executed, prompt_id, outputs_ui, object_storage)
+            if result[0] is not True:
+                    return result
+            
+        for x in startInput:
+            input_data = startInput[x]
+            if isinstance(input_data, list):
+                startData[x]=outputs[input_data[0]][input_data[1]][0]
+            else:
+                startData[x]=input_data
+
+        for i in range(startData['i']+1,startData['total'],startData['stop']):
             prompt[str(maxKey+i)]=prompt[inputNum]
             prompt[unique_id]['inputs']['obj'+str(i)]=[str(maxKey+i),prompt[unique_id]['inputs']['obj'][-1]]
             if i==startInput['i']+1:
@@ -86,7 +98,10 @@ def get_del_keys(key, prompt):
                 #循环添加代码----------开始----------
                 if class_type=='ForInnerEnd' and x !='obj' and x.startswith('obj'):
                     if startNum!=None:
-                        prompt[startNum]['inputs']['i']=prompt[startNum]['inputs']['i']+prompt[startNum]['inputs']['stop']
+                        if isinstance(prompt[startNum]['inputs']['i'],list):
+                            prompt[startNum]['inputs']['i']=startData['i']+startData['stop']
+                        else:
+                            prompt[startNum]['inputs']['i']=prompt[startNum]['inputs']['i']+startData['stop']
                         prompt[startNum]['inputs']['obj']=backhaul[x]
                         for key in delKeys:
                             outputs.pop(key, None)

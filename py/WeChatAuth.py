@@ -318,7 +318,11 @@ async def handleMessagePost(request):
                     
                 if isAdopt:
                     #添加指令的代码
-                    PromptServer.instance.user_command[FromUserName]={'openId':FromUserName,'status':'prepare','command':otherName,'seed':''.join(random.sample('123456789012345678901234567890',14))}
+                    if FromUserName in PromptServer.instance.user_command:
+                        PromptServer.instance.user_command[FromUserName].update({'openId':FromUserName,'status':'prepare','command':otherName,'waitKey':'','prompt':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
+                    else:
+                        PromptServer.instance.user_command[FromUserName]={'openId':FromUserName,'status':'prepare','command':otherName,'waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))}
+
                     msg,comlist=getCommandMsg(Config().wechat['commands'][otherName],Config().wechat['isEnterprise'])
                     if comlist:
                         sendServiceMenuMessage(msg,Config().wechat['commands'][otherName]['replyText'],comlist, FromUserName)
@@ -364,7 +368,10 @@ async def handleMessagePost(request):
                     data=otherName.split('加')
                     openId=base64_decode(data[0])
                     tount=int(data[1])
-                    if openId and tount>0:
+                    if openId == 'config':
+                        Config().reload()
+                        msg='配置文件已更新'
+                    elif openId and tount>0:
                         db=DataBaseUtil()
                         fdata=db.get_user_frequency(openId)
                         if fdata[0] and fdata[0]>0:
@@ -382,8 +389,11 @@ async def handleMessagePost(request):
                 return web.Response(text=out, content_type='application/xml')
             elif isPrepare:
                 msg=''
-                if reply_content and otherName!=None:
-                    commandName=PromptServer.instance.user_command[FromUserName]['command']
+                commandName=PromptServer.instance.user_command[FromUserName]['command']
+                if reply_content in Config().wechat['commands'][commandName]['params'] and Config().wechat['commands'][commandName]['params'][reply_content]['type'] and Config().wechat['commands'][commandName]['params'][reply_content]['type']=='image':
+                    PromptServer.instance.user_command[FromUserName]['waitKey']=reply_content
+                    msg='待上传图片参数'+Config().wechat['commands'][commandName]['params'][reply_content]['zhName']
+                elif reply_content and otherName!=None:
                     if reply_content in Config().wechat['commands'][commandName]['params']:
                         if 'options' in Config().wechat['commands'][commandName]['params'][reply_content]:
                             PromptServer.instance.user_command[FromUserName][reply_content]=Config().wechat['commands'][commandName]['params'][reply_content]['options'][otherName]
@@ -404,7 +414,18 @@ async def handleMessagePost(request):
     elif MsgType == 'image': #图片
         if isPrepare:
             PicUrl=data.find('PicUrl').text
-            PromptServer.instance.user_command[FromUserName]['image']=PicUrl
+            commandName=PromptServer.instance.user_command[FromUserName]['command']
+            msg=''
+            if PromptServer.instance.user_command[FromUserName]['waitKey']:
+                PromptServer.instance.user_command[FromUserName][PromptServer.instance.user_command[FromUserName]['waitKey']]=PicUrl
+                msg='已上传图片参数'+Config().wechat['commands'][commandName]['params'][PromptServer.instance.user_command[FromUserName]['waitKey']]['zhName']
+                PromptServer.instance.user_command[FromUserName]['waitKey']=''
+            elif 'image' in Config().wechat['commands'][commandName]['params']:
+                PromptServer.instance.user_command[FromUserName]['image']=PicUrl
+                msg='已上传图片参数'+Config().wechat['commands'][commandName]['params']['image']['zhName']
+
+            out = reply_text(FromUserName, ToUserName, CreateTime, msg)
+            return web.Response(text=out, content_type='application/xml')
         else:
             out = reply_text(FromUserName, ToUserName, CreateTime, '请先选择指令')
             return web.Response(text=out, content_type='application/xml')

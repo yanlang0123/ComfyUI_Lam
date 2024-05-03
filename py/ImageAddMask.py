@@ -1,6 +1,7 @@
 import torch
 import torchvision.transforms.functional as TF
-
+import cv2
+import numpy as np
 class ImageAddMask:
     def __init__(self):
         pass
@@ -20,16 +21,19 @@ class ImageAddMask:
     CATEGORY = "lam"
 
     def imageAddMask(self, image, mask):
-        if len(image.shape) < 4:
-            C = 1
-        else:
-            C = image.shape[3]
-
         image = tensor2rgba(image)
+        mask_np=mask.numpy()
+        mask_shape=mask_np.shape
+        img_shape=image.size()
+        if img_shape[1] != mask_shape[1] or img_shape[2] != mask_shape[2]:
+            maskList=[]
+            for i in range(mask.shape[0]):
+                maskList.append(cv2.resize(mask_np[i],(img_shape[2],img_shape[1])))
+            mask_np=np.array(maskList)
 
-        mask = 1.0 - mask
-
+        mask=torch.from_numpy(mask_np)
         
+        mask = 1.0 - mask
         image[:,:,:,-1] = mask
 
         return (image,)

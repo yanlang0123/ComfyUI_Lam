@@ -11,9 +11,51 @@ if not os.path.exists(confdir):
 def tensor2pil(image):
     return Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
 
+def solid_mask(value, width, height):
+    out = torch.full((1, height, width), value,
+                     dtype=torch.float32, device="cpu")
+    return out
+
+
+def mask_combine(destination, source, x, y, operation="add"):
+    output = destination.reshape(
+        (-1, destination.shape[-2], destination.shape[-1])).clone()
+    source = source.reshape((-1, source.shape[-2], source.shape[-1]))
+
+    left, top = (x, y,)
+    right, bottom = (min(left + source.shape[-1], destination.shape[-1]), min(
+        top + source.shape[-2], destination.shape[-2]))
+    visible_width, visible_height = (right - left, bottom - top,)
+
+    source_portion = source[:, :visible_height, :visible_width]
+    destination_portion = destination[:, top:bottom, left:right]
+
+    if operation == "multiply":
+        output[:, top:bottom, left:right] = destination_portion * source_portion
+    elif operation == "add":
+        output[:, top:bottom, left:right] = destination_portion + source_portion
+    elif operation == "subtract":
+        output[:, top:bottom, left:right] = destination_portion - source_portion
+    elif operation == "and":
+        output[:, top:bottom, left:right] = torch.bitwise_and(
+            destination_portion.round().bool(), source_portion.round().bool()).float()
+    elif operation == "or":
+        output[:, top:bottom, left:right] = torch.bitwise_or(
+            destination_portion.round().bool(), source_portion.round().bool()).float()
+    elif operation == "xor":
+        output[:, top:bottom, left:right] = torch.bitwise_xor(
+            destination_portion.round().bool(), source_portion.round().bool()).float()
+
+    output = torch.clamp(output, 0.0, 1.0)
+    return output
+
 # PIL to Tensor
 def pil2tensor(image):
     return torch.from_numpy(np.array(image).astype(np.float32) / 255.0)
+
+
+def zero_for_non_zero(num):
+    return 0 if num < 0 else num
 
 class ImageCropFaces:
     def __init__(self):
@@ -23,75 +65,48 @@ class ImageCropFaces:
     def INPUT_TYPES(cls):
         return {
             "required": {
+                "analysis_models": ("ANALYSIS_MODELS", ),
                 "image": ("IMAGE",),
                 "crop_padding_factor": ("FLOAT", {"default": 0.25, "min": 0.0, "max": 2.0, "step": 0.01}),
-                "cascade_xml": ([
-                                "lbpcascade_animeface.xml",
-                                "haarcascade_frontalface_default.xml", 
-                                "haarcascade_frontalface_alt.xml", 
-                                "haarcascade_frontalface_alt2.xml",
-                                "haarcascade_frontalface_alt_tree.xml",
-                                "haarcascade_profileface.xml",
-                                "haarcascade_upperbody.xml",
-                                "haarcascade_eye.xml"
-                                ],),
                 }
         }
     
-    RETURN_TYPES = ("IMAGE", "LIST")
+    RETURN_TYPES = ("IMAGE", "MASKS","BOXS",)
     FUNCTION = "image_crop_face"
     
     CATEGORY = "lam"
     
-    def image_crop_face(self, image, cascade_xml=None, crop_padding_factor=0.25):
-        return self.crop_face(tensor2pil(image), cascade_xml, crop_padding_factor)
+    def image_crop_face(self,analysis_models,image, crop_padding_factor=0.25):
+        return self.crop_face(tensor2pil(image),analysis_models,crop_padding_factor)
     
-    def crop_face(self, image, cascade_name=None, padding=0.25):
+    def crop_face(self, image, analysis_models, padding=0.25):
     
         import cv2
 
         img = np.array(image.convert('RGB'))
 
-        face_location = None
+        faces=[]
+        if analysis_models["library"] == "insightface":
+            facesData = analysis_models["detector"].get(np.array(img))
+            for face in facesData:
+                x, y, w, h = face.bbox.astype(int)
+                w = w - x
+                h = h - y
+                faces.append([x, y, w, h])
 
-        cascades = [ os.path.join(os.path.join(confdir, 'res'), 'lbpcascade_animeface.xml'), 
-                    os.path.join(os.path.join(confdir, 'res'), 'haarcascade_frontalface_default.xml'), 
-                    os.path.join(os.path.join(confdir, 'res'), 'haarcascade_frontalface_alt.xml'), 
-                    os.path.join(os.path.join(confdir, 'res'), 'haarcascade_frontalface_alt2.xml'), 
-                    os.path.join(os.path.join(confdir, 'res'), 'haarcascade_frontalface_alt_tree.xml'), 
-                    os.path.join(os.path.join(confdir, 'res'), 'haarcascade_profileface.xml'), 
-                    os.path.join(os.path.join(confdir, 'res'), 'haarcascade_upperbody.xml') ]
-                    
-        if cascade_name:
-            for cascade in cascades:
-                if os.path.basename(cascade) == cascade_name:
-                    cascades.remove(cascade)
-                    cascades.insert(0, cascade)
-                    break
-
-        faces = None
-        if not face_location:
-            for cascade in cascades:
-                if not os.path.exists(cascade):
-                    print(f"Unable to find cascade XML file at `{cascade}`. Did you pull the latest files from https://github.com/WASasquatch/was-node-suite-comfyui repo?")
-                    return (pil2tensor(Image.new("RGB", (512,512), (0,0,0))), False)
-                face_cascade = cv2.CascadeClassifier(cascade)
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-                if len(faces) != 0:
-                    print(f"Face found with: {os.path.basename(cascade)}")
-                    break
-            if len(faces) == 0:
-                print("No faces found in the image!")
-                return (pil2tensor(Image.new("RGB", (512,512), (0,0,0))), False)
-        else: 
-            print("Face found with: face_recognition model")
-            faces = face_location
+        else:
+            facesData = analysis_models["detector"](np.array(img), 1)
+            for face in facesData:
+                x, y, w, h = face.left(), face.top(), face.width(), face.height()
+                faces.append([x, y, w, h])
             
         face_imgs=[]
-        face_crop_datas=[]
+        face_masks=[]
+        face_boxs=[]
         one_size=None
         for i, (x, y, w, h) in enumerate(faces):
+            if w < 50 and h < 50:
+                continue
             # Check if the face region aligns with the edges of the original image
             left_adjust = max(0, -x)
             right_adjust = max(0, x + w - img.shape[1])
@@ -127,6 +142,9 @@ class ImageCropFaces:
             
             # Ensure square crop of the original image
             crop_size = min(right - left, bottom - top)
+            if center_x<crop_size // 2 or center_y<crop_size // 2:
+                crop_size=min(center_x,center_y)*2
+
             left = center_x - crop_size // 2
             right = center_x + crop_size // 2
             top = center_y - crop_size // 2
@@ -156,10 +174,20 @@ class ImageCropFaces:
             face_img=face_img.resize(one_size)
 
             face_imgs.append(pil2tensor(face_img.convert('RGB')))
-            face_crop_datas.append((original_size, (left, top, right, bottom)))
+            
+            face_boxs.append([original_size[1], original_size[0],left, top])
+
+            destination = solid_mask(0.0, img.shape[1], img.shape[0])
+            source = solid_mask(1.0, original_size[1], original_size[0])
+            face_masks.append(mask_combine(destination, source,left, top, operation="add"))
+        
+        if len(face_imgs)<=0:
+            image = Image.new(mode="RGB", size=(64, 64),color=(255, 255, 255))
+            face_imgs.append(torch.from_numpy(np.array(image).astype(np.float32) / 255.0))
+        
         
         # Return face image and coordinates
-        return (torch.stack(face_imgs), face_crop_datas)
+        return (torch.stack(face_imgs), face_masks ,face_boxs, )
     
 
 NODE_CLASS_MAPPINGS = {
