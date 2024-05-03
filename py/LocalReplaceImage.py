@@ -39,7 +39,7 @@ class LoadReplaceImage:
         mask_shape=mask_np.shape
         img1_shape=img1.size()
         img2_shape=img2.size()
-        print("=====------=======",mask_shape)
+
         if tuple(mask_shape)!=tuple(img1_shape):
             maskList=[]
             for i in range(mask_shape[0]):
@@ -52,16 +52,12 @@ class LoadReplaceImage:
         mask_np_rgb[:,:,:,2] = mask_np
         
         mask=torch.from_numpy(mask_np_rgb)
-        print("-----------",mask.size())
-        print("-----------",img1_shape)
-        print("-----------",img2_shape)
         #取最少图片数量
         min_size=img2_shape[0]  if img1_shape[0]>img2_shape[0] else img1_shape[0]
         #图片大小不一致时，返回被替换内容
         if tuple(mask.size()[1:])!=tuple(img1_shape[1:]) or x+img1_shape[1]>img2_shape[1] or y+img1_shape[2]>img2_shape[2]:
             return img2
 
-        print("min_size::::",str(min_size))
         img1[:min_size]=img1[:min_size]*mask[:min_size]
         img2[:min_size,x:x+img1_shape[1],y:y+img1_shape[2]]=img2[:min_size,x:x+img1_shape[1],y:y+img1_shape[2]]*(1-mask[:min_size])
         img2[:min_size,x:x+img1_shape[1],y:y+img1_shape[2]]=img1[:min_size]+img2[:min_size,x:x+img1_shape[1],y:y+img1_shape[2]]

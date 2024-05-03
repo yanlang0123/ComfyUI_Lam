@@ -227,7 +227,7 @@
                                     id="upload_image_preview_parend_id" style="display: none;">
                                     <div data-v-e19f253b="" onclick="clickUpload()" class="aigc-preview__img"
                                         id="upload_image_preview_id"
-                                        style="background-image: url(&quot;http://127.0.0.1:8189/view?filename=ComfyUI_00819_.png&type=input&subfolder=&rand=0.9293840121020174&quot;);">
+                                        style="background-image: url(&quot;../view?filename=ComfyUI_00819_.png&type=input&subfolder=&rand=0.9293840121020174&quot;);">
                                         <!----><!----><!---->
                                     </div>
                                 </section>
@@ -452,7 +452,7 @@
             // 鼠标离开时的操作
             $('#contact_administrator_popover').hide()
         });
-        $.get('/wechatauth/getCommands', {}, function (res) {
+        $.get('../wechatauth/getCommands', {}, function (res) {
             comands = res;
             $("#comand_div_id").html('')
             for (var key of Object.keys(res)) {
@@ -466,7 +466,7 @@
     })
     var historyObj={}
     function getHistorys(){
-        $.get('/wechatauth/getHistorys', {'openId':openId}, function (res) {
+        $.get('../wechatauth/getHistorys', {'openId':openId}, function (res) {
             console.log(res)
             var historyHtml='';
             for(var i = 0; i < res.length; i++){
@@ -485,7 +485,7 @@
                     if(Object.keys(node_output).indexOf("images") >= 0){
                         for(var j = 0; j < node_output.images.length; j++){
                             var img=node_output.images[j]
-                            var url = '/view?filename=' + img.filename + '&type=' + img.type + '&subfolder='+ img.subfolder
+                            var url = '../view?filename=' + img.filename + '&type=' + img.type + '&subfolder='+ img.subfolder
                             historyHtml+=`<div data-v-ae8b2cf0="" data-v-622eff0c="" onclick="openView('image','`+url+`','`+command['prompt_id']+`')"
                                 class="item-box step_2 aigc-container__fml-item"><img data-v-ae8b2cf0=""
                                     class="cover-img"
@@ -507,12 +507,12 @@
                     }else if(Object.keys(node_output).indexOf("gifs") >= 0){
                         for(var j = 0; j < node_output.gifs.length; j++){
                             var video=node_output.gifs[j]
-                            var url = '/view?filename=' + video.filename + '&type=' + video.type + '&subfolder='+ video.subfolder
-                            var imgUrl='/lam/getImage?type=wechat&&name=video_play.jpeg'
+                            var url = '../view?filename=' + video.filename + '&type=' + video.type + '&subfolder='+ video.subfolder
+                            var imgUrl='../lam/getImage?type=wechat&&name=video_play.jpeg'
                             var backgroundImg=''
                             if(Object.keys(command).indexOf('image')>=0){
                                 if(command['image'].indexOf('view?filename')>=0){
-                                    backgroundImg='/view?'+command['image'].split('?')[1]
+                                    backgroundImg='../view?'+command['image'].split('?')[1]
                                 }
                             }
                             if(userParams['prompt_id']==command['prompt_id']){
@@ -577,7 +577,7 @@
         if ('image' in comands[name].params) {
             if(comand &&'image' in comand){
                 if(comand['image'].indexOf('view?filename')>=0){
-                    url='/view?'+comand['image'].split('?')[1]
+                    url='../view?'+comand['image'].split('?')[1]
                     $("#upload_image_btn_parent_id").hide()
                     $("#upload_image_preview_parend_id").show()
                     //修改div的背景图片
@@ -740,7 +740,7 @@
                 $("#upload_image_btn_parent_id").hide()
                 $("#upload_image_preview_parend_id").show()
                 //修改div的背景图片
-                var url = '/view?filename=' + res.name + '&type=' + res.type + '&subfolder='
+                var url = '../view?filename=' + res.name + '&type=' + res.type + '&subfolder='
                 $("#upload_image_preview_id").css("background-image", "url(" + url + ")")
                 var host = window.location.host;
                 imageUrl = 'http://' + host + url
@@ -818,7 +818,7 @@
         }
         $.ajax({
             method: 'post',
-            url: '/wechatauth/addTask',
+            url: '../wechatauth/addTask',
             data: formData,
             processData: false,
             contentType: false,

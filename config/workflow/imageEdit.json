@@ -1,0 +1,262 @@
+{
+  "4": {
+    "inputs": {
+      "ckpt_name": "cosxl_edit.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Checkpoint加载器(简易)"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": [
+        "47",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
+  },
+  "7": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "37:8",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "41": {
+    "inputs": {
+      "width": 960,
+      "height": 0,
+      "interpolation": "nearest",
+      "keep_proportion": true,
+      "condition": "always",
+      "image": [
+        "48",
+        0
+      ]
+    },
+    "class_type": "ImageResize+",
+    "_meta": {
+      "title": "图像缩放"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": [
+        "48",
+        0
+      ]
+    },
+    "class_type": "GetImage_(Width&Height) _O",
+    "_meta": {
+      "title": "GetImage_(Width&Height) _O"
+    }
+  },
+  "44": {
+    "inputs": {
+      "expression": "p0>960",
+      "p0": [
+        "42",
+        0
+      ]
+    },
+    "class_type": "MultiParamFormula",
+    "_meta": {
+      "title": "多参代码表达式"
+    }
+  },
+  "46": {
+    "inputs": {
+      "ANY": [
+        "44",
+        0
+      ],
+      "IF_TRUE": [
+        "41",
+        0
+      ],
+      "IF_FALSE": [
+        "48",
+        0
+      ]
+    },
+    "class_type": "IfInnerExecute",
+    "_meta": {
+      "title": "判断选择"
+    }
+  },
+  "47": {
+    "inputs": {
+      "text_trans": "秋天"
+    },
+    "class_type": "ZhPromptTranslator",
+    "_meta": {
+      "title": "中文翻译"
+    }
+  },
+  "48": {
+    "inputs": {
+      "image_path": "./ComfyUI/input/example.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "加载网络图片或本地图片"
+    }
+  },
+  "37:0": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "K采样器选择"
+    }
+  },
+  "37:1": {
+    "inputs": {
+      "noise_seed": 173148692406184
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "随机噪波"
+    }
+  },
+  "37:3": {
+    "inputs": {
+      "scheduler": "normal",
+      "steps": 20,
+      "denoise": 1,
+      "model": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "基础调度器"
+    }
+  },
+  "37:6": {
+    "inputs": {
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ],
+      "pixels": [
+        "46",
+        0
+      ]
+    },
+    "class_type": "InstructPixToPixConditioning",
+    "_meta": {
+      "title": "InstructPixToPix条件"
+    }
+  },
+  "37:7": {
+    "inputs": {
+      "cfg_conds": 5,
+      "cfg_cond2_negative": 1.5,
+      "model": [
+        "4",
+        0
+      ],
+      "cond1": [
+        "37:6",
+        0
+      ],
+      "cond2": [
+        "37:6",
+        1
+      ],
+      "negative": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "DualCFGGuider",
+    "_meta": {
+      "title": "双CFG引导"
+    }
+  },
+  "37:8": {
+    "inputs": {
+      "noise": [
+        "37:1",
+        0
+      ],
+      "guider": [
+        "37:7",
+        0
+      ],
+      "sampler": [
+        "37:0",
+        0
+      ],
+      "sigmas": [
+        "37:3",
+        0
+      ],
+      "latent_image": [
+        "37:6",
+        2
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "自定义采样器(高级)"
+    }
+  }
+}

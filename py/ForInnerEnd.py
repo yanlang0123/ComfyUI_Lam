@@ -19,22 +19,25 @@ class ForInnerEnd:
                 "obj": (AlwaysEqualProxy("*"), ),
             }
         }
-    RETURN_TYPES = (AlwaysEqualProxy("*"),)
-    RETURN_NAMES = ('obj',)
+    RETURN_TYPES = (AlwaysEqualProxy("*"),AlwaysEqualProxy("*"),)
+    RETURN_NAMES = ('objs','endObj',)
     FUNCTION = "for_end_fun"
 
     CATEGORY = "lam"
 
     def for_end_fun(self,total,obj, **kwargs):
         objs=None
+        endObj=obj
         if obj!=None and hasattr(obj, 'shape') and torch.is_tensor(obj) :
             objs=obj
         elif obj!=None:
             objs=[]
             objs.append(obj)
             
+        
         for k,v in kwargs.items():
             if k.startswith('obj') and v!=None:
+                endObj=v
                 if hasattr(obj, 'shape') and torch.is_tensor(obj) and torch.is_tensor(v):
                     if objs==None:
                         obj = v
@@ -45,7 +48,7 @@ class ForInnerEnd:
                 else:
                     objs.append(v)
                     
-        return (objs,)
+        return (objs,endObj,)
 
 NODE_CLASS_MAPPINGS = {
     "ForInnerEnd": ForInnerEnd
