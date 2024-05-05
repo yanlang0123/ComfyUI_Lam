@@ -43,7 +43,7 @@ wechat:
         image:                                     #参数名称(几个固定参数名称必须如下：图片：image  随机种子：seed 正向提示词：prompt 反向提示词：negative) 
           isRequired: true                         #是否必填
           keys:                                    #参数对应json中对应的key
-          - '64'
+          - '110'
           - inputs
           - image_path
           zhName: 待转绘图       
@@ -51,7 +51,7 @@ wechat:
         styleImage:                                     #参数名称(几个固定参数名称必须如下：图片：image  随机种子：seed 正向提示词：prompt 反向提示词：negative) 
           isRequired: true                         #是否必填
           keys:                                    #参数对应json中对应的key
-          - '65'
+          - '111'
           - inputs
           - image_path
           zhName: 风格参考图

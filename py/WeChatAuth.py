@@ -70,6 +70,7 @@ def send_sync(self, event, data, sid=None): #继承父类的send_sync方法
             db=DataBaseUtil()
             db.update_data('wcomplete', end_time, json.dumps(history['outputs']),data['prompt_id'])
             db.close_con()
+            self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
 
     self.loop.call_soon_threadsafe(
         self.messages.put_nowait, (event, data, sid))
@@ -401,7 +402,7 @@ async def handleMessagePost(request):
                             PromptServer.instance.user_command[FromUserName][reply_content]=otherName
                         msg='已填选'+Config().wechat['commands'][commandName]['params'][reply_content]['zhName']+':'+otherName
                 else:
-                    PromptServer.instance.user_command[FromUserName]['prompt']=PromptServer.instance.user_command[FromUserName]['prompt']+reply_content if 'prompt' in PromptServer.instance.user_command[FromUserName] else reply_content
+                    PromptServer.instance.user_command[FromUserName]['prompt']= reply_content
                     msg='已填入提示词：'+reply_content
                 out = reply_text(FromUserName, ToUserName, CreateTime, msg)
                 return web.Response(text=out, content_type='application/xml')

@@ -38,7 +38,7 @@ https://github.com/comfyanonymous/ComfyUI/releases/download/latest/ComfyUI_windo
    Extraction Code: b4yy
    Extract to the directory ..\ComfyUI\models\roop-face-swap
 
-6. Modify the execution.py file in the comfyUI root directory. Modify the content, search for "Return type mismatch between 
+6. Modify the execution.py file in the comfyUI root directory. 
 搜索 “def recursive_execute” 
 位置参考图如下：
 ![Alt text](修改位置.png)
