@@ -29,7 +29,7 @@ https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/SadTalker_V0
 解压到 ..\ComfyUI\models\image-face-fusion 目录
 
 
-3. 修改comfyUI根目录下的execution.py文件，修改内容为,搜索“Return type mismatch between linked nodes”找到对应行，
+3. 修改comfyUI根目录下的execution.py文件，修改内容，
 
 搜索 “def recursive_execute” 
 位置参考图如下：

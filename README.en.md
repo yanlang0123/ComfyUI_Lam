@@ -27,7 +27,7 @@ Then run the install.bat file, and if there are no errors, it's ready.
    - Extraction Code: gf0p
    - Extract to the directory ..\ComfyUI\models\image-face-fusion
 
-3. Modify the execution.py file in the comfyUI root directory. Modify the content, search for "Return type mismatch between 
+3. Modify the execution.py file in the comfyUI root directory.
 搜索 “def recursive_execute” 
 位置参考图如下：
 ![Alt text](修改位置.png)
