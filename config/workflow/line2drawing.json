@@ -1,0 +1,239 @@
+{
+  "1": {
+    "inputs": {
+      "ckpt_name": "yamer_Cartoon_xenoArcadiaCD.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Checkpoint加载器(简易)"
+    }
+  },
+  "2": {
+    "inputs": {
+      "width": [
+        "16",
+        0
+      ],
+      "height": [
+        "16",
+        1
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "空Latent"
+    }
+  },
+  "3": {
+    "inputs": {
+      "text": [
+        "17",
+        0
+      ],
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
+  },
+  "4": {
+    "inputs": {
+      "text": [
+        "18",
+        0
+      ],
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
+  },
+  "6": {
+    "inputs": {
+      "control_net_name": "control_v11p_sd15_lineart.pth"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "ControlNet加载器"
+    }
+  },
+  "7": {
+    "inputs": {
+      "strength": 1,
+      "conditioning": [
+        "3",
+        0
+      ],
+      "control_net": [
+        "6",
+        0
+      ],
+      "image": [
+        "22",
+        0
+      ]
+    },
+    "class_type": "ControlNetApply",
+    "_meta": {
+      "title": "ControlNet应用"
+    }
+  },
+  "8": {
+    "inputs": {
+      "seed": 275540587861329,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "lcm",
+      "scheduler": "karras",
+      "denoise": 1,
+      "model": [
+        "14",
+        0
+      ],
+      "positive": [
+        "7",
+        0
+      ],
+      "negative": [
+        "4",
+        0
+      ],
+      "latent_image": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "9": {
+    "inputs": {
+      "samples": [
+        "8",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "14": {
+    "inputs": {
+      "lora_name": "lcm-lora-sdv1-5.safetensors",
+      "strength_model": 1,
+      "model": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoRA加载器(仅模型)"
+    }
+  },
+  "15": {
+    "inputs": {
+      "image": ""
+    },
+    "class_type": "ETN_LoadImageBase64",
+    "_meta": {
+      "title": "Load Image (Base64)"
+    }
+  },
+  "16": {
+    "inputs": {
+      "image": [
+        "22",
+        0
+      ]
+    },
+    "class_type": "GetImage_(Width&Height) _O",
+    "_meta": {
+      "title": "GetImage_(Width&Height) _O"
+    }
+  },
+  "17": {
+    "inputs": {
+      "text_trans": ""
+    },
+    "class_type": "ZhPromptTranslator",
+    "_meta": {
+      "title": "正向提示词"
+    }
+  },
+  "18": {
+    "inputs": {
+      "text_trans": ""
+    },
+    "class_type": "ZhPromptTranslator",
+    "_meta": {
+      "title": "反向提示词"
+    }
+  },
+  "19": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "20": {
+    "inputs": {
+      "channel": "red",
+      "image": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "图像到遮罩"
+    }
+  },
+  "21": {
+    "inputs": {
+      "mask": [
+        "20",
+        0
+      ]
+    },
+    "class_type": "InvertMask",
+    "_meta": {
+      "title": "遮罩反转"
+    }
+  },
+  "22": {
+    "inputs": {
+      "mask": [
+        "21",
+        0
+      ]
+    },
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "遮罩到图像"
+    }
+  }
+}

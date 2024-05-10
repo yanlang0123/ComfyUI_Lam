@@ -273,8 +273,8 @@ app.registerExtension({
                     ),list,$el('span',{textContent:"选择内容"}),lists,
                     $el('img',{id:'show_image_id',
                     style:{display:'none',position:'absolute'},
-                    src:'/lam/getStyleImage?name=abstract_expressionism'})]));
-                let st_values=''
+                    src:''})]));
+                let st_values='';
                 Object.defineProperty(style_type, "value", {
                     set: (x) => {
                         st_values=x
@@ -282,28 +282,34 @@ app.registerExtension({
                             getStyles(st_values);
                             styles.element.children[1].innerHTML=''
                             if(pb_cache[st_values]){
-                                    let list =getTagList(pb_cache[st_values]);
-                                    styles.element.children[1].append(...list)
-                                    styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
+                                let list =getTagList(pb_cache[st_values]);
+                                styles.element.children[1].append(...list)
+                                styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
                                     if(this.properties["values"].includes(el.dataset.tag)){
                                         el.classList.add("lam_style-model-tag--selected");
                                     }
-                                    this.setSize([500, 600]);
                                 });
+                                this.setSize([500, 600]);
                             }
                             
                         }
                     },
                     get: () => {
+                        if(st_values&&!pb_cache[st_values]){
+                            getStyles(st_values);
+                            styles.element.children[1].innerHTML=''
+                        }else{
+                            style_type.value=style_type.options.values[0];
+                        }
                         if(pb_cache[st_values]&&styles.element.children[1].children.length==0){
-                                let list =getTagList(pb_cache[st_values]);
-                                styles.element.children[1].append(...list)
-                                styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
+                            let list =getTagList(pb_cache[st_values]);
+                            styles.element.children[1].append(...list)
+                            styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
                                 if(this.properties["values"].includes(el.dataset.tag)){
                                     el.classList.add("lam_style-model-tag--selected");
                                 }
-                                this.setSize([500, 600]);
                             });
+                            this.setSize([500, 600]);
                         }
                         return st_values;
                     }
@@ -311,7 +317,6 @@ app.registerExtension({
                 let stylesValue=''
                 Object.defineProperty(styles, "value", {
                     set: (x) => {
-                        
                     },
                     get: () => {
                         let namestr=Object.keys(this.properties['selTags']).join(',')

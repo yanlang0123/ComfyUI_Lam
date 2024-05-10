@@ -1,7 +1,7 @@
 wechat:
   appid: wxa50ed345b253964d                        #公众号appid 
   secret: 327ac9ba06d214d2fcfe2e9ed0520684         #公众号秘钥
-  serverAddress: http://139.9.53.208/ #服务器地址 微信公众配置地址的前缀
+  serverAddress: http://119.123.205.233/ #服务器地址 微信公众配置地址的前缀
   freeSize: 3 #免费使用次数
   isEnterprise: true #是否为企业微信
   adminNo: b0pOVFM2dnRsZkdLeWl2Zlk2bG9MTFNjUTNGUQ== #管理员微信编号启动会后可发送我的编号获取
@@ -9,6 +9,174 @@ wechat:
   access_token: '' #不用填系统用于保存临时值
   access_token_expires_at: 0 #默认0
   commands:                                        #功能列表
+    简笔画:
+      filename: line2drawing.json
+      type: paint-board
+      params:
+        ckpt:
+          isRequired: false
+          keys:
+          - '1'
+          - inputs
+          - ckpt_name
+          options:          #选项参数
+            卡通动画片SD1.5: yamer_Cartoon_xenoArcadiaCD.safetensors
+            冷却混合料SD1.5: chilloutmix_NiPrunedFp32Fix.safetensors #中文名称:英文名称
+            梦想塑造者SD1.5: dreamshaper_8.safetensors
+          zhName: 基础模型
+        prompt:
+          isRequired: false
+          keys:
+          - '17'
+          - inputs
+          - text_trans
+          zhName: 正向提示词
+        seed:
+          default: -1
+          isRequired: true
+          keys:
+          - '8'
+          - inputs
+          - seed
+          type: text
+          zhName: 随机种子
+        image:
+          isRequired: true
+          keys:
+          - '15'
+          - inputs
+          - image
+          type: text
+          zhName: 输入图片
+    水彩画:
+      filename: color2painting.json
+      type: paint-board
+      params:
+        ckpt:
+          isRequired: false
+          keys:
+          - '4'
+          - inputs
+          - ckpt_name
+          options:          #选项参数
+            卡通动画片SD1.5: yamer_Cartoon_xenoArcadiaCD.safetensors
+            冷却混合料SD1.5: chilloutmix_NiPrunedFp32Fix.safetensors #中文名称:英文名称
+            梦想塑造者SD1.5: dreamshaper_8.safetensors
+          zhName: 基础模型
+        prompt:
+          isRequired: false
+          keys:
+          - '27'
+          - inputs
+          - text_trans
+          zhName: 正向提示词
+        seed:
+          default: -1
+          isRequired: true
+          keys:
+          - '3'
+          - inputs
+          - seed
+          type: text
+          zhName: 随机种子
+        denoise:
+          default: 0.65     #默认值
+          isRequired: false
+          keys:
+          - '3'
+          - inputs
+          - denoise
+          max: 100         #最大值
+          min: 0          #最小值
+          original: 1     #原始最大值（用来换算滑块比例）
+          type: number      #类型(输入型参数目前只支持 number/text)
+          zhName: 重绘幅度
+        image:
+          isRequired: true
+          keys:
+          - '25'
+          - inputs
+          - image
+          type: text
+          zhName: 输入图片
+    图片修改:
+      filename: imageEdit.json
+      params:
+        image:
+          isRequired: true
+          keys:
+          - '48'
+          - inputs
+          - image_path
+          zhName: 图片
+        prompt:
+          isRequired: true
+          keys:
+          - '47'
+          - inputs
+          - text_trans
+          zhName: 正向提示词
+        seed:
+          default: -1
+          isRequired: true
+          keys:
+          - '37:1'
+          - inputs
+          - noise_seed
+          type: text
+          zhName: 随机种子
+      replyText: 请发送您的图片发送正向提示词用“ok”结尾开始任务，如：“漫画风格ok”
+    风格转绘:
+      filename: img2imgStyle.json
+      replyText: 请上传需转绘的图片和参考风格图发送“ok”开始任务，如：“ok”     #指令说明回复
+      params:
+        image:                                     #参数名称(几个固定参数名称必须如下：图片：image  随机种子：seed 正向提示词：prompt 反向提示词：negative) 
+          isRequired: true                         #是否必填
+          keys:                                    #参数对应json中对应的key
+          - '110'
+          - inputs
+          - image_path
+          zhName: 待转绘图       
+          type: image
+        styleImage:                                     #参数名称(几个固定参数名称必须如下：图片：image  随机种子：seed 正向提示词：prompt 反向提示词：negative) 
+          isRequired: true                         #是否必填
+          keys:                                    #参数对应json中对应的key
+          - '111'
+          - inputs
+          - image_path
+          zhName: 风格参考图
+          type: image
+          default: 发送图片
+    文生二维码:
+      filename: text2qrcode.json
+      replyText: 请发送二维码内容，和提示词发送“ok”开始任务，如：“花朵ok”     #指令说明回复
+      params:
+        prompt:
+          isRequired: true
+          keys:
+          - '75'
+          - inputs
+          - text_trans
+          zhName: 正向提示词
+        seed:
+          default: -1
+          isRequired: true
+          keys:
+          - '3'
+          - inputs
+          - seed
+          type: text
+          zhName: 随机种子
+        qrText:
+          default: "https://u.wechat.com/EEy4mPvfXdYO-MvStE4S2m0"
+          isRequired: true
+          keys:
+          - '16'
+          - inputs
+          - text
+          type: text
+          zhName: 二维码内容
+
     图生视频:
       filename: img2video.json                     #功能流程图json文件
       params:                                      #参数列表

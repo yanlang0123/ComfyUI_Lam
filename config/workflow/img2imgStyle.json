@@ -1,0 +1,651 @@
+{
+  "3": {
+    "inputs": {
+      "seed": 20,
+      "steps": 25,
+      "cfg": 6,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 0.9,
+      "model": [
+        "105",
+        0
+      ],
+      "positive": [
+        "64",
+        0
+      ],
+      "negative": [
+        "64",
+        1
+      ],
+      "latent_image": [
+        "64",
+        2
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "4": {
+    "inputs": {
+      "ckpt_name": "dreamshaper_8.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Checkpoint加载器(简易)"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": [
+        "72",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
+  },
+  "7": {
+    "inputs": {
+      "text": "blurry, noisy, messy, glitch, distorted, malformed, ill, horror, naked, nipples",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "29": {
+    "inputs": {
+      "width": 960,
+      "height": 0,
+      "interpolation": "nearest",
+      "keep_proportion": true,
+      "condition": "always",
+      "multiple_of": 0,
+      "image": [
+        "110",
+        0
+      ]
+    },
+    "class_type": "ImageResize+",
+    "_meta": {
+      "title": "图像缩放"
+    }
+  },
+  "48": {
+    "inputs": {
+      "preset": "STANDARD (medium strength)",
+      "model": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "IPAdapterUnifiedLoader",
+    "_meta": {
+      "title": "IPAdapter加载器"
+    }
+  },
+  "50": {
+    "inputs": {
+      "interpolation": "LANCZOS",
+      "crop_position": "pad",
+      "sharpening": 0,
+      "image": [
+        "111",
+        0
+      ]
+    },
+    "class_type": "PrepImageForClipVision",
+    "_meta": {
+      "title": "CLIP视觉图像处理"
+    }
+  },
+  "51": {
+    "inputs": {
+      "strength": 0.55,
+      "start_percent": 0,
+      "end_percent": 0.75,
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "control_net": [
+        "52",
+        0
+      ],
+      "image": [
+        "83",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "ControlNet应用(高级)"
+    }
+  },
+  "52": {
+    "inputs": {
+      "control_net_name": "control_v11p_sd15_lineart.pth"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "ControlNet加载器"
+    }
+  },
+  "55": {
+    "inputs": {
+      "strength": 1,
+      "start_percent": 0,
+      "end_percent": 0.3,
+      "positive": [
+        "51",
+        0
+      ],
+      "negative": [
+        "51",
+        1
+      ],
+      "control_net": [
+        "56",
+        0
+      ],
+      "image": [
+        "57",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "ControlNet应用(高级)"
+    }
+  },
+  "56": {
+    "inputs": {
+      "control_net_name": "control_v11f1p_sd15_depth.pth"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "ControlNet加载器"
+    }
+  },
+  "57": {
+    "inputs": {
+      "ckpt_name": "depth_anything_vits14.pth",
+      "resolution": 960,
+      "image": [
+        "71",
+        0
+      ]
+    },
+    "class_type": "DepthAnythingPreprocessor",
+    "_meta": {
+      "title": "DA深度预处理器"
+    }
+  },
+  "63": {
+    "inputs": {
+      "interpolation": "LANCZOS",
+      "crop_position": "pad",
+      "sharpening": 0,
+      "image": [
+        "71",
+        0
+      ]
+    },
+    "class_type": "PrepImageForClipVision",
+    "_meta": {
+      "title": "CLIP视觉图像处理"
+    }
+  },
+  "64": {
+    "inputs": {
+      "positive": [
+        "55",
+        0
+      ],
+      "negative": [
+        "55",
+        1
+      ],
+      "vae": [
+        "4",
+        2
+      ],
+      "pixels": [
+        "71",
+        0
+      ]
+    },
+    "class_type": "InstructPixToPixConditioning",
+    "_meta": {
+      "title": "InstructPixToPix条件"
+    }
+  },
+  "69": {
+    "inputs": {
+      "image": [
+        "110",
+        0
+      ]
+    },
+    "class_type": "GetImage_(Width&Height) _O",
+    "_meta": {
+      "title": "GetImage_(Width&Height) _O"
+    }
+  },
+  "70": {
+    "inputs": {
+      "expression": "p0>960",
+      "p0": [
+        "69",
+        0
+      ]
+    },
+    "class_type": "MultiParamFormula",
+    "_meta": {
+      "title": "多参代码表达式"
+    }
+  },
+  "71": {
+    "inputs": {
+      "ANY": [
+        "70",
+        0
+      ],
+      "IF_TRUE": [
+        "29",
+        0
+      ],
+      "IF_FALSE": [
+        "110",
+        0
+      ]
+    },
+    "class_type": "IfInnerExecute",
+    "_meta": {
+      "title": "判断选择"
+    }
+  },
+  "72": {
+    "inputs": {
+      "model": "wd-v1-4-moat-tagger-v2",
+      "threshold": 0.35,
+      "character_threshold": 1,
+      "exclude_tags": "",
+      "image": [
+        "71",
+        0
+      ]
+    },
+    "class_type": "WD14Tagger|pysssss",
+    "_meta": {
+      "title": "WD14反推提示词"
+    }
+  },
+  "76": {
+    "inputs": {
+      "preset": "PLUS FACE (portraits)",
+      "model": [
+        "103",
+        0
+      ]
+    },
+    "class_type": "IPAdapterUnifiedLoader",
+    "_meta": {
+      "title": "IPAdapter加载器"
+    }
+  },
+  "83": {
+    "inputs": {
+      "coarse": "disable",
+      "image": [
+        "71",
+        0
+      ]
+    },
+    "class_type": "LineArtPreprocessor",
+    "_meta": {
+      "title": "LineArt艺术线预处理器"
+    }
+  },
+  "86": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "88": {
+    "inputs": {
+      "expression": "p0[p1:p1+1]",
+      "p0": [
+        "108",
+        0
+      ],
+      "p1": [
+        "89",
+        1
+      ]
+    },
+    "class_type": "MultiParamFormula",
+    "_meta": {
+      "title": "多参代码表达式"
+    }
+  },
+  "89": {
+    "inputs": {
+      "total": [
+        "90",
+        0
+      ],
+      "stop": 1,
+      "i": 0
+    },
+    "class_type": "ForInnerStart",
+    "_meta": {
+      "title": "计次内循环首"
+    }
+  },
+  "90": {
+    "inputs": {
+      "expression": "len(p0)",
+      "p0": [
+        "108",
+        1
+      ]
+    },
+    "class_type": "MultiParamFormula",
+    "_meta": {
+      "title": "多参代码表达式"
+    }
+  },
+  "91": {
+    "inputs": {
+      "expression": "p0[p1]",
+      "p0": [
+        "108",
+        1
+      ],
+      "p1": [
+        "89",
+        1
+      ]
+    },
+    "class_type": "MultiParamFormula",
+    "_meta": {
+      "title": "多参代码表达式"
+    }
+  },
+  "92": {
+    "inputs": {
+      "total": [
+        "89",
+        0
+      ],
+      "obj": [
+        "97",
+        0
+      ]
+    },
+    "class_type": "ForInnerEnd",
+    "_meta": {
+      "title": "计次内循环尾"
+    }
+  },
+  "94": {
+    "inputs": {
+      "ANY": [
+        "95",
+        0
+      ],
+      "IF_TRUE": [
+        "96",
+        0
+      ],
+      "IF_FALSE": [
+        "89",
+        3
+      ]
+    },
+    "class_type": "IfInnerExecute",
+    "_meta": {
+      "title": "判断选择"
+    }
+  },
+  "95": {
+    "inputs": {
+      "expression": "p0==0",
+      "p0": [
+        "89",
+        1
+      ]
+    },
+    "class_type": "MultiParamFormula",
+    "_meta": {
+      "title": "多参代码表达式"
+    }
+  },
+  "96": {
+    "inputs": {
+      "preset": "FACEID PLUS V2",
+      "lora_strength": 0.39,
+      "provider": "CPU",
+      "model": [
+        "76",
+        0
+      ],
+      "ipadapter": [
+        "76",
+        1
+      ]
+    },
+    "class_type": "IPAdapterUnifiedLoaderFaceID",
+    "_meta": {
+      "title": "IPAdapterFaceID加载器"
+    }
+  },
+  "97": {
+    "inputs": {
+      "weight": 1,
+      "weight_faceidv2": 2,
+      "weight_type": "linear",
+      "combine_embeds": "concat",
+      "start_at": 0,
+      "end_at": 1,
+      "embeds_scaling": "V only",
+      "model": [
+        "94",
+        0
+      ],
+      "ipadapter": [
+        "96",
+        1
+      ],
+      "image": [
+        "88",
+        0
+      ],
+      "attn_mask": [
+        "91",
+        0
+      ]
+    },
+    "class_type": "IPAdapterFaceID",
+    "_meta": {
+      "title": "应用IPAdapterFaceID"
+    }
+  },
+  "102": {
+    "inputs": {
+      "weight": 1,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0,
+      "end_at": 1,
+      "embeds_scaling": "V only",
+      "model": [
+        "48",
+        0
+      ],
+      "ipadapter": [
+        "48",
+        1
+      ],
+      "image": [
+        "50",
+        0
+      ]
+    },
+    "class_type": "IPAdapterAdvanced",
+    "_meta": {
+      "title": "应用IPAdapter(高级)"
+    }
+  },
+  "103": {
+    "inputs": {
+      "weight": 1,
+      "weight_type": "composition",
+      "combine_embeds": "concat",
+      "start_at": 0,
+      "end_at": 1,
+      "embeds_scaling": "V only",
+      "model": [
+        "102",
+        0
+      ],
+      "ipadapter": [
+        "48",
+        1
+      ],
+      "image": [
+        "63",
+        0
+      ]
+    },
+    "class_type": "IPAdapterAdvanced",
+    "_meta": {
+      "title": "应用IPAdapter(高级)"
+    }
+  },
+  "104": {
+    "inputs": {
+      "expression": "len(p0)>0",
+      "p0": [
+        "108",
+        1
+      ]
+    },
+    "class_type": "MultiParamFormula",
+    "_meta": {
+      "title": "多参代码表达式"
+    }
+  },
+  "105": {
+    "inputs": {
+      "ANY": [
+        "104",
+        0
+      ],
+      "IF_TRUE": [
+        "92",
+        1
+      ],
+      "IF_FALSE": [
+        "103",
+        0
+      ]
+    },
+    "class_type": "IfInnerExecute",
+    "_meta": {
+      "title": "判断选择"
+    }
+  },
+  "108": {
+    "inputs": {
+      "crop_padding_factor": 0.25,
+      "analysis_models": [
+        "109",
+        0
+      ],
+      "image": [
+        "71",
+        0
+      ]
+    },
+    "class_type": "ImageCropFaces",
+    "_meta": {
+      "title": "多人面部裁剪"
+    }
+  },
+  "109": {
+    "inputs": {
+      "library": "insightface",
+      "provider": "CPU"
+    },
+    "class_type": "FaceAnalysisModels",
+    "_meta": {
+      "title": "面部分析模型"
+    }
+  },
+  "110": {
+    "inputs": {
+      "image_path": "./ComfyUI/input/example.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "需转绘的图"
+    }
+  },
+  "111": {
+    "inputs": {
+      "image_path": "./ComfyUI/input/example.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "风格参考图片"
+    }
+  }
+}
