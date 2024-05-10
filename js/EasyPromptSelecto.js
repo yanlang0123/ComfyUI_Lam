@@ -324,12 +324,12 @@ app.registerExtension({
                             let list =getTagList(pb_cache[prompt_type.value][cat_value],cat_value);
                             tags.element.children[1].append(...list)
                             tags.element.children[1].querySelectorAll(".lam-model-tag").forEach(el => {
-                            if(this.properties["values"].includes(el.dataset.tag)){
-                                el.classList.add("lam-model-tag--selected");
-                            }
+                                if(this.properties["values"].includes(el.dataset.tag)){
+                                    el.classList.add("lam-model-tag--selected");
+                                }
+                            });
                             this.setSize([600, 700]);
-                        });
-                    }
+                        }
                         return cat_value;
                     }
                 });               

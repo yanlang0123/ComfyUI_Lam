@@ -481,7 +481,7 @@
                 
                 historyObj[command['prompt_id']]=command
                 for(var node_id of Object.keys(outputs)){
-                    node_output = outputs[node_id]
+                    var node_output = outputs[node_id]
                     if(Object.keys(node_output).indexOf("images") >= 0){
                         for(var j = 0; j < node_output.images.length; j++){
                             var img=node_output.images[j]

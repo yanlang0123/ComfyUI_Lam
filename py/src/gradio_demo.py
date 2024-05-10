@@ -103,7 +103,7 @@ class SadTalker():
         if use_DAIN:
             import paddle
             from .dain_model import dain_predictor
-            #paddle.device.set_device("gpu") # 把get—device的结果直接复制进去
+            #paddle.device.set_device("gpu") # 把get—device的结果直接复制进去 补帧
             paddle.enable_static()
             predictor_dian = dain_predictor.DAINPredictor(dian_output, weight_path=os.path.join(self.checkpoint_path,'DAIN_weight'),
                                                         time_step=time_step,

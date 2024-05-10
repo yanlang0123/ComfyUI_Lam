@@ -9,6 +9,96 @@ wechat:
   access_token: '' #不用填系统用于保存临时值
   access_token_expires_at: 0 #默认0
   commands:                                        #功能列表
+    简笔画:
+      filename: line2drawing.json
+      type: paint-board
+      params:
+        ckpt:
+          isRequired: false
+          keys:
+          - '1'
+          - inputs
+          - ckpt_name
+          options:          #选项参数
+            卡通动画片SD1.5: yamer_Cartoon_xenoArcadiaCD.safetensors
+            冷却混合料SD1.5: chilloutmix_NiPrunedFp32Fix.safetensors #中文名称:英文名称
+            梦想塑造者SD1.5: dreamshaper_8.safetensors
+          zhName: 基础模型
+        prompt:
+          isRequired: false
+          keys:
+          - '17'
+          - inputs
+          - text_trans
+          zhName: 正向提示词
+        seed:
+          default: -1
+          isRequired: true
+          keys:
+          - '8'
+          - inputs
+          - seed
+          type: text
+          zhName: 随机种子
+        image:
+          isRequired: true
+          keys:
+          - '15'
+          - inputs
+          - image
+          type: text
+          zhName: 输入图片
+    水彩画:
+      filename: color2painting.json
+      type: paint-board
+      params:
+        ckpt:
+          isRequired: false
+          keys:
+          - '4'
+          - inputs
+          - ckpt_name
+          options:          #选项参数
+            卡通动画片SD1.5: yamer_Cartoon_xenoArcadiaCD.safetensors
+            冷却混合料SD1.5: chilloutmix_NiPrunedFp32Fix.safetensors #中文名称:英文名称
+            梦想塑造者SD1.5: dreamshaper_8.safetensors
+          zhName: 基础模型
+        prompt:
+          isRequired: false
+          keys:
+          - '27'
+          - inputs
+          - text_trans
+          zhName: 正向提示词
+        seed:
+          default: -1
+          isRequired: true
+          keys:
+          - '3'
+          - inputs
+          - seed
+          type: text
+          zhName: 随机种子
+        denoise:
+          default: 0.65     #默认值
+          isRequired: false
+          keys:
+          - '3'
+          - inputs
+          - denoise
+          max: 100         #最大值
+          min: 0          #最小值
+          original: 1     #原始最大值（用来换算滑块比例）
+          type: number      #类型(输入型参数目前只支持 number/text)
+          zhName: 重绘幅度
+        image:
+          isRequired: true
+          keys:
+          - '25'
+          - inputs
+          - image
+          type: text
+          zhName: 输入图片
     图片修改:
       filename: imageEdit.json
       params:

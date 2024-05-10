@@ -1,0 +1,192 @@
+{
+  "3": {
+    "inputs": {
+      "seed": 611578276912800,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "denoise": 0.65,
+      "model": [
+        "21",
+        0
+      ],
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "latent_image": [
+        "19",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "4": {
+    "inputs": {
+      "ckpt_name": "yamer_Cartoon_xenoArcadiaCD.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Checkpoint加载器(简易)"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": [
+        "27",
+        0
+      ],
+      "clip": [
+        "21",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
+  },
+  "7": {
+    "inputs": {
+      "text": [
+        "28",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "10": {
+    "inputs": {
+      "lora_name": "lcm-lora-sdv1-5.safetensors",
+      "strength_model": 1,
+      "strength_clip": 1,
+      "model": [
+        "4",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "LoRA加载器"
+    }
+  },
+  "19": {
+    "inputs": {
+      "pixels": [
+        "25",
+        0
+      ],
+      "vae": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE编码"
+    }
+  },
+  "21": {
+    "inputs": {
+      "lora_name": "可爱少女厚涂风.safetensors",
+      "strength_model": 0,
+      "strength_clip": 1,
+      "model": [
+        "10",
+        0
+      ],
+      "clip": [
+        "10",
+        1
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "LoRA加载器"
+    }
+  },
+  "23": {
+    "inputs": {
+      "vae_name": "clearvae_v23.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "VAE加载器"
+    }
+  },
+  "25": {
+    "inputs": {
+      "image": ""
+    },
+    "class_type": "ETN_LoadImageBase64",
+    "_meta": {
+      "title": "Load Image (Base64)"
+    }
+  },
+  "27": {
+    "inputs": {
+      "text_trans": ""
+    },
+    "class_type": "ZhPromptTranslator",
+    "_meta": {
+      "title": "正向提示词"
+    }
+  },
+  "28": {
+    "inputs": {
+      "text_trans": ""
+    },
+    "class_type": "ZhPromptTranslator",
+    "_meta": {
+      "title": "反向提示词"
+    }
+  }
+}

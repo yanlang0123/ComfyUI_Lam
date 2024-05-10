@@ -32,7 +32,8 @@ class KeypointExtractor():
                     keypoints.append(current_kp[None])
 
             keypoints = np.concatenate(keypoints, 0)
-            np.savetxt(os.path.splitext(name)[0]+'.txt', keypoints.reshape(-1))
+            if name is not None:
+                np.savetxt(os.path.splitext(name)[0]+'.txt', keypoints.reshape(-1))
             return keypoints
         else:
             while True:

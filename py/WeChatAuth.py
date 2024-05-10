@@ -89,7 +89,6 @@ def update_dict(dictionary, keys, value):
 def setPost(self,FromUserName):
     self.user_command[FromUserName]['status']='waiting' #prepare:准备 waiting:待执行  wcomplete完成
     params=self.user_command[FromUserName]
-    logging.info(str(params))
     basePath=folder_paths.folder_names_and_paths['custom_nodes'][0][0]
     comand=Config().wechat['commands'][params['command']]
     filePath = os.path.join(basePath,'ComfyUI_Lam','config','workflow',comand['filename'])
@@ -105,7 +104,6 @@ def setPost(self,FromUserName):
             update_dict(json_data,keys,params[key])
     
     json_data={"prompt":json_data,"client_id":params['openId']}
-    logging.info(json_data)
     json_data = self.trigger_on_prompt(json_data)
     if "number" in json_data:
         number = float(json_data['number'])
@@ -163,14 +161,22 @@ async def getHistorys(request):
         db=DataBaseUtil()
         datas=db.get_many_data(openId)
         db.close_con()
-        return web.Response(text=json.dumps(datas), content_type='application/json')
+        rdataList=[]
+        if "type" in request.rel_url.query:
+            for data in datas:
+                jd=json.loads(data[2])
+                if 'type' in jd and request.rel_url.query['type']==jd['type']:
+                    rdataList.append(data)
+        else:
+            rdataList=datas
+        return web.Response(text=json.dumps(rdataList), content_type='application/json')
     else:
-        return web.Response(status=404)
+        data={'msg':'openId 不能为空！','success':False}
+        return web.Response(text=json.dumps(data), content_type='application/json')
     
 @PromptServer.instance.routes.post("/wechatauth/addTask")
 async def addTask(request):
     post = await request.post()
-    print(post.keys())
     command = post.get("command")
     if command == None:
         msg = '指令不能为空！'
@@ -205,6 +211,9 @@ async def addTask(request):
     params=Config().wechat['commands'][command]['params']
     paramName=''
     userData={'openId':openId,'command':command,'status':'prepare','isWeb':True}
+    if 'type' in Config().wechat['commands'][command]:
+        userData['type']=Config().wechat['commands'][command]['type']
+    
     for param in params:
         val=post.get(param)
         if params[param]['isRequired'] and val==None:
@@ -221,6 +230,8 @@ async def addTask(request):
     if 'seed' in userData:
         if userData['seed'].isdigit()==False or int(userData['seed'])==-1:
             userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
+    else:
+        userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
 
     if hasattr(PromptServer.instance,"user_command")==False:
         setattr(PromptServer.instance,"user_command",{})
@@ -230,11 +241,23 @@ async def addTask(request):
     if resp!=None:
         data={'msg':'任务成功加入队列请等待','prompt_id':resp,'success':True}
         return web.Response(text=json.dumps(data), content_type='application/json')
+    else:
+        data={'msg':'任务加入队列失败','success':False}
+        return web.Response(text=json.dumps(data), content_type='application/json')
     
 @PromptServer.instance.routes.get("/wechatauth/getCommands")
 async def getCommands(request):
     commands=Config().wechat['commands']
-    return web.Response(text=json.dumps(commands), content_type='application/json')
+    comms={}
+    if "type" in request.rel_url.query:
+        type=request.rel_url.query['type']
+        for key in commands:
+            if 'type' in commands[key] and commands[key]['type']==type:
+                comms[key] = commands[key]
+    else:
+        comms=commands
+    #type: paint-board
+    return web.Response(text=json.dumps(comms), content_type='application/json')
 
 @PromptServer.instance.routes.get("/wechatauth/app")
 async def app(request):
