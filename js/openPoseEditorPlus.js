@@ -99,6 +99,7 @@ class OpenPose {
     this.subsets = [];
     this.hands = [];
     this.rects = [];
+    this.backgImg=null
     this.index = 1
     this.history_index = 0;
     this.history_change = false;
@@ -111,6 +112,13 @@ class OpenPose {
     this.addPoseDemoInput.style.display = "none";
     this.addPoseDemoInput.addEventListener("change", this.addPoseDemo.bind(this));
     document.body.appendChild(this.addPoseDemoInput);
+    // 创建用于选择图片的input元素
+    this.backgroundInput = document.createElement("input");
+    this.backgroundInput.type = "file";
+    this.backgroundInput.accept = "image/*";
+    this.backgroundInput.style.display = "none";
+    this.backgroundInput.addEventListener("change", this.onLoadBackground.bind(this));
+    document.body.appendChild(this.backgroundInput);
     }
 
   setCanvasWidth(width){
@@ -122,7 +130,25 @@ class OpenPose {
     //this.painterCanvas.setHeight(height);
   }
 
-	// 处理背景图片的加载
+  // 处理背景图片的加载
+  onLoadBackground(e) {
+    const file = this.backgroundInput.files[0];
+    //const url = URL.createObjectURL(file);
+    // 创建FileReader对象
+    const reader = new FileReader();
+    let thi=this
+    // 文件读取成功后执行的回调函数
+    reader.onload = function(event) {
+      const base64 = event.target.result;
+      //console.log('转换后的Base64字符串:', base64);
+      // 在这里可以使用base64字符串，例如发送到服务器或进行其他处理
+      thi.backgImg=base64;
+      thi.setBackgroundImage(base64);
+    };
+    // 以Base64形式读取文件
+    reader.readAsDataURL(file);
+  }
+	//添加示例图片
   addPoseDemo(e) {
     const file = this.addPoseDemoInput.files[0];
     if(file){
@@ -136,11 +162,16 @@ class OpenPose {
             img.set({
                 originX: 'left',
                 originY: 'top',
-                opacity: 0.5
+                opacity: 0.95
             });
-            
+        let width = this.node.widgets[this.node.widgets.findIndex(obj => obj.name === 'width')];
+        let height = this.node.widgets[this.node.widgets.findIndex(obj => obj.name === 'height')];
+        width.value=img.width
+        height.value=img.height
         this.setCanvasWidth(img.width)
         this.setCanvasHeight(img.height)
+        this.node.painter.setCanvasSize(width.value,height.value)
+        //this.backgImg=img
         this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas));
         });
     }
@@ -310,11 +341,17 @@ class OpenPose {
     }
   }
 
+  clearCanvas(){
+    //this.canvas.clear();
+    //this.canvas.backgroundColor = "#000";
+    let thi=this
+    this.canvas.getObjects().forEach(function(object) {
+      thi.canvas.remove(object);
+    });
+  }
+
   setPose(keypoints,groups=[],isEdit=true) {
-    this.canvas.clear();
-
-    this.canvas.backgroundColor = "#000";
-
+    this.clearCanvas();
     let res = [];
     if(groups.length>0){
       res=groups;
@@ -639,6 +676,7 @@ class OpenPose {
     this.canvas.clear();
     this.canvas.backgroundColor = "#000";
     this.groups=[]
+    this.backgImg = null;
     this.addPose();
     this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
     'hands':JSON.parse(JSON.stringify(this.hands)),
@@ -915,22 +953,28 @@ function createOpenPose(node, inputName, inputData, app) {
         index.value =0;
         index.options['max']=this.openPose.groups.length-1;
         node.openPose.setIndexPose(0,false)
+        if('backgImg' in data && data.backgImg){
+          node.openPose.backgImg=data.backgImg;
+          node.openPose.setBackgroundImage(node.openPose.backgImg)
+        }
     },
     get: () => {
       return JSON.stringify({
         groups: this.openPose.groups,
         subsets: this.openPose.subsets,
         hands: this.openPose.hands,
+        backgImg:this.openPose.backgImg?this.openPose.backgImg:null,
       });
     }
   });
 
   // Create elements undo, redo, clear history
   let panelButtons = document.createElement("div"),
+    refButton = document.createElement("button"),
     addButton = document.createElement("button"),
     delButton = document.createElement("button"),
     resButton = document.createElement("button"),
-    refButton = document.createElement("button"),
+    imgButton = document.createElement("button"),
     undoButton = document.createElement("button"),
     redoButton = document.createElement("button"),
     fliplfButton = document.createElement("button"),
@@ -939,20 +983,22 @@ function createOpenPose(node, inputName, inputData, app) {
     historyClearButton = document.createElement("button");
 
   panelButtons.className = "panelButtons comfy-menu-btns";
+  refButton.textContent = "Ref";
   addButton.textContent = "+";
   delButton.textContent = "-";
   resButton.textContent = "⟲";
-  refButton.textContent = "img";
+  imgButton.textContent = "img";
   undoButton.textContent = "<-";
   redoButton.textContent = "->";
   fliplfButton.textContent = "↔";
   fliptdButton.textContent = "↕";
   rectButton.textContent = "□";
   historyClearButton.textContent = "✖";
+  refButton.title = "背景图片";
   addButton.title = "添加骨骼";
   delButton.title = "删除骨骼";
   resButton.title = "重置";
-  refButton.title = "添加人物示例";
+  imgButton.title = "添加人物示例";
   undoButton.title = "上一步";
   redoButton.title = "下一步";
   fliplfButton.title = "左右翻转";
@@ -960,10 +1006,11 @@ function createOpenPose(node, inputName, inputData, app) {
   rectButton.title="矩形遮罩";
   historyClearButton.title = "清除历史";
 
+  refButton.addEventListener("click", () => node.openPose.backgroundInput.click());
   addButton.addEventListener("click", () => node.openPose.addPose());
   delButton.addEventListener("click", () => node.openPose.delIndexPose());
   resButton.addEventListener("click", () => node.openPose.resetCanvas());
-  refButton.addEventListener("click", () => node.openPose.addPoseDemoInput.click());
+  imgButton.addEventListener("click", () => node.openPose.addPoseDemoInput.click());
   undoButton.addEventListener("click", () => node.openPose.undo());
   redoButton.addEventListener("click", () => node.openPose.redo());
   fliplfButton.addEventListener("click", () => node.openPose.fliplf());
@@ -984,10 +1031,11 @@ function createOpenPose(node, inputName, inputData, app) {
       node.openPose.updateHistoryData();
     }
   });
+  panelButtons.appendChild(refButton);
   panelButtons.appendChild(addButton);
   panelButtons.appendChild(delButton);
   panelButtons.appendChild(resButton);
-  panelButtons.appendChild(refButton);
+  panelButtons.appendChild(imgButton);
   panelButtons.appendChild(undoButton);
   panelButtons.appendChild(redoButton);
   panelButtons.appendChild(fliplfButton);

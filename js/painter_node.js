@@ -1646,10 +1646,10 @@ export function PainterWidget(node, inputName, inputData, app) {
 
   document.body.appendChild(widget.painter_wrap);
 
-  node.addWidget("button", "清除画布", "clear_painer", () => {
-    node.painter.list_objects_panel__items.innerHTML = "";
-    node.painter.clearCanvas();
-  });
+  // node.addWidget("button", "清除画布", "clear_painer", () => {
+  //   node.painter.list_objects_panel__items.innerHTML = "";
+  //   node.painter.clearCanvas();
+  // });
 
   // Add customWidget to node
   node.addCustomWidget(widget);

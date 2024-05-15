@@ -52,6 +52,7 @@ class ZhPromptTranslator:
 
     def __init__(self):
         self.my_translations = os.path.join(confdir,"translations.csv")
+        #os.environ['HF_ENDPOINT'] = 'hf-mirror.com'
         self.model = MarianMTModel.from_pretrained('Helsinki-NLP/opus-mt-zh-en').cuda()
         self.tokenizer = MarianTokenizer.from_pretrained('Helsinki-NLP/opus-mt-zh-en')
         self.tokenizer.src_lang = "zh_CN"

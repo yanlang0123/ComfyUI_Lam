@@ -176,72 +176,77 @@ async def getHistorys(request):
     
 @PromptServer.instance.routes.post("/wechatauth/addTask")
 async def addTask(request):
-    post = await request.post()
-    command = post.get("command")
-    if command == None:
-        msg = '指令不能为空！'
-        data={'msg':msg,'success':False}
-        return web.Response(text=json.dumps(data), content_type='application/json')
-
-    openId = post.get("openId")
-    if openId == None:
-        msg = '用户编码不能为空！'
-        data={'msg':msg,'success':False}
-        return web.Response(text=json.dumps(data), content_type='application/json')
-    
-    if hasattr(PromptServer.instance,'user_command') and openId in PromptServer.instance.user_command and PromptServer.instance.user_command[openId]['status']=='waiting':
-        msg = '您已经在队列中，请勿重复提交！'
-        data={'msg':msg,'success':False}
-        return web.Response(text=json.dumps(data), content_type='application/json')
-
-    adminNo=base64_decode(Config().wechat['adminNo'])
-    if adminNo!=openId:
-        db=DataBaseUtil()
-        data=db.get_user_frequency(openId)
-        if data[0]==None:
-            db.user_recharge(openId,Config().wechat['freeSize'])
-            data=db.get_user_frequency(openId)
-        countd=db.get_user_task_count(openId)
-        db.close_con()
-        if countd[0] >=data[0]:
-            msg='非常抱歉，您的免费使用次数已用完，如需继续使用，请扫描右上角二维码，联系管理员。'
+    try:
+        post = await request.post()
+        command = post.get("command")
+        if command == None:
+            msg = '指令不能为空！'
             data={'msg':msg,'success':False}
             return web.Response(text=json.dumps(data), content_type='application/json')
-    
-    params=Config().wechat['commands'][command]['params']
-    paramName=''
-    userData={'openId':openId,'command':command,'status':'prepare','isWeb':True}
-    if 'type' in Config().wechat['commands'][command]:
-        userData['type']=Config().wechat['commands'][command]['type']
-    
-    for param in params:
-        val=post.get(param)
-        if params[param]['isRequired'] and val==None:
-            paramName= params[param]['zhName']
-            break
-        if val:
-            userData[param]=val
 
-    if paramName:
-        msg = '参数"'+paramName+'"不能为空！'
-        data={'msg':msg,'success':False}
-        return web.Response(text=json.dumps(data), content_type='application/json')
-    
-    if 'seed' in userData:
-        if userData['seed'].isdigit()==False or int(userData['seed'])==-1:
+        openId = post.get("openId")
+        if openId == None:
+            msg = '用户编码不能为空！'
+            data={'msg':msg,'success':False}
+            return web.Response(text=json.dumps(data), content_type='application/json')
+        
+        if hasattr(PromptServer.instance,'user_command') and openId in PromptServer.instance.user_command and PromptServer.instance.user_command[openId]['status']=='waiting':
+            msg = '您已经在队列中，请勿重复提交！'
+            data={'msg':msg,'success':False}
+            return web.Response(text=json.dumps(data), content_type='application/json')
+
+        adminNo=base64_decode(Config().wechat['adminNo'])
+        if adminNo!=openId:
+            db=DataBaseUtil()
+            data=db.get_user_frequency(openId)
+            if data[0]==None:
+                db.user_recharge(openId,Config().wechat['freeSize'])
+                data=db.get_user_frequency(openId)
+            countd=db.get_user_task_count(openId)
+            db.close_con()
+            if countd[0] >=data[0]:
+                msg='非常抱歉，您的免费使用次数已用完，如需继续使用，请扫描右上角二维码，联系管理员。'
+                data={'msg':msg,'success':False}
+                return web.Response(text=json.dumps(data), content_type='application/json')
+        
+        params=Config().wechat['commands'][command]['params']
+        paramName=''
+        userData={'openId':openId,'command':command,'status':'prepare','isWeb':True}
+        if 'type' in Config().wechat['commands'][command]:
+            userData['type']=Config().wechat['commands'][command]['type']
+        
+        for param in params:
+            val=post.get(param)
+            if params[param]['isRequired'] and val==None:
+                paramName= params[param]['zhName']
+                break
+            if val:
+                userData[param]=val
+
+        if paramName:
+            msg = '参数"'+paramName+'"不能为空！'
+            data={'msg':msg,'success':False}
+            return web.Response(text=json.dumps(data), content_type='application/json')
+        
+        if 'seed' in userData:
+            if userData['seed'].isdigit()==False or int(userData['seed'])==-1:
+                userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
+        else:
             userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
-    else:
-        userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
 
-    if hasattr(PromptServer.instance,"user_command")==False:
-        setattr(PromptServer.instance,"user_command",{})
+        if hasattr(PromptServer.instance,"user_command")==False:
+            setattr(PromptServer.instance,"user_command",{})
 
-    PromptServer.instance.user_command[openId]=userData
-    resp=setPost(PromptServer.instance,openId)
-    if resp!=None:
-        data={'msg':'任务成功加入队列请等待','prompt_id':resp,'success':True}
-        return web.Response(text=json.dumps(data), content_type='application/json')
-    else:
+        PromptServer.instance.user_command[openId]=userData
+        resp=setPost(PromptServer.instance,openId)
+        if resp!=None:
+            data={'msg':'任务成功加入队列请等待','prompt_id':resp,'success':True}
+            return web.Response(text=json.dumps(data), content_type='application/json')
+        else:
+            data={'msg':'任务加入队列失败','success':False}
+            return web.Response(text=json.dumps(data), content_type='application/json')
+    except Exception as e:
+        logging.error('任务加入队列处理异常:'+str(e))
         data={'msg':'任务加入队列失败','success':False}
         return web.Response(text=json.dumps(data), content_type='application/json')
     
