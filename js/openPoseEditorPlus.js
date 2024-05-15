@@ -98,7 +98,10 @@ class OpenPose {
     this.groups = [];
     this.subsets = [];
     this.hands = [];
-    this.rects = [];
+    this.prompts = [];
+    this.promptInput=null;
+    this.negatives = [];
+    this.negativeInput=null;
     this.backgImg=null
     this.index = 1
     this.history_index = 0;
@@ -215,6 +218,8 @@ class OpenPose {
     });
     this.subsets.push({});
     this.hands.push([]);
+    this.prompts.push('');
+    this.negatives.push('');
     this.node.widgets[this.index].value = this.groups.length-1;
     this.node.widgets[this.index].options['max']=this.groups.length-1;
     for(let i=0;i<this.groups.length;i++){
@@ -277,6 +282,8 @@ class OpenPose {
     this.groups.splice(delIndex,1)
     this.subsets.splice(delIndex,1)
     this.hands.splice(delIndex,1)
+    this.prompts.splice(delIndex,1)
+    this.negatives.splice(delIndex,1)
     this.node.widgets[this.index].value =0;
     this.node.widgets[this.index].options['max']=this.groups.length-1;
     this.node.setDirtyCanvas(true);
@@ -307,6 +314,8 @@ class OpenPose {
       }
     }
     this.addPose(groups[v],true,hands[v])
+    this.promptInput.value=this.prompts[v]
+    this.negativeInput.value=this.negatives[v]
     this.lockMode=false
   }
 
@@ -375,9 +384,13 @@ class OpenPose {
       this.groups.push(keypoints);
       this.subsets.push(default_subset);
       this.hands.push(hands);
+      this.prompts.push('');
+      this.negatives.push('');
       this.node.widgets[this.index].value = this.groups.length-1;
       this.node.widgets[this.index].options['max']=this.groups.length-1;
       this.history_index=this.node.widgets[this.index].value
+      this.promptInput.value=this.prompts[this.history_index]
+      this.negativeInput.value=this.negatives[this.history_index]
     }
 
     if(!Array.isArray(keypoints)){
@@ -635,14 +648,14 @@ class OpenPose {
       console.log('selection:cleared取消的事件')
     });
 
-    if (!LS_Poses[this.node.name].undo_history.length) {
-      this.groups=[]
-      this.hands=[]
-      this.addPose();
-      this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
-      'hands':JSON.parse(JSON.stringify(this.hands)),
-      'index':this.history_index});
-    }
+    // if (!LS_Poses[this.node.name].undo_history.length) {
+    //   this.groups=[]
+    //   this.hands=[]
+    //   this.addPose();
+    //   this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
+    //   'hands':JSON.parse(JSON.stringify(this.hands)),
+    //   'index':this.history_index});
+    // }
     return this.canvas;
   }
 
@@ -791,6 +804,8 @@ class OpenPose {
             this.groups.push(data.groups[i]);
             this.subsets.push(data.subsets[i]);
             this.hands.push([]);
+            this.prompts.push('');
+            this.negatives.push('');
           }
 
           this.node.widgets[this.index].value = this.groups.length-1;
@@ -914,6 +929,24 @@ function createOpenPose(node, inputName, inputData, app) {
         });
         element.hidden = !visible;
       });
+      Array.from(
+        this.openpose.querySelectorAll(
+          "textarea,div.prompt_div"
+        )
+      ).forEach((element) => {
+        if (element.tagName == "TEXTAREA") {
+          Object.assign(element.style, {
+            width: `${300 * transform.a}px`,
+            height: `${190 * transform.d}px`,
+            fontSize: `${transform.d * 10.0}px`,
+          });
+        }else if (element.tagName == "DIV") {
+          Object.assign(element.style, {
+            top: `${-340 * transform.a}px`
+          });
+        }
+       
+      });
     },
   };
 
@@ -952,11 +985,17 @@ function createOpenPose(node, inputName, inputData, app) {
         node.openPose.subsets=data.subsets;
         index.value =0;
         index.options['max']=this.openPose.groups.length-1;
-        node.openPose.setIndexPose(0,false)
         if('backgImg' in data && data.backgImg){
           node.openPose.backgImg=data.backgImg;
           node.openPose.setBackgroundImage(node.openPose.backgImg)
         }
+        if('prompts' in data && data.prompts){
+          node.openPose.prompts=data.prompts;
+        }
+        if('negatives' in data && data.negatives){
+          node.openPose.negatives=data.negatives;
+        }
+        node.openPose.setIndexPose(0,false)
     },
     get: () => {
       return JSON.stringify({
@@ -964,6 +1003,8 @@ function createOpenPose(node, inputName, inputData, app) {
         subsets: this.openPose.subsets,
         hands: this.openPose.hands,
         backgImg:this.openPose.backgImg?this.openPose.backgImg:null,
+        prompts:this.openPose.prompts?this.openPose.prompts:null,
+        negatives:this.openPose.negatives?this.openPose.negatives:null
       });
     }
   });
@@ -1044,11 +1085,41 @@ function createOpenPose(node, inputName, inputData, app) {
   panelButtons.appendChild(historyClearButton);
   node.openPose.canvas.wrapperEl.appendChild(panelButtons);
 
+  //添加提示词输入框
+  let promptDiv = document.createElement("div");
+  promptDiv.className = "prompt_div";
+  let promptInput = document.createElement("textarea");
+  promptInput.className = "comfy-multiline-input promptInput";
+  promptInput.placeholder = "正向提示词";
+  promptInput.addEventListener("input", () => {
+    node.openPose.prompts[node.openPose.history_index]=promptInput.value;
+  });
+  promptDiv.appendChild(promptInput);
+  node.openPose.promptInput=promptInput
+  //反向提示词
+  let negativeInput = document.createElement("textarea");
+  negativeInput.className = "comfy-multiline-input promptInput";
+  negativeInput.placeholder = "反向提示词";
+  negativeInput.addEventListener("input", () => {
+    node.openPose.negatives[node.openPose.history_index]=negativeInput.value;
+  });
+  promptDiv.appendChild(negativeInput);
+  node.openPose.negativeInput=negativeInput
+  node.openPose.canvas.wrapperEl.appendChild(promptDiv);
+
+
   document.body.appendChild(widget.openpose);
   document.addEventListener('keydown', function(event) {
       if(node.openPose.disabled){
         return;
       }
+      if(Object.keys(app.canvas.selected_nodes).length>1 || Object.keys(app.canvas.selected_nodes).length==0){
+        return;
+      }
+      if('LAM.OpenPoseEditorPlus'!=app.canvas.selected_nodes[Object.keys(app.canvas.selected_nodes)[0]].type){
+        return;
+      }
+      
       if(event.key=='Delete'||event.key=='Backspace'){
         let activeObject=node.openPose.canvas.getActiveObject()
         if (activeObject) {
@@ -1373,6 +1444,16 @@ app.registerExtension({
   }
   .active svg > * {
     stroke: var(--error-text);
+  }
+  .prompt_div{
+    position: absolute;
+    width: 90%;
+    height: 100px;
+    top: -195px;
+  }
+  .prompt_div .promptInput {
+    margin: 0 3px;
+    width: 45%;
   }
     
     `;

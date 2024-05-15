@@ -287,9 +287,9 @@ class openPoseEditorPlus:
 
                 }
 
-    RETURN_TYPES = ("IMAGE", "IMAGE","IMAGE", "INT", "INT", "MASKS", "MASKS","BOXS","IMAGE",)
-    RETURN_NAMES = ("poseImg", "handImg","painterImg","width",
-                    "height", "head_masks", "body_masks","body_boxs","backgImg",)
+    RETURN_TYPES = ("IMAGE", "IMAGE","IMAGE", "INT", "INT", "MASKS", "MASKS","BOXS","IMAGE","LIST","LIST",)
+    RETURN_NAMES = ("姿态图", "手部图","画板图","宽度",
+                    "高度", "头部遮罩组", "整体遮罩组","坐标（w,h,x,y）组","背景图","正词组",'反词组',)
     FUNCTION = "output_pose"
 
     CATEGORY = "lam"
@@ -297,6 +297,8 @@ class openPoseEditorPlus:
     def output_pose(self,image, width, height, unique_id, wprompt, **kwargs):
         groups = []
         hands = []
+        prompts= []
+        negatives = []
         backgImgStr=''
         if unique_id in wprompt:
             if wprompt[unique_id]["inputs"]:
@@ -306,6 +308,8 @@ class openPoseEditorPlus:
                         groups = data["groups"]
                         hands = data["hands"]
                         backgImgStr= data['backgImg'] if 'backgImg' in data else None
+                        prompts = data["prompts"] if 'prompts' in data else []
+                        negatives = data["negatives"] if 'negatives' in data else []
                         break
         head_masks = []
         body_masks = []
@@ -412,7 +416,7 @@ class openPoseEditorPlus:
 
         backgImg = torch.from_numpy(backgImg)[None,]
 
-        return (poseImage, handImage,painterImage, width, height, head_masks, body_masks,body_boxs,backgImg,)
+        return (poseImage, handImage,painterImage, width, height, head_masks, body_masks,body_boxs,backgImg,prompts,negatives,)
 
     @classmethod
     def IS_CHANGED(self, image):
