@@ -43,8 +43,12 @@ class MultiTextSetArea:
         conditioning=conditioning_to
         for i in range(minSize):
             w,h,x,y=body_boxs[i]
+            if len(values)>i:
+                value= values[i]
+            else:
+                value= values[0]
             conditioning_1=self.encode(clip,textList[i])
-            conditioning_2=self.appendArea(conditioning_1,w,h,x,y,values[i])
+            conditioning_2=self.appendArea(conditioning_1,w,h,x,y,value)
             conditioning=conditioning+conditioning_2
 
         return (conditioning,)

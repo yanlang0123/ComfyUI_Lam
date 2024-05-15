@@ -42,8 +42,13 @@ class MultiTextSetMask:
         minSize=min([len(body_masks),len(textList)])
         conditioning=conditioning_to
         for i in range(minSize):
+            if len(values)>i:
+                value= values[i]
+            else:
+                value= values[0]
+
             conditioning_1=self.encode(clip,textList[i])
-            conditioning_3=self.condAppend(conditioning_1,body_masks[i],values[i][0],values[i][1])
+            conditioning_3=self.condAppend(conditioning_1,body_masks[i],value[0],value[1])
             conditioning=conditioning+conditioning_3
 
         return (conditioning,)

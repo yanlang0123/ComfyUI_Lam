@@ -186,15 +186,12 @@ class Painter {
   initCanvas(canvasEl) {
     this.canvas = new fabric.Canvas(canvasEl, {
       isDrawingMode: true,
-      backgroundColor: "transparent",
       width: 512,
       height: 512,
     });
 
     this.canvas.backgroundColor = "#000000";
-    //this.canvas.setBackgroundColor({ source: 'white', opacity: 0.5 }, this.canvas.renderAll.bind(this.canvas));
     this.canvas.setBackgroundColor('transparent', fabric.StaticCanvas.NONE_CACHING, false);
-
     return this.canvas;
   }
 
@@ -256,6 +253,10 @@ class Painter {
                 <label for="strokeWidth"><span>笔刷:</span><input id="strokeWidth" type="number" min="0" max="150" value="5" step="1" title="Brush width"></label>
                 <label for="eraseWidth"><span>擦除:</span><input id="eraseWidth" type="number" min="0" max="150" value="20" step="1" title="Erase width"></label>
             </div>
+            <div class="painter_grid_style painter_bg_setting fieldset_box comfy-menu-btns" f_name="背景设置">
+                <input id="bgColor" type="color" value="#000000" data-label="BG" title="背景颜色">
+                <button id="traBackground" bgImage="traBackground" title="Add background image">透明</button>
+            </div>
             <div class="painter_settings_box fieldset_box comfy-menu-btns" f_name="功能按钮">      
             <button id="clearCanvas" title="清除画布内容" width="50px">清除</button>  
           </div>
@@ -316,7 +317,8 @@ class Painter {
     this.fillColorTransparent = panelPaintBox.querySelector(
       "#fillColorTransparent"
     );
-    //this.bgColor = panelPaintBox.querySelector("#bgColor");
+    this.bgColor = panelPaintBox.querySelector("#bgColor");
+    this.traBackground= panelPaintBox.querySelector("#traBackground");
     this.clear = panelPaintBox.querySelector("#clear");
 
     // this.painter_bg_setting = panelPaintBox.querySelector(
@@ -344,9 +346,19 @@ class Painter {
     this.bindEvents();
   }
 
+  traBackgroundColor(){
+    if('transparent' == this.canvas.backgroundColor){
+      this.canvas.backgroundColor = this.bgColor.value || "#000000";
+    }else{
+      this.canvas.setBackgroundColor('transparent', fabric.StaticCanvas.NONE_CACHING, false);
+    }
+    this.canvas.renderAll();
+    this.uploadPaintFile(this.node.name);
+  }
+
   clearCanvas() {
     this.canvas.clear();
-    //this.canvas.backgroundColor = this.bgColor.value || "#000000";
+    this.canvas.setBackgroundColor('transparent', fabric.StaticCanvas.NONE_CACHING, false);
     this.canvas.requestRenderAll();
     this.addToHistory();
     this.canvasSaveSettingsPainter();
@@ -966,11 +978,12 @@ class Painter {
       }
     };
     // Event input bgcolor
-    // this.reset_set_bg = () => {
-    //   this.canvas.setBackgroundImage(null);
-    //   this.canvas.backgroundColor = this.bgColor.value;
-    //   this.canvas.renderAll();
-    // };
+    this.reset_set_bg = () => {
+      this.canvas.setBackgroundImage(null);
+      this.canvas.backgroundColor = this.bgColor.value;
+      this.canvas.renderAll();
+      this.uploadPaintFile(this.node.name);
+    };
 
     const fileReaderFunc = (e, func) => {
       let file = e.target.files[0],
@@ -983,12 +996,16 @@ class Painter {
       reader.readAsDataURL(file);
     };
 
-    //this.bgColor.oninput = this.reset_set_bg;
+    this.bgColor.oninput = this.reset_set_bg;
 
     // Event input bg image
     this.bgImageFile.onchange = (e) => {
       fileReaderFunc(e, this.bgImageFile.func);
     };
+
+    this.traBackground.addEventListener("click", () => {
+      this.traBackgroundColor();
+    });
 
     this.buttonClearCanvas.addEventListener("click", () => {
       this.list_objects_panel__items.innerHTML = "";
@@ -1646,10 +1663,10 @@ export function PainterWidget(node, inputName, inputData, app) {
 
   document.body.appendChild(widget.painter_wrap);
 
-  node.addWidget("button", "清除画布", "clear_painer", () => {
-    node.painter.list_objects_panel__items.innerHTML = "";
-    node.painter.clearCanvas();
-  });
+  // node.addWidget("button", "清除画布", "clear_painer", () => {
+  //   node.painter.list_objects_panel__items.innerHTML = "";
+  //   node.painter.clearCanvas();
+  // });
 
   // Add customWidget to node
   node.addCustomWidget(widget);

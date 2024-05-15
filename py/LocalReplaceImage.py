@@ -28,7 +28,7 @@ class LoadReplaceImage:
         #     image_bt = comfy.utils.common_upscale(image_bt, image_t.shape[2], image_t.shape[1], upscale_method='bicubic', crop='center')
         #     image_bt = image_bt.permute(0, 2, 3, 1)
         
-        replace_image = self.blend_mode(image_t, image_bt, mask_erosion,x,y)
+        replace_image = self.blend_mode(image_t.clone(), image_bt.clone(), mask_erosion.clone(),x,y)
         return (replace_image,)
 
     def blend_mode(self, img1, img2, mask,y,x):
@@ -37,6 +37,7 @@ class LoadReplaceImage:
             mask_np=np.expand_dims(mask_np, axis=0)
 
         mask_shape=mask_np.shape
+
         img1_shape=img1.size()
         img2_shape=img2.size()
 

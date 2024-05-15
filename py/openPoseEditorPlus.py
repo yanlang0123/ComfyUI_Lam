@@ -12,6 +12,8 @@ from aiohttp import web
 import os
 import json
 import cv2
+import base64
+from io import BytesIO
 from lam_tools import annotator_ckpts_path, load_file_from_url
 
 
@@ -285,9 +287,9 @@ class openPoseEditorPlus:
 
                 }
 
-    RETURN_TYPES = ("IMAGE", "IMAGE","IMAGE", "INT", "INT", "MASKS", "MASKS","BOXS",)
-    RETURN_NAMES = ("image", "handImg","painterImg","width",
-                    "height", "head_masks", "body_masks","body_boxs")
+    RETURN_TYPES = ("IMAGE", "IMAGE","IMAGE", "INT", "INT", "MASKS", "MASKS","BOXS","IMAGE","LIST","LIST",)
+    RETURN_NAMES = ("姿态图", "手部图","画板图","宽度",
+                    "高度", "头部遮罩组", "整体遮罩组","坐标（w,h,x,y）组","背景图","正词组",'反词组',)
     FUNCTION = "output_pose"
 
     CATEGORY = "lam"
@@ -295,6 +297,9 @@ class openPoseEditorPlus:
     def output_pose(self,image, width, height, unique_id, wprompt, **kwargs):
         groups = []
         hands = []
+        prompts= []
+        negatives = []
+        backgImgStr=''
         if unique_id in wprompt:
             if wprompt[unique_id]["inputs"]:
                 for arg in wprompt[unique_id]["inputs"]:
@@ -302,6 +307,9 @@ class openPoseEditorPlus:
                         data = json.loads(wprompt[unique_id]["inputs"][arg])
                         groups = data["groups"]
                         hands = data["hands"]
+                        backgImgStr= data['backgImg'] if 'backgImg' in data else None
+                        prompts = data["prompts"] if 'prompts' in data else []
+                        negatives = data["negatives"] if 'negatives' in data else []
                         break
         head_masks = []
         body_masks = []
@@ -397,7 +405,18 @@ class openPoseEditorPlus:
         painterImage = np.array(painterImage).astype(np.float32) / 255.0
         painterImage = torch.from_numpy(painterImage)[None,]
 
-        return (poseImage, handImage,painterImage, width, height, head_masks, body_masks,body_boxs,)
+        if backgImgStr:
+            backgImgStr = backgImgStr.split(',')[1]
+            backgImg = base64.b64decode(backgImgStr)
+            backgImg = Image.open(BytesIO(backgImg))
+            backgImg = backgImg.convert("RGB")
+            backgImg = np.array(backgImg).astype(np.float32) / 255.0
+        else:
+            backgImg = np.zeros(shape=(height, width, 3), dtype=np.uint8)
+
+        backgImg = torch.from_numpy(backgImg)[None,]
+
+        return (poseImage, handImage,painterImage, width, height, head_masks, body_masks,body_boxs,backgImg,prompts,negatives,)
 
     @classmethod
     def IS_CHANGED(self, image):

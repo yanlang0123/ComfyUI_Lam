@@ -52,6 +52,7 @@ class ZhPromptTranslator:
 
     def __init__(self):
         self.my_translations = os.path.join(confdir,"translations.csv")
+        #os.environ['HF_ENDPOINT'] = 'hf-mirror.com'
         self.model = MarianMTModel.from_pretrained('Helsinki-NLP/opus-mt-zh-en').cuda()
         self.tokenizer = MarianTokenizer.from_pretrained('Helsinki-NLP/opus-mt-zh-en')
         self.tokenizer.src_lang = "zh_CN"
@@ -95,23 +96,30 @@ class ZhPromptTranslator:
                 "text_trans": ("STRING", {"multiline": True, "default": ""}),
                 # "trans_switch": (["enabled", "disabled"],),
             },
+            "optional": {
+                "textList": ("LIST",),
+            },
         }
 
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = ("STRING","LIST",)
     FUNCTION = "translation"
     CATEGORY = "lam"
 
-    def translation(self, text_trans, ):
-
+    def translation(self, text_trans,textList=[]):
         if text_trans == "undefined":
             text_trans = ""
 
-        target_text = ""
-
-        print("prompt: ", text_trans)
-
         cache = load_csv(self.my_translations)
-
+        target_text = self.trans_switch(cache,text_trans)
+        targetList=[]
+        for text in textList:
+            targetList.append(self.trans_switch(cache,text))
+        
+        return (target_text,targetList)
+    
+    def trans_switch(self,cache,text_trans):
+        if len(text_trans)==0:
+            return ""
         if contains_chinese(text_trans):
             text_trans = remove_unnecessary_spaces(text_trans)
             modified_text = replace_text(text_trans, cache)
@@ -122,9 +130,7 @@ class ZhPromptTranslator:
         else:
             target_text = text_trans
 
-        print("target: " + target_text)
-
-        return (target_text,)
+        return target_text
     
 NODE_CLASS_MAPPINGS = {
     "ZhPromptTranslator": ZhPromptTranslator
