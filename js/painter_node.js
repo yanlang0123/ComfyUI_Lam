@@ -1697,7 +1697,7 @@ export function PainterWidget(node, inputName, inputData, app) {
     if (node?.imgs && typeof this.imgs !== undefined) {
       aspect_ratio = this.imgs[0].naturalHeight / this.imgs[0].naturalWidth;
     }
-    let buffer = 290;
+    let buffer = 350;
     if (w > this.painter.maxNodeSize) w = w - (w - this.painter.maxNodeSize);
     if (w < 600) w = 600;
 
