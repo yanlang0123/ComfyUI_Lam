@@ -86,7 +86,20 @@ class ImageCropFaces:
         img = np.array(image.convert('RGB'))
 
         faces=[]
-        if analysis_models["library"] == "insightface":
+        if not isinstance(analysis_models, dict):
+            if type(analysis_models).__name__=='InsightFace':
+                facesData=analysis_models.get_face(np.array(img))
+                for face in facesData:
+                    x, y, w, h = face.bbox.astype(int)
+                    w = w - x
+                    h = h - y
+                    faces.append([x, y, w, h])
+            else:
+                facesData = analysis_models.get_face(np.array(img))
+                for face in facesData:
+                    x, y, w, h = face.left(), face.top(), face.width(), face.height()
+                    faces.append([x, y, w, h])
+        elif analysis_models["library"] == "insightface":
             facesData = analysis_models["detector"].get(np.array(img))
             for face in facesData:
                 x, y, w, h = face.bbox.astype(int)

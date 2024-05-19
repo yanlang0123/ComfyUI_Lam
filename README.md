@@ -133,6 +133,9 @@ def get_del_keys(key, prompt):
         if class_type=='ForInnerEnd':
             prompt[startNum]['inputs']=oldPrompt[startNum]['inputs']
             prompt[unique_id]['inputs']=oldPrompt[unique_id]['inputs']
+            result = recursive_execute(server, prompt, outputs, startNum, extra_data, executed, prompt_id, outputs_ui, object_storage)
+            if result[0] is not True:
+                   return result
         if class_type=='IfInnerExecute':
             prompt[unique_id]['inputs']=oldPrompt[unique_id]['inputs']
         #循环添加代码-----------结束---------

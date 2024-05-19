@@ -3,6 +3,17 @@ class IfInnerExecute:
     """
     内判断选择
     """
+    DESCRIPTION = """
+    入参：ANY 输入任意类型，用于判断是否，主要是条件，比如 p0>p1 或整数型0 或者 1
+    IF_TRUE 任意类型 ：ANY 判断为True时出参参数为此参数
+    IF_TRUE 任意类型 ：ANY 判断为False时出参参数为此参数
+    输出参数：类型根据IF_TRUE或者IF_TRUE一致
+    实例：
+    ANY = 1      IF_TRUE = 2  IF_FALSE = 3  输出：2
+    ANY = 0      IF_TRUE = 2  IF_FALSE = 3  输出：3
+    ANY = True   IF_TRUE = 2  IF_FALSE = 3  输出：2
+    ANY = False  IF_TRUE = 2  IF_FALSE = 3  输出：3
+    """
 
     @classmethod
     def INPUT_TYPES(s):

@@ -1,4 +1,12 @@
 class MultiIntFormula:
+
+    DESCRIPTION = """
+    输入参数：n0,n1,n2...可根据需求加入入参。类型：int,float
+    输出参数：有一个int，有一个float 值一样，类型不一样，根据需求使用
+    表达式：使用+-*/%等运算符进行运算，加+，减-，*乘，除/，取余%，括号()，注意全部是英文符合。
+    示例：
+    n0+n1/n2*n3
+    """
     def __init__(self):
         pass
 

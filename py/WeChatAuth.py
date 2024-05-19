@@ -71,6 +71,11 @@ def send_sync(self, event, data, sid=None): #继承父类的send_sync方法
             db.update_data('wcomplete', end_time, json.dumps(history['outputs']),data['prompt_id'])
             db.close_con()
             self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
+        elif  event == "execution_error" and data['prompt_id'] == self.user_command[sid]['prompt_id']:
+            db=DataBaseUtil()
+            db.delete_data(data['prompt_id'])
+            db.close_con()
+            self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
 
     self.loop.call_soon_threadsafe(
         self.messages.put_nowait, (event, data, sid))

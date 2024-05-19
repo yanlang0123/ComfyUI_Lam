@@ -192,6 +192,10 @@ class DataBaseUtil():
     def update_data(self, status, end_time, outputs,prompt_id):
         self.operate_one("UPDATE users SET status=?,end_time = ?, outputs = ? WHERE prompt_id = ?",
                           (status, end_time, outputs, prompt_id))
+        
+    def delete_data(self,prompt_id):
+        self.operate_one("DELETE FROM users WHERE prompt_id = ?",
+                          (prompt_id,))
     
     def get_many_data(self, openId):
         return self.query_many("SELECT * FROM users WHERE openId=? ", (openId,))
