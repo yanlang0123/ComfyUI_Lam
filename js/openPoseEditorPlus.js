@@ -1537,7 +1537,7 @@ app.registerExtension({
 
         createOpenPose.apply(this, [this, nodeNamePNG, {}, app]);
         PainterWidget.apply(this, [this, nodeNamePNG, {}, app]);
-        //this.setSize([750, 950]);
+        this.setSize([750, 950]);
         return r;
       };
     }
