@@ -21,7 +21,7 @@ def send_sync(self, event, data, sid=None): #继承父类的send_sync方法
     if event=='execution_start':
         self.clientObjPromptId[sid]=data['prompt_id']
 
-    if 'prompt_id' in data and  data['prompt_id'] in self.clientObjPromptId.values():
+    if isinstance(data, dict) and 'prompt_id' in data and  data['prompt_id'] in self.clientObjPromptId.values():
         nSid = next(key for key, value in self.clientObjPromptId.items() if value == data['prompt_id'])
         if nSid:
             sid=nSid

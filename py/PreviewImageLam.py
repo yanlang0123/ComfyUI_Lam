@@ -7,7 +7,7 @@ import numpy as np
 import json
 from PIL.PngImagePlugin import PngInfo
 from comfy.cli_args import args
-
+from server import PromptServer
 
 class PreviewImageLam(SaveImage):
     def __init__(self):
@@ -22,15 +22,15 @@ class PreviewImageLam(SaveImage):
     def INPUT_TYPES(s):
         return {"required":
                 {"images": ("IMAGE", ), },
-                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
+                "hidden": {"prompt": "PROMPT","extra_pnginfo": "EXTRA_PNGINFO", "unique_id": "UNIQUE_ID"},
                 }
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "save_images"
-    OUTPUT_NODE = True
     CATEGORY = "image"
+    OUTPUT_NODE = False
 
-    def save_images(self, images, filename_prefix="ComfyUI", prompt=None, extra_pnginfo=None):
+    def save_images(self, images, filename_prefix="ComfyUI", prompt=None, extra_pnginfo=None,unique_id=None):
         filename_prefix += self.prefix_append
         full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(
             filename_prefix, self.output_dir, images[0].shape[1], images[0].shape[0])
@@ -58,8 +58,10 @@ class PreviewImageLam(SaveImage):
                 "type": self.type
             })
             counter += 1
+        if PromptServer.instance.client_id:
+            PromptServer.instance.send_sync("executed", {"output":{"images": results},"node":unique_id,"prompt_id":''},PromptServer.instance.client_id)
 
-        return {"ui": {"images": results},"result": (images,)}
+        return (images,)
     
 NODE_CLASS_MAPPINGS = {
     "PreviewImageLam": PreviewImageLam

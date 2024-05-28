@@ -3,13 +3,12 @@ from PIL import Image, ImageFilter, ImageEnhance, ImageOps, ImageDraw, ImageChop
 import numpy as np
 import os
 import torch
+from lam_tools import tensor2pil,pil2tensor
 # Tensor to PIL
 #获取组节点
 confdir = os.path.abspath(os.path.join(__file__, "../../config"))
 if not os.path.exists(confdir):
     os.mkdir(confdir)
-def tensor2pil(image):
-    return Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
 
 def solid_mask(value, width, height):
     out = torch.full((1, height, width), value,
@@ -49,11 +48,6 @@ def mask_combine(destination, source, x, y, operation="add"):
     output = torch.clamp(output, 0.0, 1.0)
     return output
 
-# PIL to Tensor
-def pil2tensor(image):
-    return torch.from_numpy(np.array(image).astype(np.float32) / 255.0)
-
-
 def zero_for_non_zero(num):
     return 0 if num < 0 else num
 
@@ -82,7 +76,7 @@ class ImageCropFaces:
     def crop_face(self, image, analysis_models, padding=0.25):
     
         import cv2
-
+        
         img = np.array(image.convert('RGB'))
 
         faces=[]
