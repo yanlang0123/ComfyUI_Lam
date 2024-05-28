@@ -8,10 +8,17 @@ from tqdm import tqdm
 from urllib.parse import urlparse
 import torch
 import random
+from PIL import Image
 
 
 annotator_ckpts_path = os.path.join(os.path.dirname(__file__), "ckpts")
 
+def tensor2pil(image):
+    return Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
+
+# PIL to Tensor
+def pil2tensor(image):
+    return torch.from_numpy(np.array(image).astype(np.float32) / 255.0)
 
 def HWC3(x):
     assert x.dtype == np.uint8

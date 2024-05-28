@@ -6,8 +6,11 @@ class MultiTextSelelct:
     @classmethod
     def INPUT_TYPES(cls):
         return {
-             "required": {
+            "required": {
                  "i": ("INT", {"forceInput": True}),
+            },
+            "optional": {
+                "textList": ("LIST",),
                 "text0": ("STRING", {"forceInput": True}),
                 "text1": ("STRING", {"forceInput": True}),
             }
@@ -18,15 +21,14 @@ class MultiTextSelelct:
 
     CATEGORY = "lam"
 
-    def text_to_select(self, i,**kwargs):
-        strList=[]
+    def text_to_select(self, i,textList=[],**kwargs):
         for arg in kwargs:
             if type(kwargs[arg]) != str: 
                 continue
             if arg.startswith('text'):
-                strList.append(kwargs[arg])
+                textList.append(kwargs[arg])
 
-        return (strList[i],strList)
+        return (textList[i],textList)
     
 NODE_CLASS_MAPPINGS = {
     "MultiTextSelelct": MultiTextSelelct

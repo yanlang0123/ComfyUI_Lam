@@ -13,7 +13,19 @@ import types
 import execution
 import uuid
 import folder_paths
+import traceback
+
 def send_sync(self, event, data, sid=None): #继承父类的send_sync方法
+    if hasattr(self,"clientObjPromptId")==False:
+        setattr(self,"clientObjPromptId",{})
+    if event=='execution_start':
+        self.clientObjPromptId[sid]=data['prompt_id']
+
+    if isinstance(data, dict) and 'prompt_id' in data and  data['prompt_id'] in self.clientObjPromptId.values():
+        nSid = next(key for key, value in self.clientObjPromptId.items() if value == data['prompt_id'])
+        if nSid:
+            sid=nSid
+
     if sid and hasattr(self, "user_command") and sid in getattr(self,'user_command'):
         if event == "executing" and data['node'] is None and data['prompt_id'] == self.user_command[sid]['prompt_id']:
             history=self.prompt_queue.get_history(prompt_id=data['prompt_id'])[data['prompt_id']]
@@ -71,7 +83,7 @@ def send_sync(self, event, data, sid=None): #继承父类的send_sync方法
             db.update_data('wcomplete', end_time, json.dumps(history['outputs']),data['prompt_id'])
             db.close_con()
             self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
-        elif  event == "execution_error" and data['prompt_id'] == self.user_command[sid]['prompt_id']:
+        elif  event == "execution_error" and hasattr(self, "user_command") and data['prompt_id'] == self.user_command[sid]['prompt_id']:
             db=DataBaseUtil()
             db.delete_data(data['prompt_id'])
             db.close_con()
@@ -79,6 +91,7 @@ def send_sync(self, event, data, sid=None): #继承父类的send_sync方法
 
     self.loop.call_soon_threadsafe(
         self.messages.put_nowait, (event, data, sid))
+    
 def update_dict(dictionary, keys, value):
     if len(keys) == 1:
         dictionary[keys[0]] = value

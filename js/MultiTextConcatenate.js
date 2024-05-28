@@ -1,8 +1,7 @@
 import { app } from "/scripts/app.js";
 import { ComfyWidgets } from "/scripts/widgets.js";
+import { $el } from "../../../scripts/ui.js";
 import {CUSTOM_INT, recursiveLinkUpstream, transformFunc, swapInputs,swapOutputs, renameNodeInputs,renameNodeOutputs, removeNodeInputs,removeNodeOutputs, getDrawColor, computeCanvasSize} from "./utils.js"
-
-// Displays input text on a node
 
 app.registerExtension({
     name: "Comfy.lam.MultiTextConcatenate",
@@ -19,7 +18,7 @@ app.registerExtension({
                     ctx.font = "bold 12px sans-serif";
                     ctx.fillStyle = "dodgerblue";
                     const sz = ctx.measureText(text);
-                    ctx.fillText(text, this.size[0] - sz.width - 5, LiteGraph.NODE_SLOT_HEIGHT * 3);
+                    ctx.fillText(text, this.size[0]/2 - (sz.width + 5)/2, LiteGraph.NODE_SLOT_HEIGHT * 1);
                     ctx.restore();
                 }
                 return r;
@@ -35,7 +34,7 @@ app.registerExtension({
                 this.inputPrefix="text"
                 this.outputPrefix=""
                 if('MultiTextSelelct'==nodeData.name){
-                    this.originalsize=1
+                    this.originalsize=2
                 }
                 if('MultiIntFormula'==nodeData.name){
                     this.inputType="INT,FLOAT"
@@ -47,25 +46,24 @@ app.registerExtension({
                     this.outputPrefix="r"
                 }
                 function changCustomtext(){
-                    let cuTexts=[]
-                    const pos = this.widgets.findIndex((w) => w.type === "customtext");
-                    if (pos !== -1) {
-                        for (let i = pos; i < this.widgets.length; i++) {
-                            cuTexts.push({
-                                name: this.widgets[i].name,
-                                value: this.widgets[i].value,
-                            })
-                            this.widgets[i].onRemove?.();
-                        }
-                        this.widgets.length = pos;
-                    }
-                    for(let i = 0; i < cuTexts.length; i++){
-                        let val=cuTexts[i].value
-                        let name=cuTexts[i].name
-                        const w =ComfyWidgets["STRING"](this, name, ["STRING", { multiline: true }, app]).widget;
-                        w.value = val;
-                    }
+                    this.setSize( this.computeSize() );
                 }
+                this.widgets.forEach(function(widget) {
+                    if(widget.type!="customtext"){
+                        return ;
+                    }
+                    const draw = widget.draw;
+                    widget.draw = function (ctx,parentNode, widgetWidth, y, widgetHeight) {
+                        draw?.apply(this, arguments);
+                        if (this.inputEl.hidden) return;
+                        const transform = ctx.getTransform();
+                        let maxIoputSize=Math.max(...[parentNode.inputs.length,parentNode.outputs.length])
+                        Object.assign(this.inputEl.style, {
+                            top: `${ maxIoputSize*transform.d*20+transform.d*5+transform.f}px`,
+                            height: `${32.0 * transform.d}px`,
+                        });
+                    }
+                });
                 this.getExtraMenuOptions = function(_, options) {
                     if(this.outputPrefix){
                         options.unshift(

@@ -49,25 +49,25 @@ https://github.com/xinntao/facexlib/releases/download/v0.2.2/parsing_parsenet.pt
 新增内容：
 ```python
 #循环添加代码----------开始----------
-def get_del_keys(key, prompt):
+def get_del_keys(key, prompt,uniqueIds):
     keys=[]
     for k,v in prompt.items():
-        if v['class_type']=='ForInnerEnd' or v['class_type']=='ForInnerStart':
+        if k in uniqueIds :
             continue
         for k1,v1 in v['inputs'].items():
             if type(v1)==list and v1[0]==key:
                 keys.append(k)
-                keys=keys+get_del_keys(k,prompt)
+                keys=keys+get_del_keys(k,prompt,uniqueIds)
     return keys
 #循环添加代码-----------结束---------
 ```
 ```python
-    #循环添加代码----------开始----------
+#循环添加代码----------开始----------
     startNum=None
     startData={}
     delKeys=[]
     backhaul={}
-    clTypes=['ForInnerEnd','IfInnerExecute']
+    clTypes=['ForInnerEnd','IfInnerExecute','DoWhileEnd']
     oldPrompt=None
     if class_type in clTypes:
         oldPrompt=copy.deepcopy(prompt)
@@ -77,7 +77,7 @@ def get_del_keys(key, prompt):
         inputNum=prompt[unique_id]['inputs']['obj'][0]
         maxKeyStr=sorted(list(prompt.keys()), key=lambda x: int(x.split(':')[0]))[-1]
         maxKey = int(maxKeyStr.split(':')[0])
-        delKeys=list(set(get_del_keys(startNum,prompt)))
+        delKeys=list(set(get_del_keys(startNum,prompt,[startNum,unique_id]))) 
         delKeys.append(startNum)
         delKeys = list(filter(lambda x: x != inputNum, delKeys))
         for key in delKeys:
@@ -103,6 +103,12 @@ def get_del_keys(key, prompt):
                 backhaul['obj'+str(i)]=prompt[unique_id]['inputs']['obj']
             else:
                 backhaul['obj'+str(i)]=[str(maxKey+i-startInput['stop']),prompt[unique_id]['inputs']['obj'][-1]]
+    elif class_type=='DoWhileEnd':
+        startNum=prompt[unique_id]['inputs']['start'][0]
+        inputNum=prompt[unique_id]['inputs']['ANY'][0]
+        delKeys=list(set(get_del_keys(startNum,prompt,[startNum,unique_id]))) 
+        delKeys.append(startNum)
+        delKeys.append(inputNum)
 
     #循环添加代码-----------结束---------
 ```
@@ -120,7 +126,21 @@ def get_del_keys(key, prompt):
                 #循环添加代码-----------结束---------
 ```
 ```python
-            #判断选择添加代码-----------结束---------
+                #判断选择添加代码-----------开始---------
+                if class_type=='DoWhileEnd' and x == 'ANY':
+                    any=outputs[inputNum][prompt[unique_id]['inputs']['ANY'][1]][0]
+                    i=0
+                    while any:
+                        for key in delKeys:
+                            outputs.pop(key, None)
+                        i=i+1
+                        outputs['i']=[[i]]
+                        prompt[startNum]['inputs']['i']=['i',0]
+                        result = recursive_execute(server, prompt, outputs, input_unique_id, extra_data, executed, prompt_id, outputs_ui, object_storage)
+                        if result[0] is not True:
+                            return result
+                        any=outputs[inputNum][prompt[unique_id]['inputs']['ANY'][1]][0]
+            
             if class_type=='IfInnerExecute' and x=='ANY':
                 if outputs[input_unique_id][output_index][0]:
                     inputs['IF_FALSE']=oldPrompt[unique_id]['inputs']['IF_TRUE']
@@ -130,9 +150,10 @@ def get_del_keys(key, prompt):
 ```
 ```python
         #循环添加代码----------开始----------
-        if class_type=='ForInnerEnd':
+        if class_type=='ForInnerEnd' or class_type=='DoWhileEnd':
             prompt[startNum]['inputs']=oldPrompt[startNum]['inputs']
             prompt[unique_id]['inputs']=oldPrompt[unique_id]['inputs']
+            outputs.pop(startNum, None)
             result = recursive_execute(server, prompt, outputs, startNum, extra_data, executed, prompt_id, outputs_ui, object_storage)
             if result[0] is not True:
                    return result
@@ -140,3 +161,17 @@ def get_del_keys(key, prompt):
             prompt[unique_id]['inputs']=oldPrompt[unique_id]['inputs']
         #循环添加代码-----------结束---------
 ```
+搜索 “def validate_prompt
+```python
+'''优化输出开始'''
+    inputKeys=[]
+    for k,v in prompt.items():
+        for k1,v1 in v['inputs'].items():
+            if type(v1)==list and len(v1)==2:
+                inputKeys.append(v1[0])
+    for x in prompt:
+        class_ = nodes.NODE_CLASS_MAPPINGS[prompt[x]['class_type']]
+        if hasattr(class_, 'OUTPUT_NODE') and class_.OUTPUT_NODE == True and x not in inputKeys:
+            outputs.add(x)
+    '''优化输出结束'''
+``` 
