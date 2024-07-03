@@ -1,3 +1,10 @@
+#redis: #redis 实现comfyUI集群
+#  host: localhost
+#  port: 6379
+#  password: 
+#  basePath: 192.168.1.8:8188
+#  isMain: true
+
 wechat:
   appid: wxa50ed345b253964d                        #公众号appid 
   secret: 327ac9ba06d214d2fcfe2e9ed0520684         #公众号秘钥

@@ -723,7 +723,7 @@ class OpenPose {
             img.style.height = "40px";
             img.addEventListener("dragend", (e) =>  {
               let name=e.target.alt;
-              let x=e.x;
+              let x=e.x;  
               let y=e.y;
               let width=thi.canvas.width;
               let height=thi.canvas.height;

@@ -163,9 +163,9 @@
         0
       ]
     },
-    "class_type": "GetImage_(Width&Height) _O",
+    "class_type": "GetImageSize",
     "_meta": {
-      "title": "GetImage_(Width&Height) _O"
+      "title": "GetImageSize"
     }
   },
   "17": {

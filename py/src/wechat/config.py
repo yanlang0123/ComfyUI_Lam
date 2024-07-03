@@ -57,7 +57,7 @@ class Config(object):
     def reload(self) -> None:
         yconfig = self._load_config()
         self.wechat = yconfig.get("wechat", {})
-        #self.comfyui = yconfig.get("comfyui", {})
+        self.redis = yconfig.get("redis", {})
         #self.EMAIL= yconfig.get("email", {})
         #self.OPENAI= yconfig.get("openai", {})
         #self.GLM4= yconfig.get("glm4", {})

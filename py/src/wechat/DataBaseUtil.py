@@ -197,8 +197,9 @@ class DataBaseUtil():
         self.operate_one("DELETE FROM users WHERE prompt_id = ?",
                           (prompt_id,))
     
-    def get_many_data(self, openId):
-        return self.query_many("SELECT * FROM users WHERE openId=? ", (openId,))
+    def get_many_data(self, openId,page_number = 1,page_size = 10):
+        offset = (page_number - 1) * page_size
+        return self.query_many("SELECT * FROM users WHERE openId=? ORDER BY start_time DESC LIMIT ? OFFSET ?", (openId,page_size,offset))
 
     def user_recharge(self,openId,frequency):
         now = time.localtime()

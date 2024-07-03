@@ -10,18 +10,24 @@ app.registerExtension({
         if (showNames.indexOf(nodeData.name)>=0) {
             const onDrawForeground = nodeType.prototype.onDrawForeground;
             nodeType.prototype.onDrawForeground = function (ctx) {
-                const r = onDrawForeground?.apply?.(this, arguments);
-                const v = app.nodeOutputs?.[this.id + ""];
-                if (!this.flags.collapsed && v) {
-                    const text = v.value[0] + "";
-                    ctx.save();
-                    ctx.font = "bold 12px sans-serif";
-                    ctx.fillStyle = "dodgerblue";
-                    const sz = ctx.measureText(text);
-                    ctx.fillText(text, this.size[0]/2 - (sz.width + 5)/2, LiteGraph.NODE_SLOT_HEIGHT * 1);
-                    ctx.restore();
+                try {
+                    const r = onDrawForeground?.apply?.(this, arguments);
+                    const v = app.nodeOutputs?.[this.id + ""];
+                    if (!this.flags.collapsed && v) {
+                        const text = v.value[0] + "";
+                        ctx.save();
+                        ctx.font = "bold 12px sans-serif";
+                        ctx.fillStyle = "dodgerblue";
+                        const sz = ctx.measureText(text);
+                        ctx.fillText(text, this.size[0]/2 - (sz.width + 5)/2, LiteGraph.NODE_SLOT_HEIGHT * 1);
+                        ctx.restore();
+                    }
+                    return r;
+                } catch(e) {
+                    console.log(e)
                 }
-                return r;
+                return 
+
             };
         }
         var names=["MultiTextConcatenate",'MultiTextSelelct',"MultiIntFormula","MultiParamFormula"]
@@ -46,7 +52,7 @@ app.registerExtension({
                     this.outputPrefix="r"
                 }
                 function changCustomtext(){
-                    this.setSize( this.computeSize() );
+                    //this.setSize( this.computeSize() );
                 }
                 this.widgets.forEach(function(widget) {
                     if(widget.type!="customtext"){
@@ -56,11 +62,21 @@ app.registerExtension({
                     widget.draw = function (ctx,parentNode, widgetWidth, y, widgetHeight) {
                         draw?.apply(this, arguments);
                         if (this.inputEl.hidden) return;
-                        const transform = ctx.getTransform();
+                        const  margin = 20,
+                        clientRectBound = ctx.canvas.getBoundingClientRect(),
+                        transform = new DOMMatrix()
+                        .scaleSelf(
+                            clientRectBound.width / ctx.canvas.width,
+                            clientRectBound.height / ctx.canvas.height
+                        )
+                        .multiplySelf(ctx.getTransform())
+                        .translateSelf(margin, margin + y),
+                        w = (widgetWidth - (margin * 2+10) * transform.a) ;
                         let maxIoputSize=Math.max(...[parentNode.inputs.length,parentNode.outputs.length])
                         Object.assign(this.inputEl.style, {
-                            top: `${ maxIoputSize*transform.d*20+transform.d*5+transform.f}px`,
-                            height: `${32.0 * transform.d}px`,
+                            left: `${transform.a * margin + transform.e}px`,
+                            top: `${transform.d + transform.f}px`,
+                            width: `${w}px`,
                         });
                     }
                 });
