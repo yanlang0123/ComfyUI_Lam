@@ -10,7 +10,7 @@ kornia
 qrcode
 imageio
 imageio-ffmpeg
-tensorflow==2.12.0  -i https://pypi.tuna.tsinghua.edu.cn/simple
+tensorflow
 yacs
 pydub
 filterpy
