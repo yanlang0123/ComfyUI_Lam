@@ -22,6 +22,6 @@ Then run the install.bat file, and if there are no errors, it's ready.
    - Extraction Code: gf0p
    - Extract to the directory ..\ComfyUI\models\image-face-fusion
 
-3. Modify the execution.py file in the comfyUI root directory.
+3. 执行修改脚本
 windows  执行“修改文件.bat”文件，未报错后就可以了
 linux  执行“修改文件.sh”文件，未报错后就可以了

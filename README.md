@@ -23,6 +23,6 @@ https://huggingface.co/lllyasviel/Annotators/resolve/main/ControlNetLama.pth  ..
 解压到 ..\ComfyUI\models\image-face-fusion 目录
 
 
-3. 修改comfyUI根目录下的execution.py文件，修改内容，
+3. 执行修改脚本
 windows  执行“修改文件.bat”文件，未报错后就可以了
 linux  执行“修改文件.sh”文件，未报错后就可以了
