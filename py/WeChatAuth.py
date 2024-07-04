@@ -352,20 +352,22 @@ def setPost(self,FromUserName):
 @run_with_reconnect
 def selServer(json_data,prompt_id):
     json_data['prompt_id']=prompt_id
-    name=getCkptName(json_data['prompt'])
-    if name:
-        ckkeys=r.keys('ckpt:*:'+name)
-        nport=None
-        for ckkey in ckkeys:
-            ns=ckkey.split(":")
-            nport=':'.join(ns[1:3])
-            break
-        if nport:
-            print(nport)
-            nval = r.get('heartbeat:'+nport)
-            if nval!=None:
-                sendPublish(nport, json.dumps({'event':'addTask','data':json_data,'ckptName':name}))
-                return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
+    name=None
+    if Config().redis['modelPriority']==True :
+        name=getCkptName(json_data['prompt'])
+        if name:
+            ckkeys=r.keys('ckpt:*:'+name)
+            nport=None
+            for ckkey in ckkeys:
+                ns=ckkey.split(":")
+                nport=':'.join(ns[1:3])
+                break
+            if nport:
+                nval = r.get('heartbeat:'+nport)
+                if nval!=None:
+                    sendPublish(nport, json.dumps({'event':'addTask','data':json_data,'ckptName':name}))
+                    return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
+                
     keys=r.keys('heartbeat:*')
     if len(keys)>1:
         nameSize={}

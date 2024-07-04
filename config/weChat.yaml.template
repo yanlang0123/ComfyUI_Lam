@@ -1,9 +1,10 @@
-#redis: #redis 实现comfyUI集群
-#  host: localhost
+#redis:
+#  host: 127.0.0.1
 #  port: 6379
 #  password: 
-#  basePath: 192.168.1.8:8188
-#  isMain: true
+#  basePath: 192.168.1.8:8188 #comfyui地址
+#  isMain: true       #是否主comfyUI
+#  modelPriority: false #是否模型优先
 
 wechat:
   appid: wxa50ed345b253964d                        #公众号appid 
