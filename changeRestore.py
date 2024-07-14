@@ -168,7 +168,8 @@ def recursive_execute'''
 	]
 }
 ]
-filePath=os.path.dirname(__file__)
+filePath=os.path.dirname(os.path.abspath(__file__))
+print('当前目录：',filePath)
 base_path=filePath.split('custom_nodes')[0]
 backupPath=os.path.join(filePath,'backup')
 def read_py_file(file_path):
