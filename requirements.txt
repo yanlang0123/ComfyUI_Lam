@@ -18,3 +18,4 @@ facexlib
 librosa
 face_alignment
 pyzbar
+redis
