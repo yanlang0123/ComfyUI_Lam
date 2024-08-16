@@ -28,7 +28,7 @@ def get_del_keys(key, prompt,uniqueIds):
         for k1,v1 in v['inputs'].items():
             if type(v1)==list and v1[0]==key:
                 keys.append(k)
-                keys=keys+get_del_keys(k,prompt,uniqueIds)
+                keys=keys+get_del_keys(k,prompt,uniqueIds+[k])
     return keys
 #循环添加代码-----------结束---------
 def recursive_execute'''
@@ -77,10 +77,10 @@ def recursive_execute'''
         for i in range(startData['i']+1,startData['total'],startData['stop']):
             prompt[str(maxKey+i)]=prompt[inputNum]
             prompt[unique_id]['inputs']['obj'+str(i)]=[str(maxKey+i),prompt[unique_id]['inputs']['obj'][-1]]
-            if i==startInput['i']+1:
+            if i==startData['i']+1:
                 backhaul['obj'+str(i)]=prompt[unique_id]['inputs']['obj']
             else:
-                backhaul['obj'+str(i)]=[str(maxKey+i-startInput['stop']),prompt[unique_id]['inputs']['obj'][-1]]
+                backhaul['obj'+str(i)]=[str(maxKey+i-startData['stop']),prompt[unique_id]['inputs']['obj'][-1]]
     elif class_type=='DoWhileEnd':
         startNum=prompt[unique_id]['inputs']['start'][0]
         inputNum=prompt[unique_id]['inputs']['ANY'][0]
