@@ -401,10 +401,19 @@ def trigger_on_prompt(self,json_data,isRun=True):
             logging.warning(f"[ERROR] An error occurred during the on_prompt_handler processing")
             logging.warning(traceback.format_exc())
 
+    prompt=json_data['prompt']
+    maxKeyStr=sorted(list(prompt.keys()), key=lambda x: int(x.split(':')[0]))[-1]
+    maxKey = int(maxKeyStr.split(':')[0])
+    endNodeKeys=[x for x in prompt.keys() if prompt[x]['class_type']=='ForInnerEnd']
+    for unique_id in endNodeKeys:
+        inputNum=prompt[unique_id]['inputs']['obj']
+        maxKey=maxKey+1
+        json_data['prompt'][str(maxKey)]={ "inputs": { "expression": "p0",  "p0": inputNum },"class_type": "MultiParamFormula"}
+        json_data['prompt'][unique_id]['inputs']['obj']=[str(maxKey),0]
+
     return json_data
 
 def prompt(self,json_data):
-    print('----到这里-----')
     json_data = self.trigger_on_prompt(json_data,isRun=False)
     if 'prompt_id' in json_data:
         prompt_id=json_data['prompt_id']
