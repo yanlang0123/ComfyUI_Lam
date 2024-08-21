@@ -277,8 +277,8 @@ app.registerExtension({
                 let st_values='';
                 Object.defineProperty(style_type, "value", {
                     set: (x) => {
-                        st_values=x
-                        if(st_values){
+                        if(st_values!=x){
+                            st_values=x
                             getStyles(st_values);
                             styles.element.children[1].innerHTML=''
                             if(pb_cache[st_values]){
@@ -300,6 +300,7 @@ app.registerExtension({
                             styles.element.children[1].innerHTML=''
                         }else if(!st_values){
                             style_type.value=style_type.options.values[0];
+                            this.setSize([500, 600]);
                         }
                         if(pb_cache[st_values]&&styles.element.children[1].children.length==0){
                             let list =getTagList(pb_cache[st_values]);
