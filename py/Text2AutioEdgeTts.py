@@ -24,7 +24,7 @@ class Text2AutioEdgeTts:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("音频地址",)
     FUNCTION = "text_2_autio"
-    OUTPUT_NODE = True
+    OUTPUT_NODE = False
 
     CATEGORY = "lam"
 
