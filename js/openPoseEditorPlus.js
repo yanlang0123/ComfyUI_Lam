@@ -891,6 +891,12 @@ function createOpenPose(node, inputName, inputData, app) {
     value:'',
 
     draw: function (ctx, _, widgetWidth, y, widgetHeight) {
+      let top=0,left=0;
+      if(window.comfyAPI.app.app.menu.menuPositionSetting.value=='Top'){
+        top=35;left=40;
+      }else if(window.comfyAPI.app.app.menu.menuPositionSetting.value=='Bottom'){
+        left=40;
+      }
       const margin = 10,
         visible = app.canvas.ds.scale > 0.5 && this.type === "openpose",
         clientRectBound = ctx.canvas.getBoundingClientRect(),
@@ -906,8 +912,8 @@ function createOpenPose(node, inputName, inputData, app) {
       let h=w/this.openpose.children[0].width*this.openpose.children[0].height
 
       Object.assign(this.openpose.style, {
-        left: `${transform.a * margin + transform.e}px`,
-        top: `${transform.d + transform.f}px`,
+        left: `${transform.a * margin+left + transform.e}px`,
+        top: `${ top + transform.d + transform.f}px`,
         width: w + "px",
         height: h + "px",
         position: "absolute",
@@ -1147,6 +1153,7 @@ function createOpenPose(node, inputName, inputData, app) {
   
   node.openPose.getHands()
   node.addWidget("button", "显/隐画板", "ShowPainter", () => {
+    debugger;
     node.painter.disabled=!node.painter.disabled
     node.openPose.disabled=!node.openPose.disabled
     
