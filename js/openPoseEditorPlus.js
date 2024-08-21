@@ -99,8 +99,8 @@ class OpenPose {
     this.subsets = [];
     this.hands = [];
     this.prompts = [];
-    this.promptInput=null;
     this.negatives = [];
+    this.promptInput=null;
     this.negativeInput=null;
     this.backgImg=null
     this.index = 1
@@ -689,6 +689,10 @@ class OpenPose {
     this.canvas.clear();
     this.canvas.backgroundColor = "#000";
     this.groups=[]
+    this.subsets = [];
+    this.hands = [];
+    this.prompts = [];
+    this.negatives = [];
     this.backgImg = null;
     this.addPose();
     this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
@@ -865,7 +869,6 @@ class OpenPose {
     if(json.keypoints.length==1&&!Array.isArray(json.keypoints[0])){
       json.keypoints=json.keypoints[0];
     }
-    console.log(json)
     return json;
   }
 
@@ -1066,8 +1069,12 @@ function createOpenPose(node, inputName, inputData, app) {
         'hands':JSON.parse(JSON.stringify(node.openPose.hands)),
         'index':node.openPose.history_index});
       }
-      node.openPose.groups=[]
-      node.openPose.addPose();
+      // node.openPose.groups=[]
+      // node.openPose.subsets = [];
+      // node.openPose.hands = [];
+      // node.openPose.prompts = [];
+      // node.openPose.negatives = [];
+      // node.openPose.addPose();
       node.openPose.history_change = true;
       node.openPose.updateHistoryData();
     }
@@ -1472,6 +1479,10 @@ app.registerExtension({
             n.openPose.loadPreset(pose_ls[pose_ls.length - 1]);
           }else{
             n.openPose.groups=[]
+            n.openPose.subsets = [];
+            n.openPose.hands = [];
+            n.openPose.prompts = [];
+            n.openPose.negatives = [];
             n.openPose.addPose();
             n.openPose.undo_history.push({'groups':JSON.parse(JSON.stringify(n.openPose.groups)),
             'hands':JSON.parse(JSON.stringify(n.openPose.hands)),
