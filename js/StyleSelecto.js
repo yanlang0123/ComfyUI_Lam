@@ -278,21 +278,21 @@ app.registerExtension({
                 Object.defineProperty(style_type, "value", {
                     set: (x) => {
                         st_values=x
-                        if(st_values){
-                            getStyles(st_values);
-                            styles.element.children[1].innerHTML=''
-                            if(pb_cache[st_values]){
-                                let list =getTagList(pb_cache[st_values]);
-                                styles.element.children[1].append(...list)
-                                styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
-                                    if(this.properties["values"].includes(el.dataset.tag)){
-                                        el.classList.add("lam_style-model-tag--selected");
-                                    }
-                                });
-                                this.setSize([500, 600]);
-                            }
+                        // if(st_values){
+                        //     getStyles(st_values);
+                        //     styles.element.children[1].innerHTML=''
+                        //     if(pb_cache[st_values]){
+                        //         let list =getTagList(pb_cache[st_values]);
+                        //         styles.element.children[1].append(...list)
+                        //         styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
+                        //             if(this.properties["values"].includes(el.dataset.tag)){
+                        //                 el.classList.add("lam_style-model-tag--selected");
+                        //             }
+                        //         });
+                        //         this.setSize([500, 600]);
+                        //     }
                             
-                        }
+                        // }
                     },
                     get: () => {
                         if(st_values&&!pb_cache[st_values]){
