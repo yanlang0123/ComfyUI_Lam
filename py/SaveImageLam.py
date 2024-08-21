@@ -7,7 +7,6 @@ import numpy as np
 import json
 from PIL.PngImagePlugin import PngInfo
 from comfy.cli_args import args
-from server import PromptServer
 
 class SaveImageLam(SaveImage):
     def __init__(self):
@@ -60,10 +59,7 @@ class SaveImageLam(SaveImage):
             })
             counter += 1
 
-        if PromptServer.instance.client_id:
-            PromptServer.instance.send_sync("executed", {"output":{"images": results},"node":unique_id,"prompt_id":''},PromptServer.instance.client_id)
-
-        return (images,)
+        return { "ui": { "images": results }, "result": images }
     
 NODE_CLASS_MAPPINGS = {
     "SaveImageLam": SaveImageLam

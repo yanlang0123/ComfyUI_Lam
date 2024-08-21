@@ -19,13 +19,18 @@ class MultiIntFormula:
             "optional": {
                 "n0": ("INT,FLOAT", ),
                 "n1": ("INT,FLOAT", ),
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",           #节点编号
+                "prompt": "PROMPT",                 #流程节点信息
+                "extra_pnginfo": "EXTRA_PNGINFO"    #前端流程图信息
             }
         }
 
     RETURN_TYPES = ("INT","FLOAT",)
     FUNCTION = "evaluate"
     CATEGORY = "lam"
-    OUTPUT_NODE = True
+    OUTPUT_NODE = False
 
     def evaluate(self, expression, **kwargs):
         lookup = {}

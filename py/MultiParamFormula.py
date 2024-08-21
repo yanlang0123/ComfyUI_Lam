@@ -25,6 +25,11 @@ class MultiParamFormula:
             "optional": {
                 "p0": (AlwaysEqualProxy("*"), ),
                 "p1": (AlwaysEqualProxy("*"), ),
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",           #节点编号
+                "prompt": "PROMPT",                 #流程节点信息
+                "extra_pnginfo": "EXTRA_PNGINFO"    #前端流程图信息
             }
         }
 
@@ -32,7 +37,7 @@ class MultiParamFormula:
     RETURN_NAMES = ('p0',)
     FUNCTION = "evaluate"
     CATEGORY = "lam"
-    OUTPUT_NODE = True
+    OUTPUT_NODE = False
 
     def evaluate(self, expression, **kwargs):
         lookup = {}
@@ -48,7 +53,7 @@ class MultiParamFormula:
 
         if not isinstance(r, tuple):
             r = (r,)
-
+            
         return {"ui": {"value": [msg]}, "result": r}
     
 NODE_CLASS_MAPPINGS = {

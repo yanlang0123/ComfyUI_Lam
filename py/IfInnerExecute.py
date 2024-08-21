@@ -27,7 +27,7 @@ class IfInnerExecute:
 
     RETURN_TYPES = (AlwaysEqualProxy("*"),)
 
-    RETURN_NAMES = "?"
+    RETURN_NAMES = ('?',)
 
     FUNCTION = "return_based_on_bool"
 

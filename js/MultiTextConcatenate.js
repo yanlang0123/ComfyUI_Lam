@@ -6,7 +6,7 @@ import {CUSTOM_INT, recursiveLinkUpstream, transformFunc, swapInputs,swapOutputs
 app.registerExtension({
     name: "Comfy.lam.MultiTextConcatenate",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        var showNames=["IfInnerExecute",'MultiIntFormula','MultiParamFormula']
+        var showNames=["IfInnerExecute",'MultiIntFormula','MultiParamFormula','ForInnerEnd','DoWhileEnd']
         if (showNames.indexOf(nodeData.name)>=0) {
             const onDrawForeground = nodeType.prototype.onDrawForeground;
             nodeType.prototype.onDrawForeground = function (ctx) {
