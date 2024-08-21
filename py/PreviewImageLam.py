@@ -58,7 +58,7 @@ class PreviewImageLam(SaveImage):
             })
             counter += 1
         
-        return { "ui": { "images": results }, "result": images }
+        return { "ui": { "images": results }, "result": (images,) }
     
 NODE_CLASS_MAPPINGS = {
     "PreviewImageLam": PreviewImageLam
