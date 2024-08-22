@@ -57,13 +57,13 @@ class ZhPromptTranslator:
         modelDir = os.path.join(os.path.abspath(os.path.join(__file__, "../../models")),'opus-mt-zh-en')
         
         self.model = MarianMTModel.from_pretrained(modelDir)
-        self.model.to(device)
+        #self.model.to(device)
         self.tokenizer = MarianTokenizer.from_pretrained(modelDir)
         self.tokenizer.src_lang = "zh_CN"
     def translate(self,chinese_str: str) -> str:
         # 对中文句子进行分词
         input_ids = self.tokenizer.encode(chinese_str, return_tensors="pt")
-        input_ids.to(device)
+        #input_ids.to(device)
 
         # 进行翻译
         output_ids = self.model.generate(input_ids)
