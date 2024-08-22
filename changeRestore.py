@@ -59,6 +59,7 @@ class PromptExecutor:'''
             forNodes={}
             nextNodeForId={}
             oldNodeData={}
+            ifAnyNodes={prompt[x]['inputs']['ANY'][0]:[x,prompt[x]['inputs']['ANY'][1]] for x in prompt.keys() if prompt[x]['class_type']=='IfInnerExecute'}
             while not execution_list.is_empty():'''
 		}
 		,{
@@ -240,7 +241,18 @@ class PromptExecutor:'''
                             self.server.send_sync("executed", {"output":{"value": [endSize]},"node":node_id,"prompt_id":''},self.server.client_id)
                             self.server.send_sync("executing", { "node": node_id, "display_node": node_id, "prompt_id": prompt_id }, self.server.client_id)
                         self.caches.outputs.remove_node(iNum)
-                        self.caches.outputs.remove_node(startNum)'''
+                        self.caches.outputs.remove_node(startNum)
+                    elif node_id in ifAnyNodes:
+                        data=self.caches.outputs.get(node_id)
+                        ifExNodeId=ifAnyNodes[node_id][0]
+                        if data and data[ifAnyNodes[node_id][-1]][0]:
+                            if prompt[ifExNodeId]['inputs']['IF_FALSE'][0] in execution_list.blocking and len(execution_list.blocking[prompt[ifExNodeId]['inputs']['IF_FALSE'][0]].keys())==1:
+                                if prompt[ifExNodeId]['inputs']['IF_FALSE'][0] in execution_list.pendingNodes:
+                                    execution_list.pop_node(prompt[ifExNodeId]['inputs']['IF_FALSE'][0])
+                        else:
+                            if prompt[ifExNodeId]['inputs']['IF_TRUE'][0] in execution_list.blocking and len(execution_list.blocking[prompt[ifExNodeId]['inputs']['IF_TRUE'][0]].keys())==1:
+                                if prompt[ifExNodeId]['inputs']['IF_TRUE'][0] in execution_list.pendingNodes:
+                                    execution_list.pop_node(prompt[ifExNodeId]['inputs']['IF_TRUE'][0])'''
 		}
 	]
 }

@@ -4,19 +4,23 @@ if exist "..\..\..\python_embeded\python.exe" (
     echo Custom Python build of ComfyUI standalone executable detected:
     echo "%RETVAL%"
     echo --------------------------------------------------
-    ..\..\..\python_embeded\python.exe install.py %1
+    ..\..\..\python_embeded\python.exe  -m pip list %1
 ) else if exist "..\..\python\python.exe" (
     echo Custom Python build of ComfyUI standalone executable detected:
     echo "%RETVAL%"
-    echo --------------------------------------------------
-    ..\..\python\python.exe -m install.py %1
+    echo ---------------------DDD-----------------------------
+    echo export HF_ENDPOINT=https://hf-mirror.com
+
+    ..\..\python\python.exe -m pip list %1
 ) else (
     for /f "tokens=*" %%i in ('where python') do set "PYTHON_PATH=%%i" & goto :done
     :done
     echo Custom Python not found. Use system's Python executable instead:
     echo %PYTHON_PATH%
     echo --------------------------------------------------
-    python.exe install.py %1
+    echo export HF_ENDPOINT=https://hf-mirror.com
+    python.exe  -m huggingface-cli download --resume-download Helsinki-NLP/opus-mt-zh-en --local-dir models/opus-mt-zh-en
+    python.exe  -m pip list %1
 )
 
 :NORMALIZEPATH

@@ -4,6 +4,7 @@ import os
 import csv
 import string
 from collections import OrderedDict
+import torch
 from transformers import MarianMTModel,MarianTokenizer
 
 #获取组节点
@@ -45,20 +46,24 @@ def replace_text(text, cache):
             text = text.replace(key, value + ' ')
     return text
 
-
+# 根据配置和设备类型创建模型对象
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class ZhPromptTranslator:
 
     def __init__(self):
         self.my_translations = os.path.join(confdir,"translations.csv")
-        #os.environ['HF_ENDPOINT'] = 'hf-mirror.com'
-        self.model = MarianMTModel.from_pretrained('Helsinki-NLP/opus-mt-zh-en').cuda()
-        self.tokenizer = MarianTokenizer.from_pretrained('Helsinki-NLP/opus-mt-zh-en')
+        modelDir = os.path.join(os.path.abspath(os.path.join(__file__, "../../models")),'opus-mt-zh-en')
+        
+        self.model = MarianMTModel.from_pretrained(modelDir)
+        self.model.to(device)
+        self.tokenizer = MarianTokenizer.from_pretrained(modelDir)
         self.tokenizer.src_lang = "zh_CN"
     def translate(self,chinese_str: str) -> str:
         # 对中文句子进行分词
-        input_ids = self.tokenizer.encode(chinese_str, return_tensors="pt").cuda()
+        input_ids = self.tokenizer.encode(chinese_str, return_tensors="pt")
+        input_ids.to(device)
 
         # 进行翻译
         output_ids = self.model.generate(input_ids)
