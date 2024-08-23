@@ -802,6 +802,23 @@ async def handleMessagePost(request):
             logging.error('事件处理异常:'+str(e))
     return web.Response(status=200)
 
+custom_nodes_path=folder_paths.get_folder_paths('custom_nodes')[0]
+custom_nodes_path=os.path.join(custom_nodes_path,'AIGODLIKE-ComfyUI-Translation')
+custom_nodes_path=os.path.join(custom_nodes_path,Config().base['language'],'Nodes') 
+NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS={}
+if os.path.exists(custom_nodes_path):
+    for file in os.listdir(custom_nodes_path):
+        if file.endswith('.json'):
+            json_file=os.path.join(custom_nodes_path, file)
+            if os.path.isfile(json_file):
+                f = open(json_file,'r', encoding='utf-8')
+                data = json.load(f)
+                f.close()
+                for key in data:
+                    if 'title' in data[key]:
+                         NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS[key]=data[key]['title']
+
+setattr(PromptServer.instance,"displayName",NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS)
 PromptServer.instance.send_sync=types.MethodType(send_sync,PromptServer.instance)
 PromptServer.instance.trigger_on_prompt=types.MethodType(trigger_on_prompt,PromptServer.instance)
 

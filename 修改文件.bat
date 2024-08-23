@@ -9,7 +9,7 @@ if exist "..\..\..\python_embeded\python.exe" (
     echo Custom Python build of ComfyUI standalone executable detected:
     echo "%RETVAL%"
     echo --------------------------------------------------
-    ..\..\python\python.exe -m changeRestore.py %1
+    ..\..\python\python.exe changeRestore.py %1
 ) else (
     for /f "tokens=*" %%i in ('where python') do set "PYTHON_PATH=%%i" & goto :done
     :done

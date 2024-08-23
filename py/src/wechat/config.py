@@ -58,6 +58,7 @@ class Config(object):
         yconfig = self._load_config()
         self.wechat = yconfig.get("wechat", {})
         self.redis = yconfig.get("redis", {})
+        self.base = yconfig.get("base", {})
         #self.EMAIL= yconfig.get("email", {})
         #self.OPENAI= yconfig.get("openai", {})
         #self.GLM4= yconfig.get("glm4", {})
