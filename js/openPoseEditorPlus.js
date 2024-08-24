@@ -330,6 +330,9 @@ class OpenPose {
       if(keypoints.length>1){
         let group=[]
         let subset=this.subsets[index]
+        if(subset===undefined){
+          subset=default_subset
+        }
         for(let i = 0; i < subset.length; i ++){
           if(subset[i]<0){
             group.push([-1,-1])
@@ -893,9 +896,9 @@ function createOpenPose(node, inputName, inputData, app) {
     draw: function (ctx, _, widgetWidth, y, widgetHeight) {
       let top=0,left=0;
       if(window.comfyAPI.app.app.menu.menuPositionSetting.value=='Top'){
-        top=35;left=40;
+        top=window.comfyAPI.app.app.menu.element.offsetHeight;left=window.comfyAPI.app.app.bodyLeft.offsetWidth;
       }else if(window.comfyAPI.app.app.menu.menuPositionSetting.value=='Bottom'){
-        left=40;
+        left=window.comfyAPI.app.app.bodyLeft.offsetWidth;
       }
       const margin = 10,
         visible = app.canvas.ds.scale > 0.5 && this.type === "openpose",
