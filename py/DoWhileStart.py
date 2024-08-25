@@ -16,6 +16,8 @@ class DoWhileStart:
         return {
             "required": {
                 "obj": (AlwaysEqualProxy("*"), ),
+            },"hidden": {
+                "i": ("INT", {"default": 0, "min": 0, "max": 99999}),
             }
         }
     RETURN_TYPES = (AlwaysEqualProxy("*"),"DOWHILE","INT","INT",)
@@ -24,8 +26,7 @@ class DoWhileStart:
 
     CATEGORY = "lam"
 
-    def do_while_start_fun(self,obj, **kwargs):
-        i=kwargs['i'] if 'i' in kwargs else 0
+    def do_while_start_fun(self,obj,i=0, **kwargs):
         random.seed(i)
         return (obj,'DOWHILE',i,random.randint(0,sys.maxsize),)
 

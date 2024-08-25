@@ -411,12 +411,6 @@ def trigger_on_prompt(self,json_data,isRun=True):
         json_data['prompt'][str(maxKey)]={ "inputs": { "expression": "p0",  "p0": inputNum },"class_type": "MultiParamFormula"}
         json_data['prompt'][unique_id]['inputs']['obj']=[str(maxKey),0]
 
-    endNodeKeys=[x for x in prompt.keys() if prompt[x]['class_type']=='DoWhileStart']
-    for unique_id in endNodeKeys:
-        maxKey=maxKey+1
-        json_data['prompt'][str(maxKey)]={ "inputs": { "expression": "0" },"class_type": "MultiParamFormula"}
-        json_data['prompt'][unique_id]['inputs']['i']=[str(maxKey),0]
-
     return json_data
 
 def prompt(self,json_data):

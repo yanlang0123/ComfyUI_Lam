@@ -39,6 +39,15 @@ editlist=[{
 		}
 	]
 },{
+	"name": "comfy_execution/graph.py",
+	"isEditStr":"self.staged_node_id = available[0]",
+	"changs":[
+		{
+			"primit":'''self.staged_node_id = self.ux_friendly_pick_node(available)''',
+			"edit":'''self.staged_node_id = available[0] #self.ux_friendly_pick_node(available)'''
+		}
+	]
+},{
 	"name": "execution.py",
 	"isEditStr":"def get_del_keys(key, prompt,uniqueIds)",
 	"changs":[
@@ -147,7 +156,7 @@ class PromptExecutor:'''
                         class_type = prompt[node_id]['class_type']
 
                 elif  class_type=='DoWhileEnd':
-                    startNum=prompt[node_id]['inputs']['start'][0]
+                    startNum,startSock=prompt[node_id]['inputs']['start']
                     inputNum,inputSocket=prompt[node_id]['inputs']['ANY']
                     anyVal=self.caches.outputs.get(inputNum)
                     if anyVal and anyVal[inputSocket][0]:
@@ -161,16 +170,16 @@ class PromptExecutor:'''
                             self.server.send_sync("executed", {"output":{"value": [endSize]},"node":node_id,"prompt_id":''},self.server.client_id)
                             self.server.send_sync("executing", { "node": node_id, "display_node": node_id, "prompt_id": prompt_id }, self.server.client_id)
                          
-                        iNum=prompt[startNum]['inputs']['i'][0]
-                        prompt[iNum]['inputs']['expression']=str(i)
+                        prompt[startNum]['inputs']['i']=i
                         from_node_id, from_socket=prompt[node_id]['inputs']['obj']
                         delKeys=list(set(get_del_keys(startNum,prompt,[startNum,node_id]))) 
                         delKeys.append(startNum)
                         delKeys.append(inputNum)
                         delKeys.append(from_node_id)
-                        delKeys.append(iNum)
                         for key in delKeys:
                             self.caches.outputs.remove_node(key)
+                        execution_list.add_strong_link(startNum, startSock, node_id)
+                        execution_list.add_strong_link(inputNum, inputSocket, node_id)
                         execution_list.add_strong_link(from_node_id, from_socket, node_id)
                         execution_list.unstage_node_execution()
                         node_id, error, ex = execution_list.stage_node_execution()
@@ -178,7 +187,6 @@ class PromptExecutor:'''
                             self.handle_execution_error(prompt_id, dynamic_prompt.original_prompt, current_outputs, executed, error, ex)
                             break
                         class_type = prompt[node_id]['class_type']
-
                 result, error, ex = execute'''
 		}
 		,{
@@ -233,8 +241,7 @@ class PromptExecutor:'''
                         
                     elif class_type=='DoWhileEnd':
                         startNum=prompt[node_id]['inputs']['start'][0]
-                        iNum=prompt[startNum]['inputs']['i'][0]
-                        prompt[iNum]['inputs']['expression']='0'
+                        prompt[startNum]['inputs']['i']=0
                         vals=self.caches.outputs.get(startNum)
                         i=0
                         if vals:
@@ -244,7 +251,6 @@ class PromptExecutor:'''
                         if self.server.client_id is not None:
                             self.server.send_sync("executed", {"output":{"value": [endSize]},"node":node_id,"prompt_id":''},self.server.client_id)
                             self.server.send_sync("executing", { "node": node_id, "display_node": node_id, "prompt_id": prompt_id }, self.server.client_id)
-                        self.caches.outputs.remove_node(iNum)
                         self.caches.outputs.remove_node(startNum)
                     elif node_id in ifAnyNodes:
                         data=self.caches.outputs.get(node_id)

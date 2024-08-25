@@ -6,6 +6,9 @@
 #  isMain: true       #是否主comfyUI
 #  modelPriority: false #是否模型优先
 
+base:
+  language: zh-CN # ja-JP ok-KR ru-RU zh-TW zh-CN en-US
+
 wechat:
   appid: wxa50ed345b253964d                        #公众号appid 
   secret: 327ac9ba06d214d2fcfe2e9ed0520684         #公众号秘钥
