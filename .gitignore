@@ -20,3 +20,4 @@ config/lamWeChat.db
 config/weChat.yaml
 config/settings_nodes.json
 models/*
+backup/*
