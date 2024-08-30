@@ -77,7 +77,9 @@ class StyleSelecto:
                 "negative_prompt":("STRING",{"forceInput": True}),
                 "i": ("INT",{"forceInput": True}),
             },
-            "hidden": {"unique_id": "UNIQUE_ID","wprompt":"PROMPT"},
+            "hidden": {
+                "styles": ("STRING", {"default": ""}),
+            },
         }
 
     RETURN_TYPES = ("STRING","STRING","STRING",)
@@ -89,12 +91,8 @@ class StyleSelecto:
 
     CATEGORY = "lam"
 
-    def get_style(self,prompt,style_type,unique_id,wprompt,negative_prompt="",i=None):
-        values = []
-        if unique_id in wprompt:
-            if wprompt[unique_id]["inputs"]['styles']:
-                #分割字符串
-                values = wprompt[unique_id]["inputs"]['styles'].split(',')
+    def get_style(self,prompt,style_type,styles='',negative_prompt="",i=None):
+        values = styles.split(',')
         styleName=''
         if i!=None:
             if len(values)>0:

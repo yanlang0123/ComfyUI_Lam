@@ -584,7 +584,9 @@ async def getCommands(request):
             if 'type' in commands[key] and commands[key]['type']==type:
                 comms[key] = commands[key]
     else:
-        comms=commands
+        for key in commands:
+            if 'type' not in commands[key]:
+                comms[key] = commands[key]
     #type: paint-board
     return web.Response(text=json.dumps(comms), content_type='application/json')
 
@@ -743,7 +745,7 @@ async def handleMessagePost(request):
             elif isPrepare:
                 msg=''
                 commandName=PromptServer.instance.user_command[FromUserName]['command']
-                if reply_content in Config().wechat['commands'][commandName]['params'] and Config().wechat['commands'][commandName]['params'][reply_content]['type'] and Config().wechat['commands'][commandName]['params'][reply_content]['type']=='image':
+                if reply_content in Config().wechat['commands'][commandName]['params'] and 'type' in Config().wechat['commands'][commandName]['params'][reply_content] and Config().wechat['commands'][commandName]['params'][reply_content]['type']=='image':
                     PromptServer.instance.user_command[FromUserName]['waitKey']=reply_content
                     msg='待上传图片参数'+Config().wechat['commands'][commandName]['params'][reply_content]['zhName']
                 elif reply_content and otherName!=None:

@@ -155,8 +155,9 @@ def receive_msg(msg, isPrepare=False, isWaiting=False):
         comList = []
         index = 0
         for key in commands:
-            comList.append({"id": index, "content": key})
-            index += 1
+            if 'type' not in commands[key]:
+                comList.append({"id": index, "content": key})
+                index += 1
         for key in query_commands:
             comList.append({"id": index, "content": key})
             index += 1

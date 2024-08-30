@@ -3,6 +3,8 @@ from aiohttp import web
 import json
 import os
 import yaml
+import folder_paths
+import comfy
 
 #获取组节点
 gdir = os.path.abspath(os.path.join(__file__, "../../groupNode"))
@@ -66,6 +68,22 @@ def getPrompt(request):
                 return web.json_response(data)
     return web.Response(status=404)
 
+@PromptServer.instance.routes.get("/lam/getModelNames")
+def getPrompt(request):
+    data={"ckpt_name": folder_paths.get_filename_list("checkpoints"),
+          "lora_name": folder_paths.get_filename_list("loras"),
+          "clip_name": folder_paths.get_filename_list("clip"),
+          "control_net_name": folder_paths.get_filename_list("controlnet"),
+          "style_model_name": folder_paths.get_filename_list("style_models"),
+          "clip_vision_name": folder_paths.get_filename_list("clip_vision"),
+          "gligen_name": folder_paths.get_filename_list("gligen"),
+          "unet_name": folder_paths.get_filename_list("diffusion_models"),
+          "vae_name": folder_paths.get_filename_list("vae"),
+          "sampler_name": comfy.samplers.KSampler.SAMPLERS,
+          "scheduler": comfy.samplers.KSampler.SCHEDULERS,
+          }
+    return web.json_response(data)
+
 class EasyPromptSelecto:
     """
     提示词选择工具
@@ -90,7 +108,9 @@ class EasyPromptSelecto:
                 "text": ("STRING",{"default": ""}),
                 "prompt_type":(files_name, ),
             },
-            "hidden": {"unique_id": "UNIQUE_ID","wprompt":"PROMPT"},
+            "hidden": {
+                "tags": ("STRING", {"default": ""}),
+            },
         }
 
     RETURN_TYPES = ("STRING",)
@@ -102,13 +122,8 @@ class EasyPromptSelecto:
 
     CATEGORY = "lam"
 
-    def translate(self,prompt_type,unique_id,wprompt,text=''):
-        values = ''
-        if unique_id in wprompt:
-            if wprompt[unique_id]["inputs"]['tags']:
-                #分割字符串
-                values = wprompt[unique_id]["inputs"]['tags']
-        return (text+values,)
+    def translate(self,prompt_type,tags='',text=''):
+        return (text+tags,)
 
 # A dictionary that contains all nodes you want to export with their names
 # NOTE: names should be globally unique
