@@ -13,14 +13,13 @@ import types
 import execution
 import uuid
 import folder_paths
-import traceback
 from comfy.cli_args import args
 from .src.wechat.redisSub import PubSub,run_with_reconnect,r
 from threading import Thread, current_thread
 from typing import List, Literal, NamedTuple, Optional
 import copy
 import asyncio
- 
+
 @run_with_reconnect
 def subscribe(p):
     while True:
@@ -387,24 +386,18 @@ def selServer(json_data,prompt_id):
         sendPublish(minKey, json.dumps({'event':'addTask','data':json_data,'ckptName':name}))
         return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
     return None
-def trigger_on_prompt(self,json_data,isRun=True):
+
+def trigger_on_prompt(json_data,isRun=True):
     if isRun and r and Config().redis['isMain']:
         prompt_id=str(uuid.uuid4())
         data=selServer(json_data,prompt_id)
         if data:
             return data
         
-    for handler in self.on_prompt_handlers:
-        try:
-            json_data = handler(json_data)
-        except Exception as e:
-            logging.warning(f"[ERROR] An error occurred during the on_prompt_handler processing")
-            logging.warning(traceback.format_exc())
-
     prompt=json_data['prompt']
     maxKeyStr=sorted(list(prompt.keys()), key=lambda x: int(x.split(':')[0]))[-1]
     maxKey = int(maxKeyStr.split(':')[0])
-    endNodeKeys=[x for x in prompt.keys() if prompt[x]['class_type']=='ForInnerEnd']
+    endNodeKeys=[x for x in prompt.keys() if 'class_type' in prompt[x] and prompt[x]['class_type']=='ForInnerEnd']
     for unique_id in endNodeKeys:
         inputNum=prompt[unique_id]['inputs']['obj']
         maxKey=maxKey+1
@@ -465,7 +458,6 @@ def getTaskRanking(self,FromUserName):
         return '您还没有排队，请先发送您的指令'
     prompt_id=self.user_command[FromUserName]['prompt_id']
     current_queue = self.prompt_queue.get_current_queue()
-    print(current_queue)
     for i in range(len(current_queue[0])):
         if current_queue[0][i][1] == prompt_id:
             return '您的任务正在执行。'
@@ -501,6 +493,11 @@ async def getHistorys(request):
 @PromptServer.instance.routes.post("/wechatauth/addTask")
 async def addTask(request):
     try:
+        if 'api_is_used' in Config().base and Config().base['api_is_used']==False:
+            logging.error('服务限制访问')
+            data={'msg':'服务限制访问','success':False}
+            return web.Response(text=json.dumps(data), content_type='application/json')
+        
         post = await request.post()
         command = post.get("command")
         if command == None:
@@ -520,7 +517,7 @@ async def addTask(request):
             return web.Response(text=json.dumps(data), content_type='application/json')
 
         adminNo=base64_decode(Config().wechat['adminNo'])
-        if adminNo!=openId:
+        if adminNo!=openId and Config().wechat['freeSize']>0:
             db=DataBaseUtil()
             data=db.get_user_frequency(openId)
             if data[0]==None:
@@ -816,7 +813,7 @@ if os.path.exists(custom_nodes_path):
 
 setattr(PromptServer.instance,"displayName",NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS)
 PromptServer.instance.send_sync=types.MethodType(send_sync,PromptServer.instance)
-PromptServer.instance.trigger_on_prompt=types.MethodType(trigger_on_prompt,PromptServer.instance)
+PromptServer.instance.add_on_prompt_handler(trigger_on_prompt)
 
 
 NODE_CLASS_MAPPINGS = {}
