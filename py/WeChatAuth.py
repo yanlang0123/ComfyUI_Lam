@@ -407,7 +407,7 @@ def trigger_on_prompt(json_data,isRun=True):
     return json_data
 
 def prompt(self,json_data):
-    json_data = self.trigger_on_prompt(json_data,isRun=False)
+    json_data = trigger_on_prompt(json_data,isRun=False)
     if 'prompt_id' in json_data:
         prompt_id=json_data['prompt_id']
     else:

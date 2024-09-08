@@ -895,10 +895,10 @@ function createOpenPose(node, inputName, inputData, app) {
 
     draw: function (ctx, _, widgetWidth, y, widgetHeight) {
       let top=0,left=0;
-      if(window.comfyAPI.app.app.menu.menuPositionSetting.value=='Top'){
-        top=window.comfyAPI.app.app.menu.element.offsetHeight;left=window.comfyAPI.app.app.bodyLeft.offsetWidth;
-      }else if(window.comfyAPI.app.app.menu.menuPositionSetting.value=='Bottom'){
-        left=window.comfyAPI.app.app.bodyLeft.offsetWidth;
+      if(app.menu.menuPositionSetting.value=='Top'){
+        top=app.menu.element.offsetHeight;left=app.bodyLeft.offsetWidth;
+      }else if(app.menu.menuPositionSetting.value=='Bottom'){
+        left=app.bodyLeft.offsetWidth;
       }
       const margin = 10,
         visible = app.canvas.ds.scale > 0.5 && this.type === "openpose",
