@@ -71,11 +71,11 @@ app.registerExtension({
                         )
                         .multiplySelf(ctx.getTransform())
                         .translateSelf(margin, margin + y),
-                        w = (widgetWidth - (margin * 2+10) * transform.a) ;
+                        w = (widgetWidth - (margin * 4) ) ;
                         let maxIoputSize=Math.max(...[parentNode.inputs.length,parentNode.outputs.length])
                         Object.assign(this.inputEl.style, {
                             left: `${transform.a * margin + transform.e}px`,
-                            top: `${transform.d + transform.f}px`,
+                            top: `${transform.d + transform.f-10}px`,
                             width: `${w}px`,
                         });
                     }

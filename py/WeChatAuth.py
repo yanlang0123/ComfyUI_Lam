@@ -401,7 +401,7 @@ def trigger_on_prompt(json_data,isRun=True):
     for unique_id in endNodeKeys:
         inputNum=prompt[unique_id]['inputs']['obj']
         maxKey=maxKey+1
-        json_data['prompt'][str(maxKey)]={ "inputs": { "expression": "p0",  "p0": inputNum },"class_type": "MultiParamFormula"}
+        json_data['prompt'][str(maxKey)]={ "inputs": { "advanced": "disable","expression": "p0",  "p0": inputNum },"class_type": "MultiParamFormula"}
         json_data['prompt'][unique_id]['inputs']['obj']=[str(maxKey),0]
 
     return json_data

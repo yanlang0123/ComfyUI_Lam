@@ -1,4 +1,5 @@
 from .src.utils.uitls import AlwaysEqualProxy,AlwaysTupleZero
+import json
 class MultiParamFormula:
 
     DESCRIPTION = """
@@ -12,6 +13,7 @@ class MultiParamFormula:
     入参：p0,p1 (p0类型LIST,p1类型INT) 表达式：p0[p1]  出参：p0 返回指定下标的元素
     入参：p0 (p0类型字符串数组) 表达式：','.join(p0)  出参：p0 返回字符串数组‘,’分割合并的字符串
     入参：p0 表达式：print('调试输出',p0)  出参：无 用于调试输出，查看数据结构
+    高级模式启用：可执行多行代码，返回值会必须赋值给“result” 否则会报错
     """
     def __init__(self):
         pass
@@ -21,6 +23,7 @@ class MultiParamFormula:
         return {
             "required": {
                 "expression": ("STRING",{"multiline": True}),
+                "advanced": (["enable", "disable"],{"default": "disable"}), 
             },
             "optional": {
                 "p0": (AlwaysEqualProxy("*"), ),
@@ -39,15 +42,22 @@ class MultiParamFormula:
     CATEGORY = "lam"
     OUTPUT_NODE = False
 
-    def evaluate(self, expression, **kwargs):
-        lookup = {}
+    def evaluate(self,advanced,expression, **kwargs):
+        lookup = {'json':json}
         for arg in kwargs:
             lookup[arg] = kwargs[arg]
         
         msg='完成'
         r=""
         try:
-            r = eval(expression, lookup)
+            if advanced=='enable':
+                exec(expression, lookup)
+                if 'result' not in lookup:
+                    msg('表达式没有返回值')
+                else:
+                    r = lookup['result']
+            else:
+                r = eval(expression, lookup)
         except Exception as e:
             msg='表达式错误'
 
