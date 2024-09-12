@@ -20,8 +20,8 @@ class IfInnerExecute:
         return {
             "required": {
                 "ANY": (AlwaysEqualProxy("*"),),
-                "IF_TRUE": (AlwaysEqualProxy("*"),),
-                "IF_FALSE": (AlwaysEqualProxy("*"),),
+                "IF_TRUE": (AlwaysEqualProxy("*"),{"lazy":True}),
+                "IF_FALSE": (AlwaysEqualProxy("*"),{"lazy":True}),
             }
         }
 
@@ -33,6 +33,16 @@ class IfInnerExecute:
 
     CATEGORY = "lam"
     OUTPUT_NODE = True
+
+    def check_lazy_status(self, ANY, IF_TRUE, IF_FALSE):
+        print("测试：check_lazy_status", ANY)
+        needed = []
+        if ANY:
+            needed.append('IF_TRUE')
+        else:
+            needed.append('IF_FALSE')
+        return needed
+
 
     def return_based_on_bool(self, ANY, IF_TRUE, IF_FALSE):
         return {"ui": {"value": [True if ANY else False]}, "result": (IF_TRUE if ANY else IF_FALSE,)}
