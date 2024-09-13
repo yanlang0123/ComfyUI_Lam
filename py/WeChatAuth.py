@@ -25,27 +25,25 @@ def subscribe(p):
     while True:
         msg = p.parse_response()
         if msg[0]=='message' and len(msg)==3:
-            try:
-                message=json.loads(msg[2])
-                if message['event']=='addTask':
-                    ckptSetCount(message)
-                    prompt(PromptServer.instance,message['data'])
-                elif message['event']=='taskDone':
-                    task_done(PromptServer.instance.prompt_queue,message['item_id'],message['data'])
-                elif message['event']=='sendImage':
-                    base64_to_file(message['data'],message['filename'],message['type'],message['subfolder'])
-                elif message['event']=='dowFile':
-                    filedata=r.get(message['filename'])
-                    base64_to_file(filedata,message['filename'],message['type'],message['subfolder'])
-                    r.delete(message['filename'])
-                elif str(message['event'])=='2':
-                    filedata = Image.open(BytesIO(base64_to_b64decode(message['data'][1])))
-                    data=tuple([message['data'][0],filedata,message['data'][2]])
-                    send_sync(PromptServer.instance,message['event'],data,sid=message['sid'],port=message['port'])
-                else:
-                    send_sync(PromptServer.instance,message['event'],message['data'],sid=message['sid'],port=message['port'])
-            except Exception as e:
-                print('订阅消息处理异常',e)
+            message=json.loads(msg[2])
+            if message['event']=='addTask':
+                ckptSetCount(message)
+                prompt(PromptServer.instance,message['data'])
+            elif message['event']=='taskDone':
+                task_done(PromptServer.instance.prompt_queue,message['item_id'],message['data'])
+            elif message['event']=='sendImage':
+                base64_to_file(message['data'],message['filename'],message['type'],message['subfolder'])
+            elif message['event']=='dowFile':
+                filedata=r.get(message['filename'])
+                base64_to_file(filedata,message['filename'],message['type'],message['subfolder'])
+                r.delete(message['filename'])
+            elif str(message['event'])=='2':
+                filedata = Image.open(BytesIO(base64_to_b64decode(message['data'][1])))
+                data=tuple([message['data'][0],filedata,message['data'][2]])
+                send_sync(PromptServer.instance,message['event'],data,sid=message['sid'],port=message['port'])
+            else:
+                send_sync(PromptServer.instance,message['event'],message['data'],sid=message['sid'],port=message['port'])
+        
     
 @run_with_reconnect
 def ckptSetCount(message):
@@ -387,13 +385,7 @@ def selServer(json_data,prompt_id):
         return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
     return None
 
-def trigger_on_prompt(json_data,isRun=True):
-    if isRun and r and Config().redis['isMain']:
-        prompt_id=str(uuid.uuid4())
-        data=selServer(json_data,prompt_id)
-        if data:
-            return data
-        
+def trigger_on_prompt(self,json_data,isRun=True):
     prompt=json_data['prompt']
     maxKeyStr=sorted(list(prompt.keys()), key=lambda x: int(x.split(':')[0]))[-1]
     maxKey = int(maxKeyStr.split(':')[0])
@@ -404,10 +396,16 @@ def trigger_on_prompt(json_data,isRun=True):
         json_data['prompt'][str(maxKey)]={ "inputs": { "advanced": "disable","expression": "p0",  "p0": inputNum },"class_type": "MultiParamFormula"}
         json_data['prompt'][unique_id]['inputs']['obj']=[str(maxKey),0]
 
-    return json_data
+    if isRun and r and Config().redis['isMain']:
+        prompt_id=str(uuid.uuid4())
+        data=selServer(json_data,prompt_id)
+        if data:
+            return data
+        
+    return self.old_trigger_on_prompt(json_data)
 
 def prompt(self,json_data):
-    json_data = trigger_on_prompt(json_data,isRun=False)
+    json_data = self.old_trigger_on_prompt(json_data)
     if 'prompt_id' in json_data:
         prompt_id=json_data['prompt_id']
     else:
@@ -813,8 +811,9 @@ if os.path.exists(custom_nodes_path):
 
 setattr(PromptServer.instance,"displayName",NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS)
 PromptServer.instance.send_sync=types.MethodType(send_sync,PromptServer.instance)
-PromptServer.instance.add_on_prompt_handler(trigger_on_prompt)
-
+if hasattr(PromptServer.instance,"old_trigger_on_prompt")==False:
+    PromptServer.instance.old_trigger_on_prompt=PromptServer.instance.trigger_on_prompt
+PromptServer.instance.trigger_on_prompt=types.MethodType(trigger_on_prompt,PromptServer.instance)
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}

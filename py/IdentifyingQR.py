@@ -1,7 +1,6 @@
 
 from PIL import Image, ImageFilter, ImageEnhance, ImageOps, ImageDraw, ImageChops, ImageFont
 import numpy as np
-from pyzbar.pyzbar import decode
 def tensor2pil(image):
     return Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
 
@@ -29,6 +28,7 @@ class IdentifyingQR:
         strList=[]
         msg=''
         try:
+            from pyzbar.pyzbar import decode
             # 解码二维码
             for qrcode in decode(img):
                 print(qrcode.data.decode('utf-8'))
@@ -36,7 +36,7 @@ class IdentifyingQR:
             msg=','.join(strList)
         except Exception as e:
             print(e)
-            msg=''
+            msg='识别异常'
         return (msg,)
     
    
