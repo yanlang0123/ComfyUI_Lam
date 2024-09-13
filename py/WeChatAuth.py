@@ -797,7 +797,7 @@ async def handleMessagePost(request):
 
 custom_nodes_path=folder_paths.get_folder_paths('custom_nodes')[0]
 custom_nodes_path=os.path.join(custom_nodes_path,'AIGODLIKE-ComfyUI-Translation')
-custom_nodes_path=os.path.join(custom_nodes_path,Config().base['language'],'Nodes') 
+custom_nodes_path=os.path.join(custom_nodes_path,Config().base.get('language','zh-CN'),'Nodes') 
 NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS={}
 if os.path.exists(custom_nodes_path):
     for file in os.listdir(custom_nodes_path):
