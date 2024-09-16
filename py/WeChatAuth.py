@@ -68,7 +68,35 @@ def sendPublish(channel,data):
         jsondata=json.loads(data)
         if jsondata['event']=='addTask':
             ckptSetCount(jsondata)
-            prompt(PromptServer.instance,jsondata['data'])
+            rdata=prompt(PromptServer.instance,jsondata['data'])
+            if "error" in rdata:
+                unique_id=""
+                class_type=""
+                message=""
+                if isinstance(rdata["error"], dict):
+                    class_type=rdata["error"]["type"]
+                    message=rdata["error"]["message"]
+                else:
+                    message=str(rdata["error"])
+
+                if "node_errors" in rdata and isinstance(rdata["node_errors"], dict):
+                    unique_id = next(iter(rdata["node_errors"]))  # 获取第一个键
+                    if len(rdata["node_errors"][unique_id]['errors'])>0:
+                        class_type=rdata["node_errors"][unique_id]['errors'][0]["message"]
+                        message=rdata["node_errors"][unique_id]['errors'][0]["details"]
+
+                mes = {
+                        "prompt_id": jsondata['data']["prompt_id"] if "prompt_id" in jsondata['data'] else '',
+                        "node_id": unique_id,
+                        "node_type": class_type,
+                        "executed": [],
+                        "exception_message": message,
+                        "exception_type": "ExecutionBlocked",
+                        "traceback": [],
+                        "current_inputs": [],
+                        "current_outputs": [],
+                    }
+                send_sync(PromptServer.instance,'execution_error', mes, sid=PromptServer.instance.client_id)
             return 
     r.publish(channel,data)
 
@@ -229,10 +257,10 @@ def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync�
         self.messages.put_nowait, (event, data, sid))
     
 MAXIMUM_HISTORY_SIZE = 10000
-def task_done(self, item_id, outputs={},status: Optional['PromptQueue.ExecutionStatus']=None):
+def task_done(self, item_id,history_result,status: Optional['PromptQueue.ExecutionStatus']=None):
     print('----------task_done--------')
     if status==None:
-        self.history[item_id] = outputs
+        self.history[item_id] = history_result
         self.server.send_sync("executing", { "node": None, "prompt_id": item_id }, self.server.client_id)
         return
     
@@ -245,18 +273,18 @@ def task_done(self, item_id, outputs={},status: Optional['PromptQueue.ExecutionS
         if status is not None:
             status_dict = copy.deepcopy(status._asdict())
 
-        data={
+        self.history[prompt[1]] = {
             "prompt": prompt,
-            "outputs": copy.deepcopy(outputs),
+            "outputs": {},
             'status': status_dict,
         }
+        self.history[prompt[1]].update(history_result)
         if r and Config().redis['isMain']==False :
             mainPath=r.get('mainPath')
             if mainPath:
-                sendPublish(mainPath, json.dumps({'event':'taskDone','data':data,'item_id':prompt[1]}))
-        
-        self.history[prompt[1]] = data
+                sendPublish(mainPath, json.dumps({'event':'taskDone','data':self.history[prompt[1]],'item_id':prompt[1]}))
         self.server.queue_updated()
+        
     
 def update_dict(dictionary, keys, value):
     if len(keys) == 1:
@@ -386,16 +414,6 @@ def selServer(json_data,prompt_id):
     return None
 
 def trigger_on_prompt(self,json_data,isRun=True):
-    prompt=json_data['prompt']
-    maxKeyStr=sorted(list(prompt.keys()), key=lambda x: int(x.split(':')[0]))[-1]
-    maxKey = int(maxKeyStr.split(':')[0])
-    endNodeKeys=[x for x in prompt.keys() if 'class_type' in prompt[x] and prompt[x]['class_type']=='ForInnerEnd']
-    for unique_id in endNodeKeys:
-        inputNum=prompt[unique_id]['inputs']['obj']
-        maxKey=maxKey+1
-        json_data['prompt'][str(maxKey)]={ "inputs": { "advanced": "disable","expression": "p0",  "p0": inputNum },"class_type": "MultiParamFormula"}
-        json_data['prompt'][unique_id]['inputs']['obj']=[str(maxKey),0]
-
     if isRun and r and Config().redis['isMain']:
         prompt_id=str(uuid.uuid4())
         data=selServer(json_data,prompt_id)
@@ -447,8 +465,7 @@ def prompt(self,json_data):
             return {"error": "no prompt", "node_errors": []}
     except Exception as e:
         print('prompt处理异常',e)
-        node_errors= ['prompt处理异常']
-        send_sync(self,'execution_error', {"prompt_id": prompt_id,'node_errors':node_errors}, sid=self.client_id)
+        return {"error": "prompt处理异常",'node_errors':[]}
     
         
 def getTaskRanking(self,FromUserName):

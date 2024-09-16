@@ -31,6 +31,7 @@ class MultiParamFormula:
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",           #节点编号
+                "dynprompt": "DYNPROMPT",
                 "prompt": "PROMPT",                 #流程节点信息
                 "extra_pnginfo": "EXTRA_PNGINFO"    #前端流程图信息
             }

@@ -35,7 +35,6 @@ class IfInnerExecute:
     OUTPUT_NODE = True
 
     def check_lazy_status(self, ANY, IF_TRUE, IF_FALSE):
-        print("测试：check_lazy_status", ANY)
         needed = []
         if ANY:
             needed.append('IF_TRUE')

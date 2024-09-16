@@ -6,5 +6,8 @@ class AlwaysEqualProxy(str):
         return False
     
 class AlwaysTupleZero(tuple):
-    def __getitem__(self, _):
-        return AlwaysEqualProxy(super().__getitem__(0))
+    def __getitem__(self, i):
+        if i<super().__len__():
+            return AlwaysEqualProxy(super().__getitem__(i))
+        else:
+            return AlwaysEqualProxy(super().__getitem__(-1))
