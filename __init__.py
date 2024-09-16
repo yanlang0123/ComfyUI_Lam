@@ -3,6 +3,7 @@ import glob
 import os
 import sys
 from .lam import init, get_ext_dir
+import time
 
 repo_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, repo_dir)
@@ -12,6 +13,7 @@ NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
 if init():
+    print("Loading ComfyUI-Lam")
     py = get_ext_dir("py")
     files = os.listdir(py)
     for file in files:

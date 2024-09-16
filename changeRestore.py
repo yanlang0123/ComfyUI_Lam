@@ -17,6 +17,19 @@ editlist=[{
 			"edit":'''info['display_name'] = self.displayName[node_class] if hasattr(self,'displayName') and node_class in self.displayName.keys() else nodes.NODE_DISPLAY_NAME_MAPPINGS[node_class] if node_class in nodes.NODE_DISPLAY_NAME_MAPPINGS.keys() else node_class'''
 		}
 	]
+},{
+	"name": "comfy/cli_args.py",
+	"isEditStr":"parser.add_argument(\"--cluster\", action=\"store_true\"",
+	"changs":[
+		{
+			"primit":'''parser.add_argument("--verbose", action="store_true", help="Enables more debug prints.")''',
+			"edit":'''parser.add_argument("--verbose", action="store_true", help="Enables more debug prints.")
+
+parser.add_argument("--cluster", action="store_true", help="是否集群")
+parser.add_argument("--isMain", action="store_true", help="是否为主")
+parser.add_argument("--basePath", type=str, default="127.0.0.1", help="服务地址")'''
+		}
+	]
 }
 ]
 filePath=os.path.dirname(os.path.abspath(__file__))

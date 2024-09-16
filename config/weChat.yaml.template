@@ -1,10 +1,8 @@
-#redis:
-#  host: 127.0.0.1
-#  port: 6379
-#  password: 
-#  basePath: 192.168.1.8:8188 #comfyui地址
-#  isMain: true       #是否主comfyUI
-#  modelPriority: false #是否模型优先
+redis:
+  host: 127.0.0.1
+  port: 6379
+  password: 
+  modelPriority: false #是否模型优先
 
 base:
   language: zh-CN # ja-JP ok-KR ru-RU zh-TW zh-CN en-US

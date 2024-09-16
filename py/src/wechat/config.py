@@ -5,6 +5,7 @@ import shutil
 import functools
 import yaml
 import folder_paths
+from comfy.cli_args import args
 
 def singleton(cls):
     """
@@ -57,8 +58,13 @@ class Config(object):
     def reload(self) -> None:
         yconfig = self._load_config()
         self.wechat = yconfig.get("wechat", {})
-        self.redis = yconfig.get("redis", {})
         self.base = yconfig.get("base", {})
+        if "cluster" in args and args.cluster:
+            self.redis = yconfig.get("redis", {})
+            self.redis["isMain"] = args.isMain
+            self.redis["basePath"] = args.basePath+":"+str(args.port)
+        else:
+            self.redis = {}
         #self.EMAIL= yconfig.get("email", {})
         #self.OPENAI= yconfig.get("openai", {})
         #self.GLM4= yconfig.get("glm4", {})

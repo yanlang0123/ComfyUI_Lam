@@ -110,22 +110,9 @@ def refresh_heartbeat():
         r.setex('heartbeat:'+Config().redis['basePath'], 3, val)
         time.sleep(2)
 
-
 @run_with_reconnect
 def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync方法
-    if hasattr(self,"pub")==False and r: #添加订阅消息
-        setattr(self,"pub",PubSub().subscribe(Config().redis['basePath']))
-        if Config().redis['isMain']:
-            r.set('mainPath',Config().redis['basePath'])
-        keys=r.keys('ckpt:'+Config().redis['basePath']+':*')
-        for key in keys:
-            r.delete(key)
-        Thread(target=refresh_heartbeat,daemon=True, args=()).start()
-        Thread(target=subscribe,daemon=True, args=(self.pub,)).start()
-        if self.prompt_queue:
-            self.prompt_queue.task_done=types.MethodType(task_done,self.prompt_queue)
     
-
     if r :
         if Config().redis['isMain']==False and event not in ['crystools.monitor']:
             mainPath=r.get('mainPath')
@@ -827,10 +814,20 @@ if os.path.exists(custom_nodes_path):
                          NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS[key]=data[key]['title']
 
 setattr(PromptServer.instance,"displayName",NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS)
-PromptServer.instance.send_sync=types.MethodType(send_sync,PromptServer.instance)
-if hasattr(PromptServer.instance,"old_trigger_on_prompt")==False:
+if hasattr(PromptServer.instance,"pub")==False and r: #添加订阅消息
+    setattr(PromptServer.instance,"pub",PubSub().subscribe(Config().redis['basePath']))
+    if Config().redis['isMain']:
+        r.set('mainPath',Config().redis['basePath'])
+    keys=r.keys('ckpt:'+Config().redis['basePath']+':*')
+    for key in keys:
+        r.delete(key)
+    Thread(target=refresh_heartbeat,daemon=True, args=()).start()
+    Thread(target=subscribe,daemon=True, args=(PromptServer.instance.pub,)).start()
+    PromptServer.instance.send_sync=types.MethodType(send_sync,PromptServer.instance)
     PromptServer.instance.old_trigger_on_prompt=PromptServer.instance.trigger_on_prompt
-PromptServer.instance.trigger_on_prompt=types.MethodType(trigger_on_prompt,PromptServer.instance)
+    PromptServer.instance.trigger_on_prompt=types.MethodType(trigger_on_prompt,PromptServer.instance)
+    if PromptServer.instance.prompt_queue:
+        PromptServer.instance.prompt_queue.task_done=types.MethodType(task_done,PromptServer.instance.prompt_queue)
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}

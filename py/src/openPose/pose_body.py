@@ -13,7 +13,7 @@ import torch
 from torchvision import transforms
 import torch
 from collections import OrderedDict
-import custom_nodes.ComfyUI_Lam.py.src.openPose.util as util
+from . import lam_util as util
 import torch
 import torch.nn as nn
 def make_layers(block, no_relu_layers):

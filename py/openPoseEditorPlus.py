@@ -6,7 +6,7 @@ import torch
 import numpy as np
 import json
 from .src.openPose.pose_body import Body
-from .src.openPose.util import draw_bodypose
+from .src.openPose.lam_util import draw_bodypose
 import server
 from aiohttp import web
 import os
