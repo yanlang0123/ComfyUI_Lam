@@ -32,7 +32,7 @@ class IfInnerExecute:
     FUNCTION = "return_based_on_bool"
 
     CATEGORY = "lam"
-    OUTPUT_NODE = True
+    OUTPUT_NODE = False
 
     def check_lazy_status(self, ANY, IF_TRUE, IF_FALSE):
         needed = []

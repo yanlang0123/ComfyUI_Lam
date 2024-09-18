@@ -14,6 +14,8 @@ class LamSwitcherCase:
                 "switcher": (AlwaysEqualProxy("*"),),
                 "case0": (AlwaysEqualProxy("*"),{"lazy":True}),
                 "case1": (AlwaysEqualProxy("*"),{"lazy":True}),
+            },"hidden": {
+                f"case{i}": (AlwaysEqualProxy("*"),{"lazy":True}) for i in range(2, 20)
             }
         }
 
@@ -24,7 +26,7 @@ class LamSwitcherCase:
     FUNCTION = "return_based_on_bool"
 
     CATEGORY = "lam"
-    OUTPUT_NODE = True
+    OUTPUT_NODE = False
 
     def check_lazy_status(self, switcher, case0, case1, **kwargs):
         needed = []
