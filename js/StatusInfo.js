@@ -7,7 +7,7 @@ app.registerExtension({
     name: "StatusInfo",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
 		var names=["Image2Video",'Video2TalkingFace','VideoAddAudio','Image2TalkingFace','ForEnd','LoadVideo','VideoFaceFusion',
-    'Text2AutioEdgeTts','VideoRoopFaceSwap','PromptTranslator','LamCommonPrint']
+    'Text2AutioEdgeTts','VideoRoopFaceSwap','PromptTranslator','LamCommonPrint','OutDoWhileEnd']
         if (names.indexOf(nodeData.name)>=0) {
             // When the node is created we want to add a readonly text widget to display the text
             const onNodeCreated = nodeType.prototype.onNodeCreated;

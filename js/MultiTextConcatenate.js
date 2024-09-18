@@ -6,7 +6,7 @@ import {CUSTOM_INT, recursiveLinkUpstream, transformFunc, swapInputs,swapOutputs
 app.registerExtension({
     name: "Comfy.lam.MultiTextConcatenate",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        var showNames=["IfInnerExecute",'MultiIntFormula','MultiParamFormula','ForInnerEnd','DoWhileEnd']
+        var showNames=["IfInnerExecute",'MultiIntFormula','MultiParamFormula','ForInnerEnd','DoWhileEnd',"LamSwitcherCase"]
         if (showNames.indexOf(nodeData.name)>=0) {
             const onDrawForeground = nodeType.prototype.onDrawForeground;
             nodeType.prototype.onDrawForeground = function (ctx) {
@@ -30,7 +30,7 @@ app.registerExtension({
 
             };
         }
-        var names=["MultiTextConcatenate",'MultiTextSelelct',"MultiIntFormula","MultiParamFormula"]
+        var names=["MultiTextConcatenate",'MultiTextSelelct',"MultiIntFormula","MultiParamFormula","LamSwitcherCase"]
         if (names.indexOf(nodeData.name)>=0) {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
 			nodeType.prototype.onNodeCreated = function () {
@@ -51,10 +51,15 @@ app.registerExtension({
                     this.inputPrefix="p"
                     this.outputPrefix="r"
                 }
+                if('LamSwitcherCase'==nodeData.name){
+                    this.originalsize=1
+                    this.inputType="*"
+                    this.inputPrefix="case"
+                }
                 function changCustomtext(){
                     //this.setSize( this.computeSize() );
                 }
-                this.widgets.forEach(function(widget) {
+                this.widgets?.forEach(function(widget) {
                     if(widget.type!="customtext"){
                         return ;
                     }

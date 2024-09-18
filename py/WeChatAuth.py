@@ -813,6 +813,9 @@ if os.path.exists(custom_nodes_path):
                     if 'title' in data[key]:
                          NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS[key]=data[key]['title']
 
+PromptServer.instance.send_sync=types.MethodType(send_sync,PromptServer.instance)
+PromptServer.instance.old_trigger_on_prompt=PromptServer.instance.trigger_on_prompt
+PromptServer.instance.trigger_on_prompt=types.MethodType(trigger_on_prompt,PromptServer.instance)
 setattr(PromptServer.instance,"displayName",NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS)
 if hasattr(PromptServer.instance,"pub")==False and r: #添加订阅消息
     setattr(PromptServer.instance,"pub",PubSub().subscribe(Config().redis['basePath']))
@@ -823,9 +826,6 @@ if hasattr(PromptServer.instance,"pub")==False and r: #添加订阅消息
         r.delete(key)
     Thread(target=refresh_heartbeat,daemon=True, args=()).start()
     Thread(target=subscribe,daemon=True, args=(PromptServer.instance.pub,)).start()
-    PromptServer.instance.send_sync=types.MethodType(send_sync,PromptServer.instance)
-    PromptServer.instance.old_trigger_on_prompt=PromptServer.instance.trigger_on_prompt
-    PromptServer.instance.trigger_on_prompt=types.MethodType(trigger_on_prompt,PromptServer.instance)
     if PromptServer.instance.prompt_queue:
         PromptServer.instance.prompt_queue.task_done=types.MethodType(task_done,PromptServer.instance.prompt_queue)
 
