@@ -58,7 +58,21 @@ widget.canvas.className = "dave-custom-canvas";
 widget.parent = node;
 document.body.appendChild(widget.canvas);
 node.addCustomWidget(widget);
-
+app.canvas.onDrawBackground = function () {
+    // Draw node isnt fired once the node is off the screen
+    // if it goes off screen quickly, the input may not be removed
+    // this shifts it off screen so it can be moved back if the node is visible.
+    for (let n in app.graph._nodes) {
+        n = graph._nodes[n];
+        for (let w in n.widgets) {
+            let wid = n.widgets[w];
+            if (Object.hasOwn(wid, "canvas")) {
+                wid.canvas.style.left = -8000 + "px";
+                wid.canvas.style.position = "absolute";
+            }
+        }
+    }
+};
 return { minWidth: 200, minHeight: 200, widget }
 }
 // Displays input text on a node
