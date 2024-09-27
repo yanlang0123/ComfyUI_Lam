@@ -1,10 +1,10 @@
-from .src.utils.uitls import AlwaysEqualProxy
+from .src.utils.uitls import AlwaysEqualProxy,AlwaysTupleZero
 class LamSwitcherCase:
     """
     内判断选择
     """
     DESCRIPTION = """
-    
+    根据switcher值选择执行那个case流 switcher=0-19
     """
 
     @classmethod
@@ -19,7 +19,7 @@ class LamSwitcherCase:
             }
         }
 
-    RETURN_TYPES = (AlwaysEqualProxy("*"),)
+    RETURN_TYPES = AlwaysTupleZero(AlwaysEqualProxy("*"),)
 
     RETURN_NAMES = ('?',)
 
@@ -33,8 +33,15 @@ class LamSwitcherCase:
         caseNames=['case0','case1']
         for key in kwargs.keys():
             caseNames.append(key)
-        if ('case'+str(switcher)) in caseNames:
-            needed.append('case'+str(switcher))
+        if isinstance(switcher, int) or isinstance(switcher, str):
+            if ('case'+str(switcher)) in caseNames:
+                needed.append('case'+str(switcher))
+        elif isinstance(switcher, list):
+            for i in switcher:
+                if ('case'+str(i)) in caseNames:
+                    needed.append('case'+str(i))
+        else:
+            raise Exception("Invalid input type for 'switcher'")
 
         return needed
 
@@ -44,9 +51,18 @@ class LamSwitcherCase:
         for key in kwargs.keys():
             cases[key]=kwargs[key]
         result=None
-        if ('case'+str(switcher)) in cases:
-            result=cases['case'+str(switcher)]
-        return {"ui": {"value": [switcher]}, "result": (result,)}
+        if isinstance(switcher, int) or isinstance(switcher, str):
+            if ('case'+str(switcher)) in cases:
+                result=cases['case'+str(switcher)]
+            return {"ui": {"value": [switcher]}, "result": (result,)}
+        elif isinstance(switcher, list):
+            result=[]
+            for i in switcher:
+                if ('case'+str(i)) in cases:
+                    result.append(cases['case'+str(i)])
+            return {"ui": {"value": [switcher]}, "result": tuple(result)}
+        else:
+            raise Exception("Invalid input type for 'switcher'")
     
 NODE_CLASS_MAPPINGS = {
     "LamSwitcherCase": LamSwitcherCase
