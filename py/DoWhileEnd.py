@@ -32,15 +32,27 @@ class DoWhileEnd:
 
     CATEGORY = "lam"
 
+    def getTaskOvers(self,nodeId):
+        if nodeId.find("Recurse")!= -1:
+            recId=nodeId.split('Recurse')[0]
+            teskSize=nodeId.count(recId)+1
+            return 'DOWHILE'+','.join([str(i+1) for i in range(max(0,teskSize-10),teskSize)])
+        elif nodeId.find(".")!= -1:
+            return 'DOWHILE'+'1,2'
+        else:
+            return 'DOWHILE'+'1'
+
     def for_end_fun(self,start,ANY,obj,stop=1,dynprompt=None, unique_id=None, **kwargs):
         assert dynprompt is not None
         graph = GraphBuilder()
         open_node = start[0]
+        overIds=self.getTaskOvers(open_node)
         if not ANY:
             values = [[open_node,1],obj]
             for i in range(NUM_FLOW_SOCKETS):
                 values.append(kwargs.get(f"initial_value{i}", None))
             return {
+                'ui':{'value':[overIds]},
                 "result": tuple(values),
                 "expand": graph.finalize(),
             }
@@ -84,6 +96,7 @@ class DoWhileEnd:
         assert my_clone is not None
         result = map(lambda x: my_clone.out(x), range(NUM_FLOW_SOCKETS+2))
         return {
+            'ui':{'value':[overIds]},
             "result": tuple(result),
             "expand": graph.finalize(),
         }

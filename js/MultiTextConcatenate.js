@@ -9,12 +9,23 @@ app.registerExtension({
         var showNames=["IfInnerExecute",'MultiIntFormula','MultiParamFormula','ForInnerEnd','DoWhileEnd',"LamSwitcherCase"]
         if (showNames.indexOf(nodeData.name)>=0) {
             const onDrawForeground = nodeType.prototype.onDrawForeground;
+            let oldText=''
             nodeType.prototype.onDrawForeground = function (ctx) {
                 try {
                     const r = onDrawForeground?.apply?.(this, arguments);
                     const v = app.nodeOutputs?.[this.id + ""];
                     if (!this.flags.collapsed && v) {
-                        const text = v.value[0] + "";
+                        let text=''
+                        if(['ForInnerEnd','DoWhileEnd'].indexOf(nodeData.name)>=0){
+                            if(v.value[0].indexOf('DOWHILE')!=-1){
+                                text=v.value[0].split('DOWHILE')[1]
+                                oldText=text
+                            }else{
+                                text=oldText
+                            }
+                        }else{
+                            text = v.value[0] + "";
+                        }
                         ctx.save();
                         ctx.font = "bold 12px sans-serif";
                         ctx.fillStyle = "dodgerblue";
