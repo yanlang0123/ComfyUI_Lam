@@ -402,6 +402,9 @@
             return;
         }
         var messageJson = eval("(" + event.data + ")");
+        if(messageJson['type']=='crystools.monitor'){
+            return 
+        }
         if(messageJson['type']=='executing' && !messageJson['data']['node']){
             userParams['status']='wcomplete'
             $("#add_task_btn_id").removeClass("disable");
@@ -832,6 +835,8 @@
                     $("#no_add_task_div").hide()
                     $("#wcomplete_add_task_div").hide()
                     $("#yes_add_task_div").show()
+                }else{
+                    $("#add_task_btn_id").removeClass("disable");
                 }
                 alertWindow('confirm',{'title':'提示','desc':res.msg,'okName':'确定'})
                 

@@ -20,9 +20,12 @@ if init():
         if not file.endswith(".py"):
             continue
         name = os.path.splitext(file)[0]
-        imported_module = importlib.import_module(".py.{}".format(name), __name__)
-        NODE_CLASS_MAPPINGS = {**NODE_CLASS_MAPPINGS, **imported_module.NODE_CLASS_MAPPINGS}
-        NODE_DISPLAY_NAME_MAPPINGS = {**NODE_DISPLAY_NAME_MAPPINGS, **imported_module.NODE_DISPLAY_NAME_MAPPINGS}
+        try:
+            imported_module = importlib.import_module(".py.{}".format(name), __name__)
+            NODE_CLASS_MAPPINGS = {**NODE_CLASS_MAPPINGS, **imported_module.NODE_CLASS_MAPPINGS}
+            NODE_DISPLAY_NAME_MAPPINGS = {**NODE_DISPLAY_NAME_MAPPINGS, **imported_module.NODE_DISPLAY_NAME_MAPPINGS}
+        except Exception as e:
+            print("节点：'"+name+"'导入异常",e)
 
 WEB_DIRECTORY = "./js" 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS","WEB_DIRECTORY"]

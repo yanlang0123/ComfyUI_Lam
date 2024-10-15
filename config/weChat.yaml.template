@@ -6,11 +6,18 @@ redis:
 
 base:
   language: zh-CN # ja-JP ok-KR ru-RU zh-TW zh-CN en-US
+  api_is_used: true
+  
+ai:
+  api_key: 6795fbe303878f35292f1aa14414e9a4 #智普AI开放平台注册实名认证可以免费用
+  model: glm-4-flash
+  sys_pompt: 你是一个AI助手，能帮助我解答问题，回答内容最多不用超过200字
 
 wechat:
   appid: wxa50ed345b253964d                        #公众号appid 
   secret: 327ac9ba06d214d2fcfe2e9ed0520684         #公众号秘钥
   serverAddress: http://119.123.205.233/ #服务器地址 微信公众配置地址的前缀
+  subscribeMsg: "感谢关注！您可以发送“帮助”查看使用说明"
   freeSize: 3 #免费使用次数
   isEnterprise: true #是否为企业微信
   adminNo: b0pOVFM2dnRsZkdLeWl2Zlk2bG9MTFNjUTNGUQ== #管理员微信编号启动会后可发送我的编号获取

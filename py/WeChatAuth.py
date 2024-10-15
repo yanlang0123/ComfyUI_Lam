@@ -27,7 +27,8 @@ def subscribe(p):
         if msg[0]=='message' and len(msg)==3:
             message=json.loads(msg[2])
             if message['event']=='addTask':
-                ckptSetCount(message)
+                if Config().redis['isSection']==False:
+                    ckptSetCount(message)
                 prompt(PromptServer.instance,message['data'])
             elif message['event']=='taskDone':
                 task_done(PromptServer.instance.prompt_queue,message['item_id'],message['data'])
@@ -101,13 +102,13 @@ def sendPublish(channel,data):
     r.publish(channel,data)
 
 @run_with_reconnect
-def refresh_heartbeat():
+def refresh_heartbeat(prefix=''):
     print('----心跳线程-----')
     while True:
-        val=r.get('heartbeat:'+Config().redis['basePath'])
+        val=r.get(prefix+'heartbeat:'+Config().redis['basePath'])
         if val==None:
             val=0
-        r.setex('heartbeat:'+Config().redis['basePath'], 3, val)
+        r.setex(prefix+'heartbeat:'+Config().redis['basePath'], 3, val)
         time.sleep(2)
 
 @run_with_reconnect
@@ -117,7 +118,7 @@ def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync�
         if Config().redis['isMain']==False and event not in ['crystools.monitor']:
             mainPath=r.get('mainPath')
             if mainPath:
-                if event=='status':
+                if event=='status' and Config().redis['isSection']==False:
                     val=data['status']['exec_info']['queue_remaining']
                     r.setex('heartbeat:'+Config().redis['basePath'], 3, val)
                 if event=='executed':
@@ -231,13 +232,15 @@ def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync�
             now = time.localtime()
             end_time = time.strftime("%Y-%m-%d %H:%M:%S", now)
             db=DataBaseUtil()
-            db.update_data('wcomplete', end_time, json.dumps(history['outputs']),data['prompt_id'])
-            db.close_con()
+            if db.isUsable:
+                db.update_data('wcomplete', end_time, json.dumps(history['outputs']),data['prompt_id'])
+                db.close_con()
             self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
         elif  event == "execution_error" and hasattr(self, "user_command") and data['prompt_id'] == self.user_command[sid]['prompt_id']:
             db=DataBaseUtil()
-            db.delete_data(data['prompt_id'])
-            db.close_con()
+            if db.isUsable:
+                db.delete_data(data['prompt_id'])
+                db.close_con()
             self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
 
     self.loop.call_soon_threadsafe(
@@ -317,14 +320,15 @@ def setPost(self,FromUserName):
     json_data={"prompt":json_data,"client_id":params['openId']}
     now = time.localtime()
     start_time = time.strftime("%Y-%m-%d %H:%M:%S", now)
+    prompt_id=str(uuid.uuid4())
     if r and Config().redis['isMain']:
-        prompt_id=str(uuid.uuid4())
         self.user_command[FromUserName]['prompt_id']=prompt_id 
-        db=DataBaseUtil()
-        db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
-        db.close_con()
         data=selServer(json_data,prompt_id)
         if data:
+            db=DataBaseUtil()
+            if db.isUsable:
+                db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
+                db.close_con()
             return data
                     
     json_data = self.trigger_on_prompt(json_data)
@@ -348,13 +352,13 @@ def setPost(self,FromUserName):
         if "client_id" in json_data:
             extra_data["client_id"] = json_data["client_id"]
         if valid[0]:
-            prompt_id = str(uuid.uuid4())
             outputs_to_execute = valid[2]
             self.prompt_queue.put((number, prompt_id, prompt, extra_data, outputs_to_execute))
             self.user_command[FromUserName]['prompt_id']=prompt_id 
             db=DataBaseUtil()
-            db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
-            db.close_con()
+            if db.isUsable:
+                db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
+                db.close_con()
             return prompt_id
         else:
             self.user_command[FromUserName]['status']='prepare' # prepare:准备 waiting:待执行  wcomplete完成
@@ -400,16 +404,52 @@ def selServer(json_data,prompt_id):
         return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
     return None
 
+def get_route_keys(endKey, prompt,uniqueIds):
+    keys=[]
+    for k1,v1 in prompt[endKey]['inputs'].items():
+        if type(v1)==list:
+            if v1[0] == uniqueIds:
+                continue
+            keys.append(v1[0])
+            keys.extend(get_route_keys(v1[0],prompt,uniqueIds))
+    return keys
+
+def section_handle(json_data):
+    prompt=json_data['prompt']
+    sectionNodeKeys=[x for x in prompt.keys() if 'class_type' in prompt[x] and prompt[x]['class_type']=='SectionEnd']
+    for endNum in sectionNodeKeys:
+        startNum=prompt[endNum]['inputs']['section'][0]
+        server=prompt[startNum]['inputs']['server']
+        if server=='default':
+            continue
+        if 'sectype' in prompt[startNum]['inputs'] and prompt[startNum]['inputs']['sectype']==1:
+            continue
+
+        childPrompt={}
+        selAllNum=get_route_keys(endNum,prompt,startNum)
+        if len(selAllNum)==0:
+            prompt[startNum]['inputs']['server']='default'
+            continue
+        selAllNum=list(set(selAllNum))
+        for selNum in selAllNum:
+            childPrompt[selNum]=prompt[selNum]
+            prompt.pop(selNum, None)
+        childPrompt[startNum]=copy.deepcopy(prompt[startNum])
+        childPrompt[endNum]=copy.deepcopy(prompt[endNum])
+        prompt[startNum]['inputs']['data']=json.dumps({'prompt':childPrompt,'client_id':json_data['client_id']})
+        prompt[endNum]['inputs']['images']=[startNum,1]
+    return json_data
 def trigger_on_prompt(self,json_data,isRun=True):
     if isRun and r and Config().redis['isMain']:
         prompt_id=str(uuid.uuid4())
         data=selServer(json_data,prompt_id)
         if data:
             return data
-        
+    json_data=section_handle(json_data)
     return self.old_trigger_on_prompt(json_data)
 
 def prompt(self,json_data):
+    json_data=section_handle(json_data)
     json_data = self.old_trigger_on_prompt(json_data)
     if 'prompt_id' in json_data:
         prompt_id=json_data['prompt_id']
@@ -477,8 +517,11 @@ async def getHistorys(request):
             page_number=int(request.rel_url.query['page_number'])
 
         db=DataBaseUtil()
-        datas=db.get_many_data(openId,page_number=page_number)
-        db.close_con()
+        if db.isUsable:
+            datas=db.get_many_data(openId,page_number=page_number)
+            db.close_con()
+        else:
+            datas=[]
         rdataList=[]
         if "type" in request.rel_url.query:
             for data in datas:
@@ -521,16 +564,17 @@ async def addTask(request):
         adminNo=base64_decode(Config().wechat['adminNo'])
         if adminNo!=openId and Config().wechat['freeSize']>0:
             db=DataBaseUtil()
-            data=db.get_user_frequency(openId)
-            if data[0]==None:
-                db.user_recharge(openId,Config().wechat['freeSize'])
+            if db.isUsable:
                 data=db.get_user_frequency(openId)
-            countd=db.get_user_task_count(openId)
-            db.close_con()
-            if countd[0] >=data[0]:
-                msg='非常抱歉，您的免费使用次数已用完，如需继续使用，请扫描右上角二维码，联系管理员。'
-                data={'msg':msg,'success':False}
-                return web.Response(text=json.dumps(data), content_type='application/json')
+                if data[0]==None:
+                    db.user_recharge(openId,Config().wechat['freeSize'])
+                    data=db.get_user_frequency(openId)
+                countd=db.get_user_task_count(openId)
+                db.close_con()
+                if countd[0] >=data[0]:
+                    msg='非常抱歉，您的免费使用次数已用完，如需继续使用，请扫描右上角二维码，联系管理员。'
+                    data={'msg':msg,'success':False}
+                    return web.Response(text=json.dumps(data), content_type='application/json')
         
         params=Config().wechat['commands'][command]['params']
         paramName=''
@@ -630,6 +674,7 @@ async def handleMessagePost(request):
     if hasattr(PromptServer.instance,"user_command")==False:
         setattr(PromptServer.instance,"user_command",{})
         
+    startTime=time.time()
     #判断是否为准备状态
     isPrepare=FromUserName in PromptServer.instance.user_command and PromptServer.instance.user_command[FromUserName]['status']=='prepare'
     isWaiting=FromUserName in PromptServer.instance.user_command and PromptServer.instance.user_command[FromUserName]['status']=='waiting'
@@ -642,7 +687,7 @@ async def handleMessagePost(request):
             elif MsgType == 'voice':
                 Content = data.find('Recognition').text  # 语音识别结果，UTF8编码
             # 调用回复函数判断接受的信息，然后返回对应的内容
-            reply_content,otherName=receive_msg(Content,isPrepare,isWaiting)
+            reply_content,otherName=receive_msg(Content,isPrepare,isWaiting,FromUserName)
             logging.info("reply_content:"+reply_content+',otherName:'+str(otherName))
             if reply_content=='menu' and otherName:
                 if Config().wechat['isEnterprise']:
@@ -660,16 +705,17 @@ async def handleMessagePost(request):
                 isAdopt=True
                 if adminNo!=FromUserName:
                     db=DataBaseUtil()
-                    data=db.get_user_frequency(FromUserName)
-                    if data[0]==None:
-                        db.user_recharge(FromUserName,Config().wechat['freeSize'])
+                    if db.isUsable:
                         data=db.get_user_frequency(FromUserName)
-                    countd=db.get_user_task_count(FromUserName)
-                    db.close_con()
-                    if countd[0] >=data[0]:
-                        isAdopt=False
-                        msg='非常抱歉，您的免费使用次数已用完,如需继续使用，请联系管理员。微信号：\n'+Config().wechat['adminWeChat']
-                    
+                        if data[0]==None:
+                            db.user_recharge(FromUserName,Config().wechat['freeSize'])
+                            data=db.get_user_frequency(FromUserName)
+                        countd=db.get_user_task_count(FromUserName)
+                        db.close_con()
+                        if countd[0] >=data[0]:
+                            isAdopt=False
+                            msg='非常抱歉，您的免费使用次数已用完,如需继续使用，请联系管理员。微信号：\n'+Config().wechat['adminWeChat']
+                        
                 if isAdopt:
                     #添加指令的代码
                     if FromUserName in PromptServer.instance.user_command:
@@ -696,6 +742,14 @@ async def handleMessagePost(request):
                 elif otherName == '我的编号':
                     out = reply_text(FromUserName, ToUserName, CreateTime, base64_encode(FromUserName))
                     return web.Response(text=out, content_type='application/xml')
+                elif otherName == '退出':
+                    if isPrepare:
+                        PromptServer.instance.user_command.pop(FromUserName,None)
+                        out = reply_text(FromUserName, ToUserName, CreateTime, '已退出')
+                        return web.Response(text=out, content_type='application/xml')
+                    else:
+                        out = reply_text(FromUserName, ToUserName, CreateTime, '非指令模式无需退出')
+                        return web.Response(text=out, content_type='application/xml')
             elif reply_content=='ok':
                 if otherName and len(otherName)>0:
                     PromptServer.instance.user_command[FromUserName]['prompt']=PromptServer.instance.user_command[FromUserName]['prompt']+otherName if 'prompt' in PromptServer.instance.user_command[FromUserName] else otherName
@@ -727,14 +781,17 @@ async def handleMessagePost(request):
                         msg='配置文件已更新'
                     elif openId and tount>0:
                         db=DataBaseUtil()
-                        fdata=db.get_user_frequency(openId)
-                        if fdata[0] and fdata[0]>0:
-                            db.user_recharge(openId,tount)
-                            msg='次数加入成功'
-                        else:
-                            msg='用户不存在'
+                        if db.isUsable:
+                            fdata=db.get_user_frequency(openId)
+                            if fdata[0] and fdata[0]>0:
+                                db.user_recharge(openId,tount)
+                                msg='次数加入成功'
+                            else:
+                                msg='用户不存在'
 
-                        db.close_con()
+                            db.close_con()
+                        else:
+                            msg='数据库连接失败'
                     else:
                         msg='用户编码错误'
                 else:
@@ -760,9 +817,9 @@ async def handleMessagePost(request):
                 out = reply_text(FromUserName, ToUserName, CreateTime, msg)
                 return web.Response(text=out, content_type='application/xml')
             else:
-                out = reply_text(FromUserName, ToUserName, CreateTime, reply_content)
-                logging.info(out)
-                return web.Response(text=out, content_type='application/xml')
+                # 调用异步函数而不等待其结果
+                asyncio.create_task(ai_auto_reply(reply_content,FromUserName))
+                return web.Response(status=200)
         except Exception as e:
             logging.error('消息处理异常:'+str(e))
     elif MsgType == 'image': #图片
@@ -824,7 +881,10 @@ if hasattr(PromptServer.instance,"pub")==False and r: #添加订阅消息
     keys=r.keys('ckpt:'+Config().redis['basePath']+':*')
     for key in keys:
         r.delete(key)
-    Thread(target=refresh_heartbeat,daemon=True, args=()).start()
+    prefix=''
+    if Config().redis['isSection']:
+        prefix='section'
+    Thread(target=refresh_heartbeat,daemon=True, args=(prefix,)).start()
     Thread(target=subscribe,daemon=True, args=(PromptServer.instance.pub,)).start()
     if PromptServer.instance.prompt_queue:
         PromptServer.instance.prompt_queue.task_done=types.MethodType(task_done,PromptServer.instance.prompt_queue)

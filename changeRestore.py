@@ -22,10 +22,11 @@ editlist=[{
 	"isEditStr":"parser.add_argument(\"--cluster\", action=\"store_true\"",
 	"changs":[
 		{
-			"primit":'''parser.add_argument("--verbose", action="store_true", help="Enables more debug prints.")''',
-			"edit":'''parser.add_argument("--verbose", action="store_true", help="Enables more debug prints.")
+			"primit":'''parser.add_argument("--multi-user", action="store_true", help="Enables per-user storage.")''',
+			"edit":'''parser.add_argument("--multi-user", action="store_true", help="Enables per-user storage.")
 
 parser.add_argument("--cluster", action="store_true", help="是否集群")
+parser.add_argument("--isSection", action="store_true", help="分段负载")
 parser.add_argument("--isMain", action="store_true", help="是否为主")
 parser.add_argument("--basePath", type=str, default="127.0.0.1", help="服务地址")'''
 		}

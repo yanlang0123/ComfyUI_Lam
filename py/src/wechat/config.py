@@ -59,9 +59,14 @@ class Config(object):
         yconfig = self._load_config()
         self.wechat = yconfig.get("wechat", {})
         self.base = yconfig.get("base", {})
+        self.ai = yconfig.get("ai", {})
         if "cluster" in args and args.cluster:
             self.redis = yconfig.get("redis", {})
-            self.redis["isMain"] = args.isMain
+            self.redis["isSection"] = args.isSection
+            if args.isSection:
+                self.redis["isMain"] = False
+            else:
+                self.redis["isMain"] = args.isMain
             self.redis["basePath"] = args.basePath+":"+str(args.port)
         else:
             self.redis = {}

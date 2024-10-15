@@ -7,17 +7,50 @@ from .config import Config
 import time
 import logging
 import folder_paths
-# APPID = 'wx1c2b19f7af1d6241'
-# SECRET = '915d587b5ae4e148e100429e11ca4d60'
-#APPID = 'wxa50ed345b253964d'
-#SECRET = "327ac9ba06d214d2fcfe2e9ed0520684"
-# APPID = 'wx2693b75459c2f339'
-# SECRET = 'f5e8741764bbb0a8b8b2d7d26a17ea62'
 import base64
 from PIL import Image
 from io import BytesIO
 import os
+from zhipuai import ZhipuAI
+import queue
  
+# 创建一个指定长度的队列
+maxsize = 10  # 队列的最大长度
+client=None
+userHistory={}
+if len(Config().ai.keys())>0:
+    client = ZhipuAI(api_key=Config().ai['api_key'])
+
+def nested_object_to_dict(obj):
+    if isinstance(obj, list):
+        return [nested_object_to_dict(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: nested_object_to_dict(v) for k, v in obj.items()}
+    if  obj and type(obj) not in (int, float, str):
+        return nested_object_to_dict(vars(obj))
+    else:
+        return obj
+async def ai_auto_reply(msg,userId):
+    if client==None or len(msg.strip())==0:
+        return 
+    if userId not in userHistory or time.time()-userHistory[userId]['time']>5*60:
+        userHistory[userId]={'time':time.time(),'messages':[{"role": "system", "content": Config().ai['sys_pompt']}]}
+    elif len(userHistory[userId]['messages'])>=maxsize:
+        userHistory[userId]['messages'].pop(1)
+    userHistory[userId]['messages'].append({"role": "user", "content": msg})
+    userHistory[userId]['time'] = time.time()
+    try:
+        response = client.chat.completions.create(
+                model=Config().ai['model'], # 填写需要调用的模型名称
+                messages=userHistory[userId]['messages'],
+                tool_choice="auto",
+            )
+        userHistory[userId]['messages'].append(nested_object_to_dict(response.choices[0].message))
+        reply_text = response.choices[0].message.content
+        sendServiceTextMessge(reply_text,userId)
+    except Exception as e:
+        msg= "AI助手发生错误，您可以发送“帮助”查看使用说明，或联系管理员"
+        sendServiceTextMessge(msg,userId)
 def file_to_base64(filename,type='output', subfolder=None):
     if type=="temp":
         output_dir = folder_paths.get_temp_directory()
@@ -146,7 +179,7 @@ def getCommandMsg(command, isEnterprise):
         return '您可以执行以下命令:\n'+'\n'.join(comList)+'\n,选择》'+','.join(names)+otherParamsStr+'\n'+command['replyText'], None
 
 
-def receive_msg(msg, isPrepare=False, isWaiting=False):
+def receive_msg(msg, isPrepare=False, isWaiting=False,userId=''):
     # 这是一个将疑问改成成熟句子的函数，例如：你好吗 公众号回复：你好
     commands = Config().wechat['commands']
     isEnterprise = Config().wechat['isEnterprise']
@@ -180,16 +213,16 @@ def receive_msg(msg, isPrepare=False, isWaiting=False):
             return msg, None
     elif msg.find('加') != -1 and len(msg.split('加')) == 2:
         return 'recharge', msg
-    elif isWaiting:
+    elif isWaiting and msg in commands:
         return '任务已加入队列请等待...', None
     else:
-        return "您可以发送“帮助”查看使用说明", None
+        return msg, None
 
 
 def receive_event(event, key):
     # 如果是关注公众号事件
     if event == 'subscribe':
-        return "感谢关注！您可以发送“帮助”查看使用说明"
+        return Config().wechat.get("subscribeMsg", "感谢关注！您可以发送“帮助”查看使用说明")
     # 如果是点击菜单拉取消息事件
     elif event == 'CLICK':
         # 接下来就是根据你点击不同的菜单拉去不同的消息啦
@@ -221,7 +254,16 @@ def getAccessToken():
     else:
         return Config().wechat['access_token']
 
-
+def sendServiceTextMessge(content,touser):
+    message={
+            "touser":touser,
+            "msgtype":"text",
+            "text":
+            {
+                "content":content
+            }
+        }
+    return sendServiceMessage(message)
 def sendServiceImageMessge(media_id, touser):  # 发送图片
     message = {
         "touser": touser,

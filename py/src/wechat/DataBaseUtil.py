@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-import sqlite3
 import folder_paths
 import time
 class DataBaseUtil():
@@ -15,38 +14,44 @@ class DataBaseUtil():
         初始化连接——使用完需关闭连接
         :param dbName: 连接库的名字，注意，以'.db'结尾
         """
-        basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
-        self.db_path = os.path.join(basePath, 'ComfyUI_Lam', 'config', dbName)
-        isNew=os.path.exists(self.db_path)
-        # 连接数据库
-        self._conn = sqlite3.connect(self.db_path)
-        # 创建游标
-        self._cur = self._conn.cursor()
-        if isNew==False:
-            # 创建数据表 用户任务表
-            users_tb_sql ='''
-                            CREATE TABLE IF NOT EXISTS users (
-                                id INTEGER PRIMARY KEY,              
-                                openId TEXT  NOT NULL,
-                                command TEXT NOT NULL,              
-                                prompt_id TEXT NOT NULL,
-                                status TEXT NOT NULL,
-                                start_time TEXT NOT NULL,
-                                end_time TEXT,
-                                outputs TEXT
-                            )
-                        '''
-            self.create_tabel(users_tb_sql)
-            # 用户充值记录表
-            user_recharge_sql ='''
-                            CREATE TABLE IF NOT EXISTS user_recharge (
-                                id INTEGER PRIMARY KEY,              
-                                openId TEXT  NOT NULL,
-                                frequency INTEGER NOT NULL,
-                                recharge_time TEXT NOT NULL
-                            )
-                        '''
-            self.create_tabel(user_recharge_sql)
+        self.isUsable=True
+        try:
+            import sqlite3
+            basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
+            self.db_path = os.path.join(basePath, 'ComfyUI_Lam', 'config', dbName)
+            isNew=os.path.exists(self.db_path)
+            # 连接数据库
+            self._conn = sqlite3.connect(self.db_path)
+            # 创建游标
+            self._cur = self._conn.cursor()
+            if isNew==False:
+                # 创建数据表 用户任务表
+                users_tb_sql ='''
+                                CREATE TABLE IF NOT EXISTS users (
+                                    id INTEGER PRIMARY KEY,              
+                                    openId TEXT  NOT NULL,
+                                    command TEXT NOT NULL,              
+                                    prompt_id TEXT NOT NULL,
+                                    status TEXT NOT NULL,
+                                    start_time TEXT NOT NULL,
+                                    end_time TEXT,
+                                    outputs TEXT
+                                )
+                            '''
+                self.create_tabel(users_tb_sql)
+                # 用户充值记录表
+                user_recharge_sql ='''
+                                CREATE TABLE IF NOT EXISTS user_recharge (
+                                    id INTEGER PRIMARY KEY,              
+                                    openId TEXT  NOT NULL,
+                                    frequency INTEGER NOT NULL,
+                                    recharge_time TEXT NOT NULL
+                                )
+                            '''
+                self.create_tabel(user_recharge_sql)
+        except:  
+            self.isUsable=False
+            print('sqlite数据库不可用')
 
 
 
@@ -213,7 +218,8 @@ class DataBaseUtil():
         return self.query_one("SELECT count(*) FROM users WHERE openId=? ", (openId,))
     
 
-#db=DataBaseUtil()
+# db=DataBaseUtil()
+# db.delete_data("ba5d5d71-13b3-4c19-b2ce-7a60a0f0b2e7")
 #db.delete_record('DELETE FROM users where command="图生视频"')
 #data=db.get_user_task_count('oJNTS6vtlfGKyivfY6loLLScQ3FQ')
 #data=db.get_data('oJNTS6vtlfGKyivfY6loLLScQ3FQ','02b73c61-6f18-4432-837a-dd64d9424ed7')

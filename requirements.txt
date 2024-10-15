@@ -19,3 +19,4 @@ librosa
 face_alignment
 pyzbar
 redis
+zhipuai
