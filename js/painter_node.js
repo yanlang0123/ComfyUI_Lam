@@ -1661,7 +1661,9 @@ export function PainterWidget(node, inputName, inputData, app) {
 
   node.painter.makeElements();
 
-  document.body.appendChild(widget.painter_wrap);
+  let parentNode = document.createElement("div");
+  parentNode.appendChild(widget.painter_wrap)
+  app.canvasContainer.appendChild(parentNode)
 
   // node.addWidget("button", "清除画布", "clear_painer", () => {
   //   node.painter.list_objects_panel__items.innerHTML = "";

@@ -894,12 +894,8 @@ function createOpenPose(node, inputName, inputData, app) {
     value:'',
 
     draw: function (ctx, _, widgetWidth, y, widgetHeight) {
-      let top=0,left=0;
-      if(app.menu.menuPositionSetting.value=='Top'){
-        top=app.menu.element.offsetHeight;left=app.bodyLeft.offsetWidth;
-      }else if(app.menu.menuPositionSetting.value=='Bottom'){
-        left=app.bodyLeft.offsetWidth;
-      }
+      const top=0;//app.menu.element.offsetHeight;
+      const left=0; //app.bodyLeft.offsetWidth;
       const margin = 10,
         visible = app.canvas.ds.scale > 0.5 && this.type === "openpose",
         clientRectBound = ctx.canvas.getBoundingClientRect(),
@@ -1123,8 +1119,10 @@ function createOpenPose(node, inputName, inputData, app) {
   node.openPose.negativeInput=negativeInput
   node.openPose.canvas.wrapperEl.appendChild(promptDiv);
 
-
-  document.body.appendChild(widget.openpose);
+  let parentNode = document.createElement("div");
+  parentNode.appendChild(widget.openpose)
+  app.canvasContainer.appendChild(parentNode)
+  //document.body.appendChild(parentNode);
   document.addEventListener('keydown', function(event) {
       if(node.openPose.disabled){
         return;
@@ -1135,7 +1133,6 @@ function createOpenPose(node, inputName, inputData, app) {
       if('LAM.OpenPoseEditorPlus'!=app.canvas.selected_nodes[Object.keys(app.canvas.selected_nodes)[0]].type){
         return;
       }
-      
       if(event.key=='Delete'||event.key=='Backspace'){
         let activeObject=node.openPose.canvas.getActiveObject()
         if (activeObject) {
@@ -1156,7 +1153,6 @@ function createOpenPose(node, inputName, inputData, app) {
   
   node.openPose.getHands()
   node.addWidget("button", "显/隐画板", "ShowPainter", () => {
-    debugger;
     node.painter.disabled=!node.painter.disabled
     node.openPose.disabled=!node.openPose.disabled
     
@@ -1466,7 +1462,6 @@ app.registerExtension({
     position: absolute;
     width: 90%;
     height: 100px;
-    top: -195px;
   }
   .prompt_div .promptInput {
     margin: 0 3px;
