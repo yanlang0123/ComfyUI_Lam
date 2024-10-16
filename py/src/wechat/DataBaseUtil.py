@@ -3,6 +3,18 @@ import sys
 import os
 import folder_paths
 import time
+import threading
+from .config import singleton
+
+lock = threading.Lock()
+
+def run_with_lock(func):
+    def wrapper(*args, **kwargs):
+        with lock:
+            return func(*args, **kwargs)
+ 
+    return wrapper
+@singleton
 class DataBaseUtil():
     """
        简单sqlite数据库工具类
@@ -20,9 +32,8 @@ class DataBaseUtil():
             basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
             self.db_path = os.path.join(basePath, 'ComfyUI_Lam', 'config', dbName)
             isNew=os.path.exists(self.db_path)
-            # 连接数据库
-            self._conn = sqlite3.connect(self.db_path)
-            # 创建游标
+            # 连接数据库 ,允许多线程 check_same_thread=False
+            self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
             self._cur = self._conn.cursor()
             if isNew==False:
                 # 创建数据表 用户任务表
@@ -90,6 +101,7 @@ class DataBaseUtil():
             print("[drop table error]", e)
             return False
     # 插入或更新表数据，一次插入或更新一条数据
+    @run_with_lock
     def operate_one(self, sql: str, value: tuple):
         """
             插入或更新单条表记录
@@ -97,8 +109,10 @@ class DataBaseUtil():
             :param value: 插入或更新的值，形如（）
             :return: True表示插入或更新成功
             """
+        # 创建游标
+        _cur = self._conn.cursor()
         try:
-            self._cur.execute(sql, value)
+            _cur.execute(sql, value)
             self._conn.commit()
             if 'INSERT' in sql.upper():
                 print("[insert one record success]")
@@ -109,7 +123,10 @@ class DataBaseUtil():
             print("[insert/update one record error]", e)
             self._conn.rollback()
             return False
+        finally:
+            _cur.close()
     # 插入或更新表数据，一次插入或更新多条数据
+    @run_with_lock
     def operate_many(self, sql: str, value: list):
         """
             插入或更新多条表记录
@@ -117,9 +134,11 @@ class DataBaseUtil():
             :param value: 插入或更新的字段的具体值，列表形式为list:[(),()]
             :return: True表示插入或更新成功
             """
+        # 创建游标
+        _cur = self._conn.cursor()
         try:
             # 调用executemany()方法
-            self._cur.executemany(sql, value)
+            _cur.executemany(sql, value)
             self._conn.commit()
             if 'INSERT' in sql.upper():
                 print("[insert many  records success]")
@@ -130,16 +149,21 @@ class DataBaseUtil():
             print("[insert/update many  records error]", e)
             self._conn.rollback()
             return False
+        finally:
+            _cur.close()
     # 删除表数据
+    @run_with_lock
     def delete_record(self, sql: str):
         """
             删除表记录
             :param sql: 删除记录SQL语句
             :return: True表示删除成功
             """
+        # 创建游标
+        _cur = self._conn.cursor()
         try:
             if 'DELETE' in sql.upper():
-                self._cur.execute(sql)
+                _cur.execute(sql)
                 self._conn.commit()
                 #print("[detele record success]")
                 return True
@@ -149,6 +173,8 @@ class DataBaseUtil():
         except Exception as e:
             print("[detele record error]", e)
             return False
+        finally:
+            _cur.close()
     # 查询一条数据
     def query_one(self, sql: str, params=None):
         """

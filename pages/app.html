@@ -554,7 +554,7 @@
             $("#wcomplete_add_task_div").hide()
             $("#yes_add_task_div").show()
         }
-        $("#"+btoa(encodeURIComponent(name))).addClass("active").siblings().removeClass("active")
+        $(document.getElementById(btoa(encodeURIComponent(name)))).addClass("active").siblings().removeClass("active")
         if ("prompt" in comands[name].params) {
             if(comand &&'prompt' in comand){
                 $("#prompt").html(comand['prompt'])

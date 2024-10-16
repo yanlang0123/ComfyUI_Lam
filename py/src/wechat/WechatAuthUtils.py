@@ -11,15 +11,6 @@ import base64
 from PIL import Image
 from io import BytesIO
 import os
-from zhipuai import ZhipuAI
-import queue
- 
-# 创建一个指定长度的队列
-maxsize = 10  # 队列的最大长度
-client=None
-userHistory={}
-if len(Config().ai.keys())>0:
-    client = ZhipuAI(api_key=Config().ai['api_key'])
 
 def nested_object_to_dict(obj):
     if isinstance(obj, list):
@@ -30,27 +21,7 @@ def nested_object_to_dict(obj):
         return nested_object_to_dict(vars(obj))
     else:
         return obj
-async def ai_auto_reply(msg,userId):
-    if client==None or len(msg.strip())==0:
-        return 
-    if userId not in userHistory or time.time()-userHistory[userId]['time']>5*60:
-        userHistory[userId]={'time':time.time(),'messages':[{"role": "system", "content": Config().ai['sys_pompt']}]}
-    elif len(userHistory[userId]['messages'])>=maxsize:
-        userHistory[userId]['messages'].pop(1)
-    userHistory[userId]['messages'].append({"role": "user", "content": msg})
-    userHistory[userId]['time'] = time.time()
-    try:
-        response = client.chat.completions.create(
-                model=Config().ai['model'], # 填写需要调用的模型名称
-                messages=userHistory[userId]['messages'],
-                tool_choice="auto",
-            )
-        userHistory[userId]['messages'].append(nested_object_to_dict(response.choices[0].message))
-        reply_text = response.choices[0].message.content
-        sendServiceTextMessge(reply_text,userId)
-    except Exception as e:
-        msg= "AI助手发生错误，您可以发送“帮助”查看使用说明，或联系管理员"
-        sendServiceTextMessge(msg,userId)
+
 def file_to_base64(filename,type='output', subfolder=None):
     if type=="temp":
         output_dir = folder_paths.get_temp_directory()

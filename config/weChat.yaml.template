@@ -11,6 +11,7 @@ base:
 ai:
   api_key: 6795fbe303878f35292f1aa14414e9a4 #智普AI开放平台注册实名认证可以免费用
   model: glm-4-flash
+  is_tools: true  #开启工具调用，默认需要配置文生图
   sys_pompt: 你是一个AI助手，能帮助我解答问题，回答内容最多不用超过200字
 
 wechat:

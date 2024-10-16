@@ -33,7 +33,8 @@ class MultiParamFormula:
                 "unique_id": "UNIQUE_ID",           #节点编号
                 "dynprompt": "DYNPROMPT",
                 "prompt": "PROMPT",                 #流程节点信息
-                "extra_pnginfo": "EXTRA_PNGINFO"    #前端流程图信息
+                "extra_pnginfo": "EXTRA_PNGINFO",    #前端流程图信息
+                "isView":("BOOLEAN",{"default": True}),
             }
         }
 
@@ -43,7 +44,7 @@ class MultiParamFormula:
     CATEGORY = "lam"
     OUTPUT_NODE = False
 
-    def evaluate(self,advanced,expression, **kwargs):
+    def evaluate(self,advanced,expression,isView=True, **kwargs):
         lookup = {'json':json}
         for arg in kwargs:
             lookup[arg] = kwargs[arg]
@@ -64,8 +65,8 @@ class MultiParamFormula:
 
         if not isinstance(r, tuple):
             r = (r,)
-            
-        return {"ui": {"value": [msg]}, "result": r}
+        
+        return {"ui": {"value": [msg]}, "result": r} if isView else r
     
 NODE_CLASS_MAPPINGS = {
     "MultiParamFormula": MultiParamFormula

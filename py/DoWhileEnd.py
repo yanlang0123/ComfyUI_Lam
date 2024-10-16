@@ -86,7 +86,7 @@ class DoWhileEnd:
                     node.set_input(k, v)
         new_open = graph.lookup_node(open_node)
         assert new_open is not None
-        inode = graph.node("MultiParamFormula", advanced="disable",expression="p0+p1", p0=[open_node,1], p1=stop)
+        inode = graph.node("MultiParamFormula", advanced="disable",expression="p0+p1",isView=False, p0=[open_node,1], p1=stop)
         new_open.set_input('i', inode.out(0))
         new_open.set_input('obj', obj)
         for i in range(NUM_FLOW_SOCKETS):

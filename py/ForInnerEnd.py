@@ -47,9 +47,9 @@ elif p1 is not None:
 
 result=p0
 '''
-        addObjs = graph.node("MultiParamFormula", advanced="enable",expression=exprStr, p0=[while_open,6], p1=obj)
-        inode = graph.node("MultiParamFormula", advanced="disable",expression="p0+p1", p0=[while_open,1], p1=[while_open,5])
-        anyNode = graph.node("MultiParamFormula", advanced="disable",expression="p0<p1", p0=inode.out(0), p1=[while_open,4])
+        addObjs = graph.node("MultiParamFormula", advanced="enable",expression=exprStr,isView=False, p0=[while_open,6], p1=obj)
+        inode = graph.node("MultiParamFormula", advanced="disable",expression="p0+p1",isView=False, p0=[while_open,1], p1=[while_open,5])
+        anyNode = graph.node("MultiParamFormula", advanced="disable",expression="p0<p1",isView=False, p0=inode.out(0), p1=[while_open,4])
         input_values = {f"initial_value{i}": kwargs.get(f"initial_value{i}", None) for i in range(3, NUM_FLOW_SOCKETS)}
         while_close = graph.node("DoWhileEnd",
                 start=start,

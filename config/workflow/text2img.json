@@ -28,7 +28,7 @@
   },
   "4": {
     "inputs": {
-      "ckpt_name": "dreamshaper_8.safetensors"
+      "ckpt_name": "juggernautXL_version6Rundiffusion.safetensors"
     },
     "class_type": "CheckpointLoaderSimple"
   },
@@ -94,7 +94,7 @@
   },
   "10": {
     "inputs": {
-      "lora_name": "lcm-lora-sdv1-5.safetensors",
+      "lora_name": "lcm-lora-sdxl.safetensors",
       "strength_model": 1,
       "strength_clip": 1,
       "model": [
@@ -111,8 +111,8 @@
   "14": {
     "inputs": {
       "aspect_ratio": "1152×896 ∣ 9:7",
-      "width": 512,
-      "height": 512
+      "width": 0,
+      "height": 0
     },
     "class_type": "AspectRatio"
   },

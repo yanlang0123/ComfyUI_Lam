@@ -4,6 +4,7 @@ import os
 import json
 from .src.wechat.WechatAuthUtils import *
 from .src.wechat.DataBaseUtil import DataBaseUtil
+from .src.wechat.tool_register import dispatch_tool,get_lm4_tools
 import xml.etree.ElementTree as ET
 import time
 import logging
@@ -19,7 +20,143 @@ from threading import Thread, current_thread
 from typing import List, Literal, NamedTuple, Optional
 import copy
 import asyncio
+from zhipuai import ZhipuAI
+ 
+# 创建一个指定长度的队列
+maxsize = 10  # 队列的最大长度
+client=None
+userHistory={}
+if len(Config().ai.keys())>0:
+    client = ZhipuAI(api_key=Config().ai['api_key'])
 
+def chat_completion(userId):
+    tools=get_lm4_tools()
+    response = client.chat.completions.create(
+            model=Config().ai['model'], # 填写需要调用的模型名称
+            messages=userHistory[userId]['messages'],
+            tools=tools if Config().ai['is_tools'] else [],
+            tool_choice="auto" if Config().ai['is_tools'] else None, #参数设置为 “none” 来强制 API 不返回任何函数的调用。目前函数调用仅支持 auto 模式
+            #tool_choice={"type": "function", "function": {"name": "get_ticket_price"}}, #以强制模型生成调用get_ticket_price的参数
+        )
+    return response
+async def ai_auto_reply(msg,userId):
+    if client==None or len(msg.strip())==0:
+        return 
+    if userId not in userHistory or time.time()-userHistory[userId]['time']>5*60:
+        userHistory[userId]={'time':time.time(),'messages':[{"role": "system", "content": Config().ai['sys_pompt']}]}
+    else:
+        while len(userHistory[userId]['messages'])>=maxsize:
+            userHistory[userId]['messages'].pop(1)
+    userHistory[userId]['messages'].append({"role": "user", "content": msg})
+    userHistory[userId]['time'] = time.time()
+    try:
+        response=chat_completion(userId)
+        while response.choices[0].finish_reason=='tool_calls' and len(response.choices[0].message.tool_calls)>0:
+            message_handle(response.choices[0].message,userId=userId)
+            response = chat_completion(userId)
+        userHistory[userId]['messages'].append(nested_object_to_dict(response.choices[0].message))
+        reply_text = response.choices[0].message.content
+        sendServiceTextMessge(reply_text,userId)
+    except Exception as e:
+        print(e)
+        msg= "AI助手发生错误，您可以发送“帮助”查看使用说明，或联系管理员"
+        sendServiceTextMessge(msg,userId)
+
+def message_handle(message,fuctionf=None,userId=''):
+    if fuctionf:
+        fuction = fuctionf.function
+        function_args={}
+        if isinstance(fuction.arguments,dict):
+            function_args = fuction.arguments
+        else:
+            function_args = json.loads(fuction.arguments)
+        logging.info(f"Tool Name {fuction.name} Rrguments: {fuction.arguments}")
+        try:
+            if fuction.name == 'resetting_chat_record':
+                userHistory[userId]['time']=0
+                observation={"success": True,"res": "重置成功" ,"res_type": "text"}
+            elif fuction.name == 'generate_image':
+                function_args['userId']=userId
+                observation=generate_image(**function_args)
+            else:
+                observation = dispatch_tool(fuction.name, function_args)
+        except Exception as e:
+            observation = f'api调用错误: {e}'
+        if isinstance(observation, dict):
+            res = str(observation['res']) if 'res_type' in observation else str(observation)
+            tool_response = res
+        else:
+            tool_response = observation if isinstance(observation, str) else str(observation)
+        userHistory[userId]['messages'].append(nested_object_to_dict(message))
+        userHistory[userId]['messages'].append({
+            "role":"tool",
+            "tool_call_id": fuctionf.id,
+            "content":tool_response
+        })
+    else:
+        if len(message.tool_calls)>0:
+            for call in message.tool_calls:
+                message_handle(message,call,userId=userId)
+                
+def generate_image(prompt,userId,command='文生图'):
+    if hasattr(PromptServer.instance,'user_command') and userId in PromptServer.instance.user_command and PromptServer.instance.user_command[userId]['status']=='waiting':
+        msg = '您已经在队列中，请勿重复提交！'
+        data={'res':msg,'success':False,"res_type": "text"}
+        return data
+
+    adminNo=base64_decode(Config().wechat['adminNo'])
+    if adminNo!=userId and Config().wechat['freeSize']>0:
+        db=DataBaseUtil()
+        if db.isUsable:
+            data=db.get_user_frequency(userId)
+            if data[0]==None:
+                db.user_recharge(userId,Config().wechat['freeSize'])
+                data=db.get_user_frequency(userId)
+            countd=db.get_user_task_count(userId)
+            
+            if countd[0] >=data[0]:
+                msg='非常抱歉，您的免费使用次数已用完，如需继续使用，请扫描右上角二维码，联系管理员。'
+                data={'res':msg,'success':False,"res_type": "text"}
+                return data
+    
+    params=Config().wechat['commands'][command]['params']
+    paramName=''
+    userData={'openId':userId,'command':command,'status':'prepare'}
+    if 'type' in Config().wechat['commands'][command]:
+        userData['type']=Config().wechat['commands'][command]['type']
+    
+    if "prompt" in params:
+        userData['prompt']=prompt
+
+    if paramName:
+        msg = '参数"'+paramName+'"不能为空！'
+        data={'res':msg,'success':False,"res_type": "text"}
+        return data
+    
+    if 'seed' in userData:
+        if userData['seed'].isdigit()==False or int(userData['seed'])==-1:
+            userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
+    else:
+        userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
+
+    if hasattr(PromptServer.instance,"user_command")==False:
+        setattr(PromptServer.instance,"user_command",{})
+
+    PromptServer.instance.user_command[userId]=userData
+    resp=setPost(PromptServer.instance,userId)
+    if resp!=None:
+        while True:
+            if userId in PromptServer.instance.user_command and PromptServer.instance.user_command[userId]['status']=='waiting':
+                time.sleep(0.5)
+            else:
+                break
+        PromptServer.instance.user_command.pop(userId,None)
+        data = {"success": True, "res": "生成成功", "res_type": "image"}
+        return data
+    else:
+        msg='非常抱歉，服务器正忙，请稍后再试！'
+        data={'res':msg,'success':False,"res_type": "text"}
+        return data
 @run_with_reconnect
 def subscribe(p):
     while True:
@@ -234,13 +371,13 @@ def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync�
             db=DataBaseUtil()
             if db.isUsable:
                 db.update_data('wcomplete', end_time, json.dumps(history['outputs']),data['prompt_id'])
-                db.close_con()
+                
             self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
         elif  event == "execution_error" and hasattr(self, "user_command") and data['prompt_id'] == self.user_command[sid]['prompt_id']:
             db=DataBaseUtil()
             if db.isUsable:
                 db.delete_data(data['prompt_id'])
-                db.close_con()
+                
             self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
 
     self.loop.call_soon_threadsafe(
@@ -328,7 +465,7 @@ def setPost(self,FromUserName):
             db=DataBaseUtil()
             if db.isUsable:
                 db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
-                db.close_con()
+                
             return data
                     
     json_data = self.trigger_on_prompt(json_data)
@@ -358,7 +495,7 @@ def setPost(self,FromUserName):
             db=DataBaseUtil()
             if db.isUsable:
                 db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
-                db.close_con()
+                
             return prompt_id
         else:
             self.user_command[FromUserName]['status']='prepare' # prepare:准备 waiting:待执行  wcomplete完成
@@ -519,7 +656,7 @@ async def getHistorys(request):
         db=DataBaseUtil()
         if db.isUsable:
             datas=db.get_many_data(openId,page_number=page_number)
-            db.close_con()
+            
         else:
             datas=[]
         rdataList=[]
@@ -570,7 +707,7 @@ async def addTask(request):
                     db.user_recharge(openId,Config().wechat['freeSize'])
                     data=db.get_user_frequency(openId)
                 countd=db.get_user_task_count(openId)
-                db.close_con()
+                
                 if countd[0] >=data[0]:
                     msg='非常抱歉，您的免费使用次数已用完，如需继续使用，请扫描右上角二维码，联系管理员。'
                     data={'msg':msg,'success':False}
@@ -711,7 +848,7 @@ async def handleMessagePost(request):
                             db.user_recharge(FromUserName,Config().wechat['freeSize'])
                             data=db.get_user_frequency(FromUserName)
                         countd=db.get_user_task_count(FromUserName)
-                        db.close_con()
+                        
                         if countd[0] >=data[0]:
                             isAdopt=False
                             msg='非常抱歉，您的免费使用次数已用完,如需继续使用，请联系管理员。微信号：\n'+Config().wechat['adminWeChat']
@@ -789,7 +926,7 @@ async def handleMessagePost(request):
                             else:
                                 msg='用户不存在'
 
-                            db.close_con()
+                            
                         else:
                             msg='数据库连接失败'
                     else:
