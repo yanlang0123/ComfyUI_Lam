@@ -1,0 +1,15 @@
+[project]
+name = "comfyui_lam"
+description = "This extension has some useful nodes, loops, wechat public number +AI chat drawing, distributed cluster"
+version = "1.0.0"
+license = {file = "LICENSE"}
+dependencies = ["openai", "opencv-python", "edge_tts", "matplotlib", "scikit-image", "omegaconf", "pytorch_lightning", "pandas", "kornia", "qrcode", "imageio", "imageio-ffmpeg", "tensorflow", "yacs", "pydub", "filterpy", "facexlib", "librosa", "face_alignment", "pyzbar", "redis", "zhipuai"]
+
+[project.urls]
+Repository = "https://github.com/yanlang0123/ComfyUI_Lam"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "ComfyUI_Lam"
+Icon = ""
