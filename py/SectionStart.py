@@ -60,10 +60,10 @@ class SectionStart:
                 while True:
                     if ChooserMessage.cancelled:
                         raise ChooserCancelled()
-                    shape=r.get(fileKey+"_shape")
-                    if shape!=None:
+                    shape=r.get(fileKey)
+                    if shape==None:
                         break
-                    time.sleep(0.1)
+                    time.sleep(0.5)
                 return ({"sectype":sectype,"fileKey":fileKey},images, )
         else:
             if server=='default':

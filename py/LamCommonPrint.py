@@ -8,6 +8,8 @@ class LamCommonPrint:
         return {
             "required": {
                 "obj": (AlwaysEqualProxy("*"),),
+            },"hidden": {
+                "isWeChat": ("INT", {}),
             }
         }
     RETURN_TYPES = (AlwaysEqualProxy("*"),)
@@ -20,8 +22,11 @@ class LamCommonPrint:
 
     CATEGORY = "lam"
 
-    def common_print(self,obj):
-        return {"ui": {"text": str(obj)}, "result": (obj, )}
+    def common_print(self,obj,isWeChat=0):
+        ui={"text": [str(obj)]}
+        if isWeChat==1:
+            ui["wechat_text"]=[str(obj)]
+        return {"ui": ui, "result": (obj, )}
     
 class LamCommonPrintNoOutput:
     def __init__(self):
@@ -45,7 +50,7 @@ class LamCommonPrintNoOutput:
     CATEGORY = "lam"
 
     def common_print(self,obj):
-        return {"ui": {"text": str(obj)}, "result": (obj, )}
+        return {"ui": {"text": [str(obj)]}, "result": (obj, )}
 
 NODE_CLASS_MAPPINGS = {
     "LamCommonPrint": LamCommonPrint,

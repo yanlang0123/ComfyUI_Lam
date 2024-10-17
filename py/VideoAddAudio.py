@@ -42,7 +42,7 @@ class VideoAddAudio:
         #插入音频
         cmd = r'ffmpeg -y -hide_banner -loglevel error -i "%s" -i "%s" -vcodec copy "%s"' % (videoPath, audioPath, result)
         os.system(cmd)  
-        return {"ui": {"text": "视频插入音频成功，保存路径："+result,
+        return {"ui": {"text": ["视频插入音频成功，保存路径："+result],
         'videos':[{'filename':file,'type':'output','subfolder':'video'}]}}
 
 NODE_CLASS_MAPPINGS = {

@@ -50,7 +50,7 @@ class SectionEnd:
                     my_tuple = tuple([int(x) for x in shape.split(',')])
                 if imgStr!=None:
                     break
-                time.sleep(0.1)
+                time.sleep(0.5)
             decoded = np.frombuffer(base64.b64decode(imgStr), dtype=np.uint8)
             result=decoded.reshape(my_tuple)
             images=torch.from_numpy(np.array(result).astype(np.float32) / 255.0)

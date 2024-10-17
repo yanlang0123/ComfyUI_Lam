@@ -320,10 +320,14 @@ def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync�
             history=self.prompt_queue.get_history(prompt_id=data['prompt_id'])[data['prompt_id']]
             #print("历史记录======：",history)
             if Config().wechat['isEnterprise'] and ('isWeb' not in self.user_command[sid] or self.user_command[sid]['isWeb']==False):
+                textMsgs=[]
                 imagePaths=[]
                 videoPaths=[]
                 for node_id in history['outputs']:
                     node_output = history['outputs'][node_id]
+                    if 'wechat_text' in node_output:
+                        for text in node_output['wechat_text']:
+                            textMsgs.append(text)
                     if 'images' in node_output:
                         for image in node_output['images']:
                             basePath=''
@@ -365,6 +369,9 @@ def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync�
                 for videoPath in videoPaths:
                     mediaId=getMediaId(videoPath,'video')
                     sendServiceVideoMessge(mediaId,'AI生成','AI生成视频',sid)
+                if len(textMsgs):
+                    text='\n'.join(textMsgs)
+                    sendServiceTextMessge(text,sid)
             self.user_command[sid]['status']='wcomplete'
             now = time.localtime()
             end_time = time.strftime("%Y-%m-%d %H:%M:%S", now)

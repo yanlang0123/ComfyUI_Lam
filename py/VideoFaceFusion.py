@@ -139,7 +139,7 @@ class VideoFaceFusion:
         imau_shape=imageu_np.shape
 
         if imau_shape[0]<=0:
-            return {"ui": {"text": "替换人脸照片不能为空"}, "result": ("",)}
+            return {"ui": {"text": ["替换人脸照片不能为空"]}, "result": ("",)}
 
         imageu=imageu_np[0]*255
         imageu=np.uint8(imageu)
@@ -148,7 +148,7 @@ class VideoFaceFusion:
         length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         flag = cap.isOpened()
         if not flag:
-            return {"ui": {"text": "视频打开失败"}, "result": ("",)}
+            return {"ui": {"text": ["视频打开失败"]}, "result": ("",)}
         image_list=[]
         for frame_idx in tqdm(range(length), '融合进度:'):
         #while True:
@@ -222,7 +222,7 @@ class VideoFaceFusion:
         os.system(cmd)  
         os.remove(videoPathTemp)
         os.remove(audioFilePathName)
-        return {"ui": {"text": "视频保存成功文件地址："+videoPath,
+        return {"ui": {"text": ["视频保存成功文件地址："+videoPath],
         'videos':[{'filename':file,'type':'output','subfolder':'video'}]}, "result": (videoPath,)}
 
 NODE_CLASS_MAPPINGS = {
