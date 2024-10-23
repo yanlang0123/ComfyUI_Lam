@@ -4,8 +4,12 @@ import base64
 import uuid
 import torch
 import json
+import comfy.model_management
+import redis
+from redis.exceptions import RedisError
+from .src.wechat.config import Config
 from .src.wechat.redisSub import r
-from .src.utils.chooser import ChooserMessage, ChooserCancelled
+from .src.utils.chooser import ChooserMessage
 class SectionStart:
     def __init__(self):
         pass
@@ -41,13 +45,17 @@ class SectionStart:
             if server=='default':
                 return (None,images, )
             else:
+                if len(Config().redis.keys())<=0:
+                    raise Exception("redis未配置")
+                pool = redis.ConnectionPool(host=Config().redis['host'], port=Config().redis['port'],password=Config().redis['password'], db=0, decode_responses=True )#password="xxxxx"
+                rc = redis.Redis(connection_pool=pool)
                 dataObj=json.loads(data)
                 prompt=dataObj['prompt']
                 fileKey=str(uuid.uuid4())
                 if images!=None:
                     arr=np.clip(255. * images.cpu().numpy(), 0, 255).astype(np.uint8)
                     arrStr=base64.b64encode(arr.tobytes()).decode("utf-8")
-                    r.setex(fileKey, 15, arrStr)
+                    rc.setex(fileKey, 15, arrStr)
                     prompt[unique_id]['inputs']['data']=json.dumps({"sectype":sectype,"fileKey":fileKey,'shape':arr.shape})
                     prompt[unique_id]['inputs']['sectype']=1
                     prompt[unique_id]['inputs'].pop('images', None)
@@ -55,16 +63,15 @@ class SectionStart:
                     prompt[unique_id]['inputs']['data']=json.dumps({"sectype":sectype,"fileKey":fileKey})
                     prompt[unique_id]['inputs']['sectype']=1
                     prompt[unique_id]['inputs'].pop('images', None)
-                r.publish(server,json.dumps({'event':'addTask','data':dataObj}))
-                ChooserMessage.addMessage(unique_id, '__start__')
-                while True:
+                rc.publish(server,json.dumps({'event':'addTask','data':dataObj}))
+                while not (unique_id in ChooserMessage.messages) and not ("-1" in ChooserMessage.messages):
                     if ChooserMessage.cancelled:
-                        raise ChooserCancelled()
-                    shape=r.get(fileKey)
-                    if shape==None:
-                        break
+                        rc.publish(server,json.dumps({'event':'sectionDone','data':{'id':unique_id,'message':'__cancel__'}}))
+                        raise comfy.model_management.InterruptProcessingException()
                     time.sleep(0.5)
-                return ({"sectype":sectype,"fileKey":fileKey},images, )
+                rc.close()
+                pool.close()
+                return ({"sectype":sectype,"fileKey":fileKey,"server":server},images, )
         else:
             if server=='default':
                 raise Exception("参数类型异常")
@@ -72,13 +79,23 @@ class SectionStart:
             fileKey=dataObj['fileKey']
             if fileKey=='':
                 raise Exception("文件不能为空")
+            if len(Config().redis.keys())<=0:
+                raise Exception("redis未配置")
+            pool = redis.ConnectionPool(host=Config().redis['host'], port=Config().redis['port'],password=Config().redis['password'], db=0, decode_responses=True )#password="xxxxx"
+            rc = redis.Redis(connection_pool=pool)
             if 'shape' in dataObj:
                 shape=dataObj['shape']
-                imgStr=r.get(fileKey)
+                imgStr=rc.get(fileKey)
                 decoded = np.frombuffer(base64.b64decode(imgStr), dtype=np.uint8)
                 result=decoded.reshape(shape)
                 images=torch.from_numpy(np.array(result).astype(np.float32) / 255.0)
-                r.delete(fileKey)
+                rc.delete(fileKey)
+            mainPath=rc.get('mainPath')
+            if mainPath==None:
+                raise Exception("主服务不存在")
+            rc.publish(mainPath,json.dumps({'event':'sectionDone','data':{'id':unique_id,'message':1}}))
+            rc.close()
+            pool.close()
             return ({"sectype":sectype,"fileKey":fileKey},images, )
             
             

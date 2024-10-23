@@ -4,9 +4,12 @@ import base64
 import uuid
 import torch
 import json
-from .src.wechat.redisSub import r
+import comfy.model_management
+import redis
+from redis.exceptions import RedisError
+from .src.wechat.config import Config
 import pickle
-from .src.utils.chooser import ChooserMessage, ChooserCancelled
+from .src.utils.chooser import ChooserMessage
 class SectionEnd:
     def __init__(self):
         pass
@@ -31,31 +34,48 @@ class SectionEnd:
         if section is None:
             return (images, )
         if section['sectype']==1:
+            if len(Config().redis.keys())<=0:
+                raise Exception("redis未配置")
+            pool = redis.ConnectionPool(host=Config().redis['host'], port=Config().redis['port'],password=Config().redis['password'], db=0, decode_responses=True )#password="xxxxx"
+            rc = redis.Redis(connection_pool=pool)
             arr=np.clip(255. * images.cpu().numpy(), 0, 255).astype(np.uint8)
             arrStr=base64.b64encode(arr.tobytes()).decode("utf-8")
             fileKey=section['fileKey']
-            r.setex(fileKey, 15, arrStr)
+            rc.setex(fileKey, 15, arrStr)
             serialized_tuple = ','.join([str(x) for x in arr.shape])
-            r.setex(fileKey+"_shape",15,serialized_tuple)
+            rc.setex(fileKey+"_shape",15,serialized_tuple)
+            mainPath=rc.get('mainPath')
+            if mainPath==None:
+                raise Exception("主服务不存在")
+            rc.publish(mainPath,json.dumps({'event':'sectionDone','data':{'id':unique_id,'message':1}}))
+            rc.close()
+            pool.close()
             return (images, )
         else:
             fileKey=section['fileKey']
-            ChooserMessage.addMessage(unique_id, '__start__')
-            while True:
+            server=section['server']
+            if len(Config().redis.keys())<=0:
+                raise Exception("redis未配置")
+            pool = redis.ConnectionPool(host=Config().redis['host'], port=Config().redis['port'],password=Config().redis['password'], db=0, decode_responses=True )#password="xxxxx"
+            rc = redis.Redis(connection_pool=pool)    
+            while not (unique_id in ChooserMessage.messages) and not ("-1" in ChooserMessage.messages):
                 if ChooserMessage.cancelled:
-                    raise ChooserCancelled()
-                imgStr=r.get(fileKey)
-                shape=r.get(fileKey+"_shape")
-                if shape!=None:
-                    my_tuple = tuple([int(x) for x in shape.split(',')])
-                if imgStr!=None:
-                    break
+                    rc.publish(server,json.dumps({'event':'sectionDone','data':{'id':unique_id,'message':'__cancel__'}}))
+                    raise comfy.model_management.InterruptProcessingException()
                 time.sleep(0.5)
+
+            imgStr=rc.get(fileKey)
+            shape=rc.get(fileKey+"_shape")
+            if shape==None or imgStr==None:
+                raise Exception("回传数据不存在")
+            my_tuple = tuple([int(x) for x in shape.split(',')])
             decoded = np.frombuffer(base64.b64decode(imgStr), dtype=np.uint8)
             result=decoded.reshape(my_tuple)
             images=torch.from_numpy(np.array(result).astype(np.float32) / 255.0)
-            r.delete(fileKey)
-            r.delete(fileKey+"_shape")
+            rc.delete(fileKey)
+            rc.delete(fileKey+"_shape")
+            rc.close()
+            pool.close()
         return (images, )
 
 NODE_CLASS_MAPPINGS = {

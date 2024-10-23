@@ -21,3 +21,4 @@ config/weChat.yaml
 config/settings_nodes.json
 models/*
 backup/*
+config/workflow/AiShoot.json

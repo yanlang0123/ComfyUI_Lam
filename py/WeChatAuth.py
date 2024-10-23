@@ -1,4 +1,5 @@
 from server import PromptServer
+import nodes
 from aiohttp import web
 import os
 import json
@@ -15,12 +16,13 @@ import execution
 import uuid
 import folder_paths
 from comfy.cli_args import args
-from .src.wechat.redisSub import PubSub,run_with_reconnect,r
+from .src.wechat.redisSub import RedisSubscriber,run_with_reconnect,r
 from threading import Thread, current_thread
 from typing import List, Literal, NamedTuple, Optional
 import copy
 import asyncio
 from zhipuai import ZhipuAI
+from .src.utils.chooser import ChooserMessage
  
 # 创建一个指定长度的队列
 maxsize = 10  # 队列的最大长度
@@ -157,30 +159,35 @@ def generate_image(prompt,userId,command='文生图'):
         msg='非常抱歉，服务器正忙，请稍后再试！'
         data={'res':msg,'success':False,"res_type": "text"}
         return data
-@run_with_reconnect
-def subscribe(p):
-    while True:
-        msg = p.parse_response()
-        if msg[0]=='message' and len(msg)==3:
-            message=json.loads(msg[2])
-            if message['event']=='addTask':
-                if Config().redis['isSection']==False:
-                    ckptSetCount(message)
-                prompt(PromptServer.instance,message['data'])
-            elif message['event']=='taskDone':
-                task_done(PromptServer.instance.prompt_queue,message['item_id'],message['data'])
-            elif message['event']=='sendImage':
-                base64_to_file(message['data'],message['filename'],message['type'],message['subfolder'])
-            elif message['event']=='dowFile':
-                filedata=r.get(message['filename'])
-                base64_to_file(filedata,message['filename'],message['type'],message['subfolder'])
-                r.delete(message['filename'])
-            elif str(message['event'])=='2':
-                filedata = Image.open(BytesIO(base64_to_b64decode(message['data'][1])))
-                data=tuple([message['data'][0],filedata,message['data'][2]])
-                send_sync(PromptServer.instance,message['event'],data,sid=message['sid'],port=message['port'])
-            else:
-                send_sync(PromptServer.instance,message['event'],message['data'],sid=message['sid'],port=message['port'])
+    
+def addSubscribe():
+    sub=RedisSubscriber(Config().redis['basePath'],subscribe)
+    sub.run()
+def subscribe(rc,msg):
+    message=json.loads(msg.decode())
+    if 'event' in message:
+        if message['event']=='addTask':
+            if Config().redis['isSection']==False:
+                ckptSetCount(message)
+            prompt(PromptServer.instance,message['data'])
+        elif message['event']=='taskDone':
+            task_done(PromptServer.instance.prompt_queue,message['item_id'],message['data'])
+        elif message['event']=='sendImage':
+            base64_to_file(message['data'],message['filename'],message['type'],message['subfolder'])
+        elif message['event']=='dowFile':
+            filedata=rc.get(message['filename'])
+            base64_to_file(filedata,message['filename'],message['type'],message['subfolder'])
+            rc.delete(message['filename'])
+        elif message['event']=='sectionDone':
+            ChooserMessage.addMessage(**message['data'])
+            if Config().redis['isSection']==True and message['data']['message'] == '__cancel__':
+                nodes.interrupt_processing()
+        elif str(message['event'])=='2':
+            filedata = Image.open(BytesIO(base64_to_b64decode(message['data'][1])))
+            data=tuple([message['data'][0],filedata,message['data'][2]])
+            send_sync(PromptServer.instance,message['event'],data,sid=message['sid'],port=message['port'])
+        else:
+            send_sync(PromptServer.instance,message['event'],message['data'],sid=message['sid'],port=message['port'])
         
     
 @run_with_reconnect
@@ -241,12 +248,18 @@ def sendPublish(channel,data):
 @run_with_reconnect
 def refresh_heartbeat(prefix=''):
     print('----心跳线程-----')
+    i=0
     while True:
         val=r.get(prefix+'heartbeat:'+Config().redis['basePath'])
         if val==None:
             val=0
         r.setex(prefix+'heartbeat:'+Config().redis['basePath'], 3, val)
         time.sleep(2)
+        if i>=30:
+            i=0
+            r.publish(Config().redis['basePath'],'{}')
+        i=i+1
+        
 
 @run_with_reconnect
 def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync方法
@@ -415,7 +428,7 @@ def task_done(self, item_id,history_result,status: Optional['PromptQueue.Executi
         self.history[prompt[1]].update(history_result)
         if r and Config().redis['isMain']==False :
             mainPath=r.get('mainPath')
-            if mainPath:
+            if mainPath and Config().redis['isSection']==False:
                 sendPublish(mainPath, json.dumps({'event':'taskDone','data':self.history[prompt[1]],'item_id':prompt[1]}))
         self.server.queue_updated()
         
@@ -1017,9 +1030,9 @@ if os.path.exists(custom_nodes_path):
 PromptServer.instance.send_sync=types.MethodType(send_sync,PromptServer.instance)
 PromptServer.instance.old_trigger_on_prompt=PromptServer.instance.trigger_on_prompt
 PromptServer.instance.trigger_on_prompt=types.MethodType(trigger_on_prompt,PromptServer.instance)
-setattr(PromptServer.instance,"displayName",NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS)
-if hasattr(PromptServer.instance,"pub")==False and r: #添加订阅消息
-    setattr(PromptServer.instance,"pub",PubSub().subscribe(Config().redis['basePath']))
+if hasattr(PromptServer.instance,"displayName")==False:
+    setattr(PromptServer.instance,"displayName",NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS)
+if  r: #添加订阅消息
     if Config().redis['isMain']:
         r.set('mainPath',Config().redis['basePath'])
     keys=r.keys('ckpt:'+Config().redis['basePath']+':*')
@@ -1029,7 +1042,7 @@ if hasattr(PromptServer.instance,"pub")==False and r: #添加订阅消息
     if Config().redis['isSection']:
         prefix='section'
     Thread(target=refresh_heartbeat,daemon=True, args=(prefix,)).start()
-    Thread(target=subscribe,daemon=True, args=(PromptServer.instance.pub,)).start()
+    Thread(target=addSubscribe,daemon=True, args=()).start()
     if PromptServer.instance.prompt_queue:
         PromptServer.instance.prompt_queue.task_done=types.MethodType(task_done,PromptServer.instance.prompt_queue)
 
