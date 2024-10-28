@@ -24,11 +24,11 @@ class IdentifyingQR:
     
     def qr_image_2_string(self,image):
         import cv2
+        from pyzbar.pyzbar import decode
         img = tensor2pil(image)
         strList=[]
         msg=''
         try:
-            from pyzbar.pyzbar import decode
             # 解码二维码
             for qrcode in decode(img):
                 print(qrcode.data.decode('utf-8'))
