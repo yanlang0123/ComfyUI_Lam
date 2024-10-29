@@ -20,3 +20,4 @@ face_alignment
 pyzbar
 redis
 zhipuai
+opencv-contrib-python
