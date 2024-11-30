@@ -712,6 +712,24 @@ class OpenPose {
     }
   }
 
+  //拖拽手势处理函数
+  onDragDrop=function(e) {
+    let name=e.dataTransfer.files[0].name;
+    let x=e.x;  
+    let y=e.y;
+    let width=this.canvas.width;
+    let height=this.canvas.height;
+    let oWidth=this.canvas.upperCanvasEl.parentElement.offsetWidth
+    let oHeight=this.canvas.upperCanvasEl.parentElement.offsetHeight
+    let left=this.canvas.upperCanvasEl.parentElement.offsetLeft
+    let top=this.canvas.upperCanvasEl.parentElement.offsetTop
+    x=(x-left)/oWidth*width
+    y=(y-top)/oHeight*height
+    this.addHand({name:name,l:x,t:y})
+    return true;
+  };
+
+
   getHands(){ //获取手势
     let thi=this;
     const addHandsBtn = async () => {
@@ -741,6 +759,10 @@ class OpenPose {
               x=(x-left)/oWidth*width
               y=(y-top)/oHeight*height
               thi.addHand({name:name,l:x,t:y})
+            });
+
+            img.addEventListener("drag", (e) => {
+              app.dragOverNode = thi;
             });
             rightButtons.appendChild(img);
           }
