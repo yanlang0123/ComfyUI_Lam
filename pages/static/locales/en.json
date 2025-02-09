@@ -1,0 +1,78 @@
+{
+  "title": "Material Search Engine",
+  "loadingModel": "Loading model...",
+  "scanStatus": {
+    "scanning": "Scanning in Progress",
+    "scanComplete": "Scanning Complete"
+  },
+  "statusLabels": {
+    "totalImages": "Total Images",
+    "totalVideos": "Total Videos",
+    "totalVideoFrames": "Total Video Frames",
+    "totalPexelsVideos": "Total Pexels Videos",
+    "scanningFiles": "Scanning Files",
+    "remainFiles": "Remaining Files",
+    "remainTime": "Estimated Remaining Time",
+    "scanProgress": "Scanning Progress"
+  },
+  "buttons": {
+    "scan": "Scan",
+    "cleanCache": "Clean Cache",
+    "logout": "Logout"
+  },
+  "searchTabs": {
+    "textSearch": "Text Search",
+    "imageSearch": "Image Search",
+    "textVideoSearch": "Text Video Search",
+    "imageVideoSearch": "Image Video Search",
+    "textImageSimilarity": "Text-Image Similarity Matching",
+    "pexelsVideos": "Pexels Videos"
+  },
+  "uploader": {
+    "drag": "Drag file to here, or ",
+    "click": "click here to upload",
+    "uploading": "Uploading..."
+  },
+  "formPlaceholders": {
+    "positiveSearch": "Search Content",
+    "negativeSearch": "Filter Content",
+    "positiveThreshold": "Search Threshold (display when similarity is above)",
+    "negativeThreshold": "Filter Threshold (display when similarity is below)",
+    "topNResults": "Show Top N Results",
+    "path": "Search Path (left empty means don't filter by path)",
+    "date": "Modify Time",
+    "textMatch": "Text Content (cannot be empty)",
+    "topnAll": "ALL"
+  },
+  "searchButtons": {
+    "search": "Search",
+    "calculateSimilarity": "Calculate Similarity"
+  },
+  "fileResults": {
+    "matchingProbability": "Similarity",
+    "matchingTimeRange": "Matching Time Range (seconds)",
+    "downloadVideoClip": "Download Video Clip",
+    "imageSearch": "Search Images",
+    "imageVideoSearch": "Search Videos"
+  },
+  "pexelsResults": {
+    "viewCount": "View Count",
+    "sourcePage": "Source Page"
+  },
+  "messages": {
+    "searchContentEmpty": "At least one search content or search path must be entered",
+    "textContentEmpty": "Text content cannot be empty",
+    "clipboardCopySuccess": "Path copied to clipboard",
+    "totalSearchResult": "Total search results: ",
+    "photos": " photos",
+    "videos": " videos",
+    "matchingSimilarityInfo": "Similarity: ",
+    "uploadSuccess": "Upload successful",
+    "imgIdNotFound": "Unable to extract image ID from img_url. This should not happen. Please report to the developer.",
+    "searching": "Searching..."
+  },
+  "footer": {
+    "description1": "This project is open-sourced on GitHub: ",
+    "description2": "(if you like, please star~)"
+  }
+}

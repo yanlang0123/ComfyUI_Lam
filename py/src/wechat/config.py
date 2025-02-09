@@ -60,16 +60,17 @@ class Config(object):
         self.wechat = yconfig.get("wechat", {})
         self.base = yconfig.get("base", {})
         self.ai = yconfig.get("ai", {})
+        self.redis = yconfig.get("redis", {})
         if "cluster" in args and args.cluster:
-            self.redis = yconfig.get("redis", {})
-            self.redis["isSection"] = args.isSection
+            self.cluster = yconfig.get("cluster", {})
+            self.cluster["isSection"] = args.isSection
             if args.isSection:
-                self.redis["isMain"] = False
+                self.cluster["isMain"] = False
             else:
-                self.redis["isMain"] = args.isMain
-            self.redis["basePath"] = args.basePath+":"+str(args.port)
+                self.cluster["isMain"] = args.isMain
+            self.cluster["basePath"] = args.basePath+":"+str(args.port)
         else:
-            self.redis = {}
+            self.cluster = None
         #self.EMAIL= yconfig.get("email", {})
         #self.OPENAI= yconfig.get("openai", {})
         #self.GLM4= yconfig.get("glm4", {})

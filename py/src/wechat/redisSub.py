@@ -7,7 +7,7 @@ import time
 r=None
 def connect_redis():
     global r
-    if len(Config().redis.keys())>0:
+    if Config().cluster and 'redis'==Config().cluster["clusterType"] and len(Config().redis.keys())>0:
         print('连接redis')
         # 尝试连接Redis
         try:

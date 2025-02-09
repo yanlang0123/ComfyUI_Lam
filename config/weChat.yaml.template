@@ -1,17 +1,30 @@
+cluster:
+  modelPriority: false
+  clusterType: redis
+  subordinates:
+  - 127.0.0.1:8190
+
 redis:
   host: 127.0.0.1
   port: 6379
   password: 
-  modelPriority: false #是否模型优先
 
 base:
   language: zh-CN # ja-JP ok-KR ru-RU zh-TW zh-CN en-US
   api_is_used: true
-  
+  appTitle: AI创作平台
+  appLogo: https://element-plus.sxtxhy.com/images/element-plus-logo.svg
+  authorIds:
+  - oJNTS6vtlfGKyivfY6loLLScQ3FQ
+  - oJNTS6vtlfGKyivfY6loLLScQ3F1
+  - oJNTS6vtlfGKyivfY6loLLScQ3F2
+  - oJNTS6vtlfGKyivfY6loLLScQ3F3
 ai:
-  api_key: 6795fbe303878f35292f1aa14414e9a4 #智普AI开放平台注册实名认证可以免费用
-  model: glm-4-flash
-  is_tools: true  #开启工具调用，默认需要配置文生图
+  api_key: sk-a446d27d074a45c0ac8ca1ac85742b28  #sk-a446d27d074a45c0ac8ca1ac85742b28  glm4 6795fbe303878f35292f1aa14414e9a4.kOzmNe7PEk1l6zdK  sk-rttnlipmkojrsjyjrfoudbuphledqizttlqergzqxyyochfl
+  model: deepseek-chat  # glm-4-flash  deepseek-chat
+  ai_type: openAi  #glm4 openAi
+  base_url: https://api.deepseek.com
+  is_tools: true
   sys_pompt: 你是一个AI助手，能帮助我解答问题，回答内容最多不用超过200字
 
 wechat:

@@ -152,7 +152,7 @@ def resetting_chat_record() -> dict:
 
 
 @register_tool
-def generate_image(prompt: Annotated[str, '要生成图片的英文提示词', True]) -> dict:
+def generate_image(prompt: Annotated[str, '要生成图片的英文提示词', True],batch_size:Annotated[int, '图片数量', True]) -> dict:
     '''
     生成图片`prompt`英文提示词
     '''

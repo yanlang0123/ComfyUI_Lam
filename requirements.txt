@@ -21,3 +21,4 @@ pyzbar
 redis
 zhipuai
 opencv-contrib-python
+websocket-client

@@ -45,7 +45,7 @@ class SectionStart:
             if server=='default':
                 return (None,images, )
             else:
-                if len(Config().redis.keys())<=0:
+                if Config().cluster==None or len(Config().redis.keys())<=0:
                     raise Exception("redis未配置")
                 pool = redis.ConnectionPool(host=Config().redis['host'], port=Config().redis['port'],password=Config().redis['password'], db=0, decode_responses=True )#password="xxxxx"
                 rc = redis.Redis(connection_pool=pool)
@@ -79,7 +79,7 @@ class SectionStart:
             fileKey=dataObj['fileKey']
             if fileKey=='':
                 raise Exception("文件不能为空")
-            if len(Config().redis.keys())<=0:
+            if Config().cluster==None or len(Config().redis.keys())<=0:
                 raise Exception("redis未配置")
             pool = redis.ConnectionPool(host=Config().redis['host'], port=Config().redis['port'],password=Config().redis['password'], db=0, decode_responses=True )#password="xxxxx"
             rc = redis.Redis(connection_pool=pool)

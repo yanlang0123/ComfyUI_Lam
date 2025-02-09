@@ -4,6 +4,7 @@ import os
 import sys
 from .lam import init, get_ext_dir
 import time
+from server import PromptServer
 
 repo_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, repo_dir)
@@ -28,4 +29,8 @@ if init():
             print("节点：'"+name+"'导入异常",e)
 
 WEB_DIRECTORY = "./js" 
+
+file_directory = os.path.dirname(os.path.abspath(__file__))
+
+PromptServer.instance.app.router.add_static("/wechatauth/static", file_directory+"/pages/static")
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS","WEB_DIRECTORY"]

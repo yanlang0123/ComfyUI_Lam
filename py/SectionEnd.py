@@ -34,7 +34,7 @@ class SectionEnd:
         if section is None:
             return (images, )
         if section['sectype']==1:
-            if len(Config().redis.keys())<=0:
+            if Config().cluster==None or len(Config().redis.keys())<=0:
                 raise Exception("redis未配置")
             pool = redis.ConnectionPool(host=Config().redis['host'], port=Config().redis['port'],password=Config().redis['password'], db=0, decode_responses=True )#password="xxxxx"
             rc = redis.Redis(connection_pool=pool)
@@ -54,7 +54,7 @@ class SectionEnd:
         else:
             fileKey=section['fileKey']
             server=section['server']
-            if len(Config().redis.keys())<=0:
+            if Config().cluster==None or len(Config().redis.keys())<=0:
                 raise Exception("redis未配置")
             pool = redis.ConnectionPool(host=Config().redis['host'], port=Config().redis['port'],password=Config().redis['password'], db=0, decode_responses=True )#password="xxxxx"
             rc = redis.Redis(connection_pool=pool)    

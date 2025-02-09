@@ -1,5 +1,6 @@
-from server import PromptServer
+from server import PromptServer,send_socket_catch_exception
 import nodes
+import aiohttp
 from aiohttp import web
 import os
 import json
@@ -17,11 +18,14 @@ import uuid
 import folder_paths
 from comfy.cli_args import args
 from .src.wechat.redisSub import RedisSubscriber,run_with_reconnect,r
+from .src.wechat.webSocketUtil import WebSocketClient
 from threading import Thread, current_thread
 from typing import List, Literal, NamedTuple, Optional
 import copy
 import asyncio
 from zhipuai import ZhipuAI
+from openai import OpenAI
+import websocket
 from .src.utils.chooser import ChooserMessage
  
 # 创建一个指定长度的队列
@@ -29,17 +33,24 @@ maxsize = 10  # 队列的最大长度
 client=None
 userHistory={}
 if len(Config().ai.keys())>0:
-    client = ZhipuAI(api_key=Config().ai['api_key'])
+    if Config().ai['ai_type']=='glm4':
+        client = ZhipuAI(api_key=Config().ai['api_key'])
+    elif Config().ai['ai_type']=='openAi':
+        client = OpenAI(
+            api_key=Config().ai['api_key'],
+            base_url=Config().ai['base_url'],
+        )
 
 def chat_completion(userId):
     tools=get_lm4_tools()
     response = client.chat.completions.create(
             model=Config().ai['model'], # 填写需要调用的模型名称
             messages=userHistory[userId]['messages'],
-            tools=tools if Config().ai['is_tools'] else [],
+            tools=tools if Config().ai['is_tools'] else None,
             tool_choice="auto" if Config().ai['is_tools'] else None, #参数设置为 “none” 来强制 API 不返回任何函数的调用。目前函数调用仅支持 auto 模式
             #tool_choice={"type": "function", "function": {"name": "get_ticket_price"}}, #以强制模型生成调用get_ticket_price的参数
         )
+    print(response)
     return response
 async def ai_auto_reply(msg,userId):
     if client==None or len(msg.strip())==0:
@@ -53,7 +64,7 @@ async def ai_auto_reply(msg,userId):
     userHistory[userId]['time'] = time.time()
     try:
         response=chat_completion(userId)
-        while response.choices[0].finish_reason=='tool_calls' and len(response.choices[0].message.tool_calls)>0:
+        while Config().ai['is_tools'] and response.choices[0].finish_reason=='tool_calls' and len(response.choices[0].message.tool_calls)>0:
             message_handle(response.choices[0].message,userId=userId)
             response = chat_completion(userId)
         userHistory[userId]['messages'].append(nested_object_to_dict(response.choices[0].message))
@@ -100,7 +111,7 @@ def message_handle(message,fuctionf=None,userId=''):
             for call in message.tool_calls:
                 message_handle(message,call,userId=userId)
                 
-def generate_image(prompt,userId,command='文生图'):
+def generate_image(prompt,userId,batch_size=1,command='文生图'):
     if hasattr(PromptServer.instance,'user_command') and userId in PromptServer.instance.user_command and PromptServer.instance.user_command[userId]['status']=='waiting':
         msg = '您已经在队列中，请勿重复提交！'
         data={'res':msg,'success':False,"res_type": "text"}
@@ -123,12 +134,15 @@ def generate_image(prompt,userId,command='文生图'):
     
     params=Config().wechat['commands'][command]['params']
     paramName=''
-    userData={'openId':userId,'command':command,'status':'prepare'}
+    userData={'openId':userId,'command':command,'status':'prepare','isAi':True}
     if 'type' in Config().wechat['commands'][command]:
         userData['type']=Config().wechat['commands'][command]['type']
     
     if "prompt" in params:
         userData['prompt']=prompt
+    
+    if "batch_size" in params:
+        userData['batch_size']=batch_size
 
     if paramName:
         msg = '参数"'+paramName+'"不能为空！'
@@ -147,13 +161,7 @@ def generate_image(prompt,userId,command='文生图'):
     PromptServer.instance.user_command[userId]=userData
     resp=setPost(PromptServer.instance,userId)
     if resp!=None:
-        while True:
-            if userId in PromptServer.instance.user_command and PromptServer.instance.user_command[userId]['status']=='waiting':
-                time.sleep(0.5)
-            else:
-                break
-        PromptServer.instance.user_command.pop(userId,None)
-        data = {"success": True, "res": "生成成功", "res_type": "image"}
+        data = {"success": True, "res": "任务下发成功", "res_type": "image"}
         return data
     else:
         msg='非常抱歉，服务器正忙，请稍后再试！'
@@ -161,14 +169,30 @@ def generate_image(prompt,userId,command='文生图'):
         return data
     
 def addSubscribe():
-    sub=RedisSubscriber(Config().redis['basePath'],subscribe)
-    sub.run()
+    if Config().cluster["isMain"] and 'socket'==Config().cluster["clusterType"] and 'subordinates' in Config().cluster and len(Config().cluster["subordinates"])>0:
+        clients = []
+        for url in Config().cluster["subordinates"]:
+            client = WebSocketClient(url,subscribe)
+            client.start()
+            clients.append(client)
+        setattr(PromptServer.instance,"clients",clients)
+    elif 'redis'==Config().cluster["clusterType"] and  r:
+        sub=RedisSubscriber(Config().cluster["basePath"],subscribe)
+        sub.run()
+    
 def subscribe(rc,msg):
-    message=json.loads(msg.decode())
+    if isinstance(rc,str):
+        if isinstance(msg,bytes):
+            send_socket_catch_exception(PromptServer.instance.sockets[PromptServer.instance.client_id].send_bytes, msg)
+            return 
+        else:
+            message=msg
+    else:
+        message=json.loads(msg.decode())
     if 'event' in message:
         if message['event']=='addTask':
-            if Config().redis['isSection']==False:
-                ckptSetCount(message)
+            if Config().cluster["isSection"]==False:
+                ckptSetCount(rc,message)
             prompt(PromptServer.instance,message['data'])
         elif message['event']=='taskDone':
             task_done(PromptServer.instance.prompt_queue,message['item_id'],message['data'])
@@ -180,7 +204,7 @@ def subscribe(rc,msg):
             rc.delete(message['filename'])
         elif message['event']=='sectionDone':
             ChooserMessage.addMessage(**message['data'])
-            if Config().redis['isSection']==True and message['data']['message'] == '__cancel__':
+            if Config().cluster["isSection"]==True and message['data']['message'] == '__cancel__':
                 nodes.interrupt_processing()
         elif str(message['event'])=='2':
             filedata = Image.open(BytesIO(base64_to_b64decode(message['data'][1])))
@@ -191,25 +215,28 @@ def subscribe(rc,msg):
         
     
 @run_with_reconnect
-def ckptSetCount(message):
-    if 'ckptName' in message and message['ckptName']:
-        val=r.get('ckpt:'+Config().redis['basePath']+':'+message['ckptName'])
-        if val==None:
-            val=3
-        else:
-            val=int(val)+1
-        r.set('ckpt:'+Config().redis['basePath']+':'+message['ckptName'],val)
-        keys=r.keys('ckpt:'+Config().redis['basePath']+':*')
-        for key in keys:
-            val=int(r.get(key))
-            if val<=1:
-                r.delete(key)
+def ckptSetCount(rc,message):
+    if isinstance(rc,str):
+        pass
+    else:
+        if 'ckptName' in message and message['ckptName']:
+            val=r.get('ckpt:'+Config().cluster["basePath"]+':'+message['ckptName'])
+            if val==None:
+                val=3
             else:
-                r.set(key,val-1)
+                val=int(val)+1
+            r.set('ckpt:'+Config().cluster["basePath"]+':'+message['ckptName'],val)
+            keys=r.keys('ckpt:'+Config().cluster["basePath"]+':*')
+            for key in keys:
+                val=int(r.get(key))
+                if val<=1:
+                    r.delete(key)
+                else:
+                    r.set(key,val-1)
                 
 @run_with_reconnect
 def sendPublish(channel,data):
-    if Config().redis['basePath'] == channel:
+    if Config().cluster["basePath"] == channel:
         jsondata=json.loads(data)
         if jsondata['event']=='addTask':
             ckptSetCount(jsondata)
@@ -250,48 +277,48 @@ def refresh_heartbeat(prefix=''):
     print('----心跳线程-----')
     i=0
     while True:
-        val=r.get(prefix+'heartbeat:'+Config().redis['basePath'])
+        val=r.get(prefix+'heartbeat:'+Config().cluster["basePath"])
         if val==None:
             val=0
-        r.setex(prefix+'heartbeat:'+Config().redis['basePath'], 3, val)
+        r.setex(prefix+'heartbeat:'+Config().cluster["basePath"], 3, val)
         time.sleep(2)
         if i>=30:
             i=0
-            r.publish(Config().redis['basePath'],'{}')
+            r.publish(Config().cluster["basePath"],'{}')
         i=i+1
         
 
 @run_with_reconnect
 def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync方法
     
-    if r :
-        if Config().redis['isMain']==False and event not in ['crystools.monitor']:
+    if Config().cluster and 'redis'==Config().cluster["clusterType"] and  r :
+        if Config().cluster["isMain"]==False and event not in ['crystools.monitor']:
             mainPath=r.get('mainPath')
             if mainPath:
-                if event=='status' and Config().redis['isSection']==False:
+                if event=='status' and Config().cluster["isSection"]==False:
                     val=data['status']['exec_info']['queue_remaining']
-                    r.setex('heartbeat:'+Config().redis['basePath'], 3, val)
+                    r.setex('heartbeat:'+Config().cluster["basePath"], 3, val)
                 if event=='executed':
                     if 'images' in data['output']:
                         for img in data['output']['images']:
                             # imgStr=image_to_base64(img['filename'],img['type'],img['subfolder'])
-                            # filename=base64_encode(Config().redis['basePath'])+img['filename']
-                            # msg={'event':'sendImage','port':Config().redis['basePath'],'filename':filename,'data':imgStr
+                            # filename=base64_encode(Config().cluster["basePath"])+img['filename']
+                            # msg={'event':'sendImage','port':Config().cluster["basePath"],'filename':filename,'data':imgStr
                             #     ,'type':img['type'],'subfolder':img['subfolder']}
                             # sendPublish(mainPath, json.dumps(msg))
                             # img['filename']=filename
-                            filename=base64_encode(Config().redis['basePath'])+img['filename']
+                            filename=base64_encode(Config().cluster["basePath"])+img['filename']
                             filedata=file_to_base64(img['filename'],img['type'],img['subfolder'])
                             r.set(filename,filedata)
-                            msg={'event':'dowFile','port':Config().redis['basePath'],'filename':filename,'type':img['type'],'subfolder':img['subfolder']}
+                            msg={'event':'dowFile','port':Config().cluster["basePath"],'filename':filename,'type':img['type'],'subfolder':img['subfolder']}
                             sendPublish(mainPath, json.dumps(msg))
                             img['filename']=filename
                     elif 'gifs' in data['output']:
                         for img in data['output']['gifs']:
-                            filename=base64_encode(Config().redis['basePath'])+img['filename']
+                            filename=base64_encode(Config().cluster["basePath"])+img['filename']
                             filedata=file_to_base64(img['filename'],img['type'],img['subfolder'])
                             r.set(filename,filedata)
-                            msg={'event':'dowFile','port':Config().redis['basePath'],'filename':filename,'type':img['type'],'subfolder':img['subfolder']}
+                            msg={'event':'dowFile','port':Config().cluster["basePath"],'filename':filename,'type':img['type'],'subfolder':img['subfolder']}
                             sendPublish(mainPath, json.dumps(msg))
                             img['filename']=filename
                 elif str(event)=='2':
@@ -302,22 +329,29 @@ def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync�
                     filedata=base64_to_b64encode(image_data.getvalue())
                     datalist=[data[0],filedata,data[2]]
                     data=datalist
-                msg={'event':event,'port':Config().redis['basePath'],'data':data,'sid':sid}
+                msg={'event':event,'port':Config().cluster["basePath"],'data':data,'sid':sid}
                 sendPublish(mainPath, json.dumps(msg))
                 return 
         elif event=='status':
             if port==None:
                 val=data['status']['exec_info']['queue_remaining']
-                r.setex('heartbeat:'+Config().redis['basePath'], 3, val)
+                r.setex('heartbeat:'+Config().cluster["basePath"], 3, val)
             keys = r.keys('heartbeat:*')
-            queue_remaining=0
+            queue_remaining = PromptServer.instance.prompt_queue.get_tasks_remaining()
             for key in keys:
                 val=r.get(key)
                 if val:
                     queue_remaining+=int(val)
 
             data['status']['exec_info']['queue_remaining']=queue_remaining
+    elif hasattr(self,"clients")==True:
+        if event=='status':
+            queue_remaining=0
+            for c in self.clients:
+                queue_remaining+=c.queue_remaining
 
+            data['status']['exec_info']['queue_remaining']=queue_remaining
+        
     if hasattr(self,"clientObjPromptId")==False:
         setattr(self,"clientObjPromptId",{})
     if event=='execution_start':
@@ -391,14 +425,19 @@ def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync�
             db=DataBaseUtil()
             if db.isUsable:
                 db.update_data('wcomplete', end_time, json.dumps(history['outputs']),data['prompt_id'])
-                
-            self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
+            if 'isAi' in self.user_command[sid] and self.user_command[sid]['isAi']==True:
+                PromptServer.instance.user_command.pop(sid,None)
+            else:
+                self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
         elif  event == "execution_error" and hasattr(self, "user_command") and data['prompt_id'] == self.user_command[sid]['prompt_id']:
             db=DataBaseUtil()
             if db.isUsable:
                 db.delete_data(data['prompt_id'])
-                
-            self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
+
+            if 'isAi' in self.user_command[sid] and self.user_command[sid]['isAi']==True:
+                PromptServer.instance.user_command.pop(sid,None)
+            else: 
+                self.user_command[sid].update({'status':'prepare','waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
 
     self.loop.call_soon_threadsafe(
         self.messages.put_nowait, (event, data, sid))
@@ -426,9 +465,9 @@ def task_done(self, item_id,history_result,status: Optional['PromptQueue.Executi
             'status': status_dict,
         }
         self.history[prompt[1]].update(history_result)
-        if r and Config().redis['isMain']==False :
+        if Config().cluster and 'redis'==Config().cluster["clusterType"] and r and Config().cluster["isMain"]==False :
             mainPath=r.get('mainPath')
-            if mainPath and Config().redis['isSection']==False:
+            if mainPath and Config().cluster["isSection"]==False:
                 sendPublish(mainPath, json.dumps({'event':'taskDone','data':self.history[prompt[1]],'item_id':prompt[1]}))
         self.server.queue_updated()
         
@@ -478,7 +517,7 @@ def setPost(self,FromUserName):
     now = time.localtime()
     start_time = time.strftime("%Y-%m-%d %H:%M:%S", now)
     prompt_id=str(uuid.uuid4())
-    if r and Config().redis['isMain']:
+    if Config().cluster and Config().cluster["isMain"]:
         self.user_command[FromUserName]['prompt_id']=prompt_id 
         data=selServer(json_data,prompt_id)
         if data:
@@ -525,40 +564,49 @@ def setPost(self,FromUserName):
 @run_with_reconnect
 def selServer(json_data,prompt_id):
     json_data['prompt_id']=prompt_id
-    name=None
-    if Config().redis['modelPriority']==True :
-        name=getCkptName(json_data['prompt'])
-        if name:
-            ckkeys=r.keys('ckpt:*:'+name)
-            nport=None
-            for ckkey in ckkeys:
-                ns=ckkey.split(":")
-                nport=':'.join(ns[1:3])
-                break
-            if nport:
-                nval = r.get('heartbeat:'+nport)
-                if nval!=None:
-                    sendPublish(nport, json.dumps({'event':'addTask','data':json_data,'ckptName':name}))
-                    return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
-                
-    keys=r.keys('heartbeat:*')
-    if len(keys)>1:
-        nameSize={}
-        for key in keys:
-            val=r.get(key)
-            if val!=None :
-                ns=key.split(":")
-                print(':'.join(ns[1:]))
-                ckkeys=r.keys('ckpt:'+':'.join(ns[1:])+':*')
-                if int(val)==0 and len(ckkeys)==0:
-                    sendPublish(':'.join(ns[1:]), json.dumps({'event':'addTask','data':json_data,'ckptName':name}))
-                    return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
-                else:
-                    nameSize[':'.join(ns[1:])]=int(val)+len(ckkeys)
-        print('nameSize:',nameSize)
-        minKey=min(key for key, value in nameSize.items() if value == min(nameSize.values()))
-        sendPublish(minKey, json.dumps({'event':'addTask','data':json_data,'ckptName':name}))
-        return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
+    if Config().cluster and 'redis'==Config().cluster["clusterType"] and r:
+        if Config().cluster['modelPriority']==True :
+            name=getCkptName(json_data['prompt'])
+            if name:
+                ckkeys=r.keys('ckpt:*:'+name)
+                nport=None
+                for ckkey in ckkeys:
+                    ns=ckkey.split(":")
+                    nport=':'.join(ns[1:3])
+                    break
+                if nport:
+                    nval = r.get('heartbeat:'+nport)
+                    if nval!=None:
+                        sendPublish(nport, json.dumps({'event':'addTask','data':json_data,'ckptName':name}))
+                        return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
+                    
+        keys=r.keys('heartbeat:*')
+        if len(keys)>1:
+            nameSize={}
+            for key in keys:
+                val=r.get(key)
+                if val!=None :
+                    ns=key.split(":")
+                    print(':'.join(ns[1:]))
+                    ckkeys=r.keys('ckpt:'+':'.join(ns[1:])+':*')
+                    if int(val)==0 and len(ckkeys)==0:
+                        sendPublish(':'.join(ns[1:]), json.dumps({'event':'addTask','data':json_data,'ckptName':name}))
+                        return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
+                    else:
+                        nameSize[':'.join(ns[1:])]=int(val)+len(ckkeys)
+            print('nameSize:',nameSize)
+            minKey=min(key for key, value in nameSize.items() if value == min(nameSize.values()))
+            sendPublish(minKey, json.dumps({'event':'addTask','data':json_data,'ckptName':name}))
+            return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
+    elif hasattr(PromptServer.instance,'clients') and len(PromptServer.instance.clients)>0:
+        clients=[obj for obj in PromptServer.instance.clients if obj.is_connected]
+        if len(clients)>0:
+            client = min(clients, key=lambda c: c.queue_remaining)
+            queue_remaining = PromptServer.instance.prompt_queue.get_tasks_remaining()
+            if queue_remaining>client.queue_remaining:
+                name=getCkptName(json_data['prompt'])
+                client.setSubscribe({'event':'addTask','data':json_data,'ckptName':name})
+                return {"prompt_id": prompt_id, "number": 1, "node_errors": []}
     return None
 
 def get_route_keys(endKey, prompt,uniqueIds):
@@ -597,7 +645,7 @@ def section_handle(json_data):
         prompt[endNum]['inputs']['images']=[startNum,1]
     return json_data
 def trigger_on_prompt(self,json_data,isRun=True):
-    if isRun and r and Config().redis['isMain']:
+    if isRun and Config().cluster and Config().cluster["isMain"]:
         prompt_id=str(uuid.uuid4())
         data=selServer(json_data,prompt_id)
         if data:
@@ -691,7 +739,30 @@ async def getHistorys(request):
     else:
         data={'msg':'openId 不能为空！','success':False}
         return web.Response(text=json.dumps(data), content_type='application/json')
-    
+
+@PromptServer.instance.routes.post("/wechatauth/setMainServer")
+async def setMainServer(request):
+    json_data =  await request.json()
+    mainPath = json_data.get("mainPath")
+    setattr(PromptServer.instance,"mainPath",mainPath)
+    return web.Response(status=200)
+
+@PromptServer.instance.routes.post("/wechatauth/setSubscribe")
+async def setSubscribe(request):
+    json_data =  await request.json()
+    subscribe('',json_data)
+    return web.Response(status=200)
+        
+@PromptServer.instance.routes.post("/wechatauth/cancelTask")
+async def cancelTask(request):
+    post = await request.post()
+    prompt_id = post.get("prompt_id")
+    openId=post.get("openId")
+    delete_func = lambda a: a[1] == prompt_id
+    PromptServer.instance.prompt_queue.delete_queue_item(delete_func)
+    PromptServer.instance.user_command[openId]['status']='prepare'
+    return web.Response(status=200)
+
 @PromptServer.instance.routes.post("/wechatauth/addTask")
 async def addTask(request):
     try:
@@ -792,11 +863,30 @@ async def getCommands(request):
 
 @PromptServer.instance.routes.get("/wechatauth/app")
 async def app(request):
+    openId=request.rel_url.query['openId']
+    if openId not in Config().base['authorIds']:
+        return web.Response(text='您没有权限访问！', content_type='text/html')
+    if openId in PromptServer.instance.sockets:
+        return web.Response(text='openId已在使用！', content_type='text/html')
+    basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
+    htmlPtah = os.path.join(basePath, 'ComfyUI_Lam', 'pages','app.html')
+    # 打开文件
+    with open(htmlPtah, 'r', encoding='utf-8') as file:
+        # 读取文件内容
+        html_content = file.read()
+
+    html_content = html_content.replace('{{openId}}', openId)
+    html_content = html_content.replace('{{appLogo}}', str(Config().base['appLogo']) if 'appLogo' in Config().base else '')
+    html_content = html_content.replace('{{appTitle}}', str(Config().base['appTitle']) if 'appTitle' in Config().base else '')
+    return web.Response(text=html_content, content_type='text/html')
+    
+@PromptServer.instance.routes.get("/wechatauth/app2")
+async def app(request):
     if "openId" in request.rel_url.query:
         openId=request.rel_url.query['openId']
         openId=base64_decode(openId)
         basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
-        htmlPtah = os.path.join(basePath, 'ComfyUI_Lam', 'pages','app.html')
+        htmlPtah = os.path.join(basePath, 'ComfyUI_Lam', 'pages','app2.html')
         # 打开文件
         with open(htmlPtah, 'r', encoding='utf-8') as file:
             # 读取文件内容
@@ -933,7 +1023,7 @@ async def handleMessagePost(request):
                     data=otherName.split('加')
                     openId=base64_decode(data[0])
                     tount=int(data[1])
-                    if openId == 'config':
+                    if data[0] == 'config':
                         Config().reload()
                         msg='配置文件已更新'
                     elif openId and tount>0:
@@ -946,7 +1036,6 @@ async def handleMessagePost(request):
                             else:
                                 msg='用户不存在'
 
-                            
                         else:
                             msg='数据库连接失败'
                     else:
@@ -1032,19 +1121,22 @@ PromptServer.instance.old_trigger_on_prompt=PromptServer.instance.trigger_on_pro
 PromptServer.instance.trigger_on_prompt=types.MethodType(trigger_on_prompt,PromptServer.instance)
 if hasattr(PromptServer.instance,"displayName")==False:
     setattr(PromptServer.instance,"displayName",NODE_LANGEUAGE_DISPLAY_NAME_MAPPINGS)
-if  r: #添加订阅消息
-    if Config().redis['isMain']:
-        r.set('mainPath',Config().redis['basePath'])
-    keys=r.keys('ckpt:'+Config().redis['basePath']+':*')
-    for key in keys:
-        r.delete(key)
-    prefix=''
-    if Config().redis['isSection']:
-        prefix='section'
-    Thread(target=refresh_heartbeat,daemon=True, args=(prefix,)).start()
+if  Config().cluster:
+    if'redis'==Config().cluster["clusterType"] and r: #添加订阅消息
+        if Config().cluster["isMain"]:
+            r.set('mainPath',Config().cluster["basePath"])
+        keys=r.keys('ckpt:'+Config().cluster["basePath"]+':*')
+        for key in keys:
+            r.delete(key)
+        prefix=''
+        if Config().cluster["isSection"]:
+            prefix='section'
+        Thread(target=refresh_heartbeat,daemon=True, args=(prefix,)).start()
+    
     Thread(target=addSubscribe,daemon=True, args=()).start()
     if PromptServer.instance.prompt_queue:
         PromptServer.instance.prompt_queue.task_done=types.MethodType(task_done,PromptServer.instance.prompt_queue)
+        
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}

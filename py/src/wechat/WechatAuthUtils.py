@@ -65,8 +65,13 @@ def base64_encode(text):
 
 def base64_decode(encoded_text):
     '''解密'''
-    decoded_text = base64.b64decode(encoded_text).decode('utf-8')
+    try:
+        decoded_text = base64.b64decode(encoded_text).decode('utf-8')
+    except Exception as e:
+        logging.error(f"base64_decode error: {e}")
+        decoded_text=''
     return decoded_text
+    
 
 
 """这是一个处理客户发送信息的文件"""
