@@ -304,7 +304,9 @@ const app = Vue.createApp({
                 prompt_id:'',
                 percenStatus:'warning',
                 percentage:0,
-                output:{images:[],texts:[]}
+                output:{images:[],texts:[]},
+                nodeIds:[],
+                doneNodeIds:[]
             }
         }
     },
@@ -365,36 +367,60 @@ const app = Vue.createApp({
                     if(that.form.prompt_id==messageJson['data']['prompt_id']){
                         that.form.percenStatus='success';
                     }
+                }else if(messageJson['type']=="execution_cached"){
+                    if(that.form.prompt_id==messageJson['data']['prompt_id']){
+                        that.form.doneNodeIds=messageJson['data']['nodes'];
+                    }
+                }else if(messageJson['type']=="executing"){
+                    if(that.form.prompt_id==messageJson['data']['prompt_id']){
+                        let node=messageJson['data']['node'];
+                        if(that.form.executing){
+                            that.form.doneNodeIds.push(that.form.executing);
+                        }
+                        if(!messageJson['data']['node']){
+                            that.form.status='prepare';
+                            that.form.percenStatus='warning';
+                            that.form.percentage=0;
+                            that.form.executing='';
+                            that.form.doneNodeIds=[];
+                            that.form.nodeIds=[];
+                        }else{
+                            that.form.executing=node;
+                        }
+                    }
                 }else if(messageJson['type']=='progress'){
                     if(that.form.prompt_id==messageJson['data']['prompt_id']){
                         let max=messageJson['data']['max'];
                         let value=messageJson['data']['value'];
-                        that.form.percentage=parseInt(value/max*100);
+                        let node=messageJson['data']['node'];
+                        let percentage=0;
+                        if(that.form.executing==node){
+                            percentage=parseFloat(value/max);
+                        }
+                        that.form.percentage=parseInt((that.form.doneNodeIds.length+percentage)/that.form.nodeIds.length*100);
                     }
                 }else if(messageJson['type']=='execution_success'){
                     if(that.form.prompt_id==messageJson['data']['prompt_id']){
+                        that.form.page_number=1;
                         that.getHistorys();
                     }
                 }else if(messageJson['type']=='executed'){
                     if(that.form.prompt_id==messageJson['data']['prompt_id']){
-                        let node_output=messageJson['data']['output'];
+                        let node_output='output' in messageJson['data']?messageJson['data']['output']:{};
                         let images=[];
                         let texts=[];
-                        if(Object.keys(node_output).indexOf("images") >= 0){
-                            for(let img of node_output?.images){
+                        if('outputImg' in node_output){
+                            for(let img of node_output?.outputImg){
                                 let url='../view?filename='+img.filename+'&type='+img.type+'&subfolder='+img.subfolder;
                                 images.push(url)
                             }
-                        }else if(Object.keys(node_output).indexOf("wechat_text") >= 0){
+                        }else if("wechat_text" in node_output){
                             texts.push(...node_output.wechat_text);
                         }
-                        that.form.output={images:images,texts:texts};
+                        if(images.length>0||texts.length>0){
+                            that.form.output={images:images,texts:texts};
+                        }
                     }
-                }else if(messageJson['type']=='executing' && !messageJson['data']['node']){
-                    that.form.status='prepare';
-                    that.form.percenStatus='warning';
-                    that.form.percentage=0;
-                    that.form.page_number=1;
                 }
             }
 
@@ -525,7 +551,26 @@ const app = Vue.createApp({
             });
         },
         cancelTask(){
-
+            let that=this;
+            let formData = new FormData();
+            formData.append("openId", openId);
+            formData.append("prompt_id",that.form.prompt_id)
+            axios.post('../wechatauth/cancelTask', formData)
+                .then(function(response) {
+                    if(response.data.success){
+                        that.form.prompt_id='';
+                        that.form.nodeIds=[];
+                        that.form.status='prepare';
+                        that.form.percenStatus='warning';
+                        that.form.percentage=0;
+                    }else{
+                        ElementPlus.ElMessage.error(response.data.msg);
+                    }
+                })
+                .catch(function(error) {
+                    console.log(error);
+                    ElementPlus.ElMessage.error(error.response.data);
+            })
         },
         startTask(){
             let that=this;
@@ -551,6 +596,7 @@ const app = Vue.createApp({
                     if(response.data.success){
                         that.form.status='waiting';
                         that.form.prompt_id=response.data.prompt_id;
+                        that.form.nodeIds=response.data.nodeIds;
                     }else{
                         ElementPlus.ElMessage.error(response.data.msg);
                     }

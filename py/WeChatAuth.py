@@ -159,7 +159,7 @@ def generate_image(prompt,userId,batch_size=1,command='文生图'):
         setattr(PromptServer.instance,"user_command",{})
 
     PromptServer.instance.user_command[userId]=userData
-    resp=setPost(PromptServer.instance,userId)
+    resp,_=setPost(PromptServer.instance,userId)
     if resp!=None:
         data = {"success": True, "res": "任务下发成功", "res_type": "image"}
         return data
@@ -375,8 +375,8 @@ def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync�
                     if 'wechat_text' in node_output:
                         for text in node_output['wechat_text']:
                             textMsgs.append(text)
-                    if 'images' in node_output:
-                        for image in node_output['images']:
+                    if 'outputImg' in node_output:
+                        for image in node_output['outputImg']:
                             basePath=''
                             if 'output' == image['type']:
                                 basePath=folder_paths.get_output_directory()
@@ -389,8 +389,8 @@ def send_sync(self, event, data, sid=None,port=None): #继承父类的send_sync�
                                 basePath=os.path.join(basePath,image['subfolder'])
 
                             imagePaths.append(os.path.join(basePath,image['filename']))
-                    if 'gifs' in node_output:
-                        for image in node_output['gifs']:
+                    if 'outputGifs' in node_output:
+                        for image in node_output['outputGifs']:
                             basePath=''
                             if 'output' in image['type']:
                                 basePath=folder_paths.get_output_directory()
@@ -506,14 +506,15 @@ def setPost(self,FromUserName):
         logging.warning("文件不存在："+filePath)
         return None
     f = open(filePath,'r', encoding='utf-8')
-    json_data = json.load(f)
+    original_data = json.load(f)
     f.close()
     for key in comand['params']:
         keys=comand['params'][key]['keys'][:]
         if key in params:
-            update_dict(json_data,keys,params[key])
+            update_dict(original_data,keys,params[key])
     
-    json_data={"prompt":json_data,"client_id":params['openId']}
+    json_data={"prompt":original_data,"client_id":params['openId']}
+    nodeIds=list(original_data.keys())
     now = time.localtime()
     start_time = time.strftime("%Y-%m-%d %H:%M:%S", now)
     prompt_id=str(uuid.uuid4())
@@ -525,7 +526,7 @@ def setPost(self,FromUserName):
             if db.isUsable:
                 db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
                 
-            return data
+            return data,nodeIds
                     
     json_data = self.trigger_on_prompt(json_data)
     if "number" in json_data:
@@ -555,11 +556,11 @@ def setPost(self,FromUserName):
             if db.isUsable:
                 db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
                 
-            return prompt_id
+            return prompt_id,nodeIds
         else:
             self.user_command[FromUserName]['status']='prepare' # prepare:准备 waiting:待执行  wcomplete完成
             logging.warning("invalid prompt: {}".format(valid[1]))
-            return None
+            return None,None
         
 @run_with_reconnect
 def selServer(json_data,prompt_id):
@@ -757,11 +758,24 @@ async def setSubscribe(request):
 async def cancelTask(request):
     post = await request.post()
     prompt_id = post.get("prompt_id")
-    openId=post.get("openId")
-    delete_func = lambda a: a[1] == prompt_id
-    PromptServer.instance.prompt_queue.delete_queue_item(delete_func)
-    PromptServer.instance.user_command[openId]['status']='prepare'
-    return web.Response(status=200)
+    openId = post.get("openId")
+    current_queue = PromptServer.instance.prompt_queue.get_current_queue()
+    queue_running = current_queue[0]
+    queue_pending = current_queue[1]
+    pids = [x[1] for x in queue_pending if x[1]==prompt_id]
+    rids = [x[1] for x in queue_running if x[1]==prompt_id]
+    if len(pids)>0:
+        delete_func = lambda a: a[1] == prompt_id
+        PromptServer.instance.prompt_queue.delete_queue_item(delete_func)
+    if len(rids)>0:
+        nodes.interrupt_processing()
+    PromptServer.instance.user_command.pop(openId,None)
+    db=DataBaseUtil()
+    if db.isUsable:
+        db.delete_data(prompt_id)
+    data={'msg':'取消成功','success':True}
+    return web.Response(text=json.dumps(data), content_type='application/json')
+        
 
 @PromptServer.instance.routes.post("/wechatauth/addTask")
 async def addTask(request):
@@ -833,9 +847,9 @@ async def addTask(request):
             setattr(PromptServer.instance,"user_command",{})
 
         PromptServer.instance.user_command[openId]=userData
-        resp=setPost(PromptServer.instance,openId)
+        resp,nodeIds=setPost(PromptServer.instance,openId)
         if resp!=None:
-            data={'msg':'任务成功加入队列请等待','prompt_id':resp,'success':True}
+            data={'msg':'任务成功加入队列请等待','prompt_id':resp,'nodeIds':nodeIds,'success':True}
             return web.Response(text=json.dumps(data), content_type='application/json')
         else:
             data={'msg':'任务加入队列失败','success':False}
@@ -1009,7 +1023,7 @@ async def handleMessagePost(request):
                 if paramName!='':
                     out = reply_text(FromUserName, ToUserName, CreateTime, '任务缺乏参数“'+paramName+'”请补充后再提交')
                     return web.Response(text=out, content_type='application/xml')
-                resp=setPost(PromptServer.instance,FromUserName)
+                resp,_=setPost(PromptServer.instance,FromUserName)
                 if resp!=None:
                     serverAddress=Config().wechat['serverAddress']+'wechatauth/app?openId='+base64_encode(FromUserName)
                     imgUrl='http://mmbiz.qpic.cn/sz_mmbiz_jpg/EpicUicwgk0IGpbYZicuGSXUBaIFWbuDZmBbmDO9PleONOz3FJ3eANEmRicD0eR7mF6PCkxSPxVicbDclQldFKDlHRA/0'
