@@ -33,7 +33,7 @@
                             </div>
                         </template>
                     </el-image>
-                    <template v-if="'{{appLogo}}'.length>0">
+                    <template v-if="'{{appLogo}}'!='None'">
                         | {{appTitle}}
                     </template>
                 </div>
@@ -235,10 +235,10 @@
                     </el-dialog>
                     <div class="aigc-main__btn-box step_4">
                         <el-button v-if="form.status!='prepare'" :class="'aigc-main__btn-box--merge'" style="height: 100%;background: linear-gradient(to bottom right, rgb(224 224 224), rgb(244 85 85));" 
-                            @click="cancelTask" >
+                            @click="cancelTask" :disabled="!isConnect" >
                             <div class="text"><span class="upper" >取消任务</span></div>
                         </el-button>
-                        <el-button v-else :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" style="height: 100%;" @click="startTask" :disabled="form.status!='prepare'">
+                        <el-button v-else :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" style="height: 100%;" @click="startTask" :disabled="!isConnect">
                             <div class="text"><span class="upper" >立即生成</span></div>
                         </el-button>
                     </div>
@@ -297,6 +297,7 @@ const app = Vue.createApp({
             loading:false,
             disabled:false,
             isNotData:false,
+            isConnect:false,
             form: {
                 openId:'',
                 command:'',
@@ -347,9 +348,7 @@ const app = Vue.createApp({
             websocket.onopen = function () {
                 // 获取所有在线用户
                 console.log("WebSocket连接成功");
-                //var username = randomString(10);
-                //sendIssue({ "userName": username, "comType": "login" });
-                //$("#talks").html(username);
+                that.isConnect=true;
             }
             // 接收到消息的回调方法
             websocket.onmessage = async function (event) {
@@ -411,7 +410,7 @@ const app = Vue.createApp({
                         let texts=[];
                         if('outputImg' in node_output){
                             for(let img of node_output?.outputImg){
-                                let url='../view?filename='+img.filename+'&type='+img.type+'&subfolder='+img.subfolder;
+                                let url='../view?filename='+img.filename+'&type='+img.type+'&subfolder='+img.subfolder+'&rand='+Math.random();
                                 images.push(url)
                             }
                         }else if("wechat_text" in node_output){
@@ -427,7 +426,21 @@ const app = Vue.createApp({
             // 连接关闭的回调方法
             websocket.onclose = function () {
                 console.error("WebSocket连接关闭");
+                that.openCloseMsg();
             }
+        },
+        openCloseMsg(){
+            var that = this;
+            that.isConnect=false;
+            ElementPlus.ElMessage({
+                showClose: true,
+                duration:0,
+                message: '服务器断开连接，关闭消息尝试重连',
+                type: 'error',
+                onClose:()=>{
+                    that.initWebSocket();
+                }
+            })
         },
         loadData() {
             var that = this;
@@ -502,10 +515,11 @@ const app = Vue.createApp({
             let that=this;
             // 清除背景图
             that.canvas.backgroundImage = null;
+            that.canvas.backgroundColor = 'rgba(0,0,0,0)'
             that.canvas.renderAll();
             that.canvas.lowerCanvasEl.toBlob(function (blob) {
             let formData = new FormData();
-            formData.append("image", blob, 'mask_'+that.dialogImageName);
+            formData.append("image", blob, 'mask_'+openId+that.dialogImageName);
             formData.append("overwrite", "true");
             formData.append("type", "input");
             axios.post('../upload/image', formData)
@@ -617,6 +631,12 @@ const app = Vue.createApp({
                     || this.paramList[paramKey].type=='number'){
                         this.paramList[paramKey].value=parseFloat(params[paramKey]);
                     }else{
+                        if(this.paramList[paramKey].type=='image'){
+                            let ps=params[paramKey].split('//');
+                            let url='../view?filename='+ps[1]+'&type='+ps[0]+'&subfolder=&rand='+Math.random();
+                            //获取文件名称
+                            this.paramList[paramKey].fileList=[{url:url,name:ps[1]}];
+                        }
                         this.paramList[paramKey].value=params[paramKey];
                     }
                 }
@@ -660,7 +680,7 @@ const app = Vue.createApp({
                             let node_output = outputs[node_id]
                             if(Object.keys(node_output).indexOf("images") >= 0){
                                 for(let img of node_output?.images){
-                                    let url='../view?filename='+img.filename+'&type='+img.type+'&subfolder='+img.subfolder;
+                                    let url='../view?filename='+img.filename+'&type='+img.type+'&subfolder='+img.subfolder+'&rand='+Math.random();
                                     images.push(url)
                                 }
                             }else if(Object.keys(node_output).indexOf("wechat_text") >= 0){

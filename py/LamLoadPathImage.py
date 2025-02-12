@@ -30,6 +30,13 @@ class LamLoadPathImage:
     
     CATEGORY = "lam"
 
+    @classmethod
+    def IS_CHANGED(cls, should_change=True, *args, **kwargs):
+        if should_change:
+            return float("NaN")
+        else:
+            return False
+
     def load_image(self, image_path, RGBA='false', filename_text_extension="true"):
     
         RGBA = (RGBA == 'true')

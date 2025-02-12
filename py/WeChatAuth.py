@@ -57,9 +57,13 @@ async def ai_auto_reply(msg,userId):
         return 
     if userId not in userHistory or time.time()-userHistory[userId]['time']>5*60:
         userHistory[userId]={'time':time.time(),'messages':[{"role": "system", "content": Config().ai['sys_pompt']}]}
+        userHistory[userId]['messages'].append({"role": "user", "content": '帮我生成一只猫的图片'})
+        userHistory[userId]['messages'].append({'content': '', 'role': 'assistant', 'function_call': None, 'tool_calls': [{'id': '0194f2d11ac6d233b0220bc6683f42a3', 'function': {'arguments': '{"prompt":"a cute cat"}', 'name': 'generate_image'}, 'type': 'function'}]})
+        userHistory[userId]['messages'].append({'role': 'tool','content': "图片生成成功",'tool_call_id': "0194f2d11ac6d233b0220bc6683f42a3"})
+        userHistory[userId]['messages'].append({"role": "assistant", "content": "已经为您生成图片。"})
     else:
-        while len(userHistory[userId]['messages'])>=maxsize:
-            userHistory[userId]['messages'].pop(1)
+        while len(userHistory[userId]['messages'])>=maxsize+5:
+            userHistory[userId]['messages'].pop(5)
     userHistory[userId]['messages'].append({"role": "user", "content": msg})
     userHistory[userId]['time'] = time.time()
     try:
@@ -161,12 +165,15 @@ def generate_image(prompt,userId,batch_size=1,command='文生图'):
     PromptServer.instance.user_command[userId]=userData
     resp,_=setPost(PromptServer.instance,userId)
     if resp!=None:
-        data = {"success": True, "res": "任务下发成功", "res_type": "image"}
-        return data
+        while True:
+            if userId in PromptServer.instance.user_command and PromptServer.instance.user_command[userId]['status']=='waiting':
+                time.sleep(0.5)
+            else:
+                break
+        return '生成成功'
     else:
         msg='非常抱歉，服务器正忙，请稍后再试！'
-        data={'res':msg,'success':False,"res_type": "text"}
-        return data
+        return msg
     
 def addSubscribe():
     if Config().cluster["isMain"] and 'socket'==Config().cluster["clusterType"] and 'subordinates' in Config().cluster and len(Config().cluster["subordinates"])>0:
