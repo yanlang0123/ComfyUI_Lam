@@ -885,7 +885,10 @@ async def getCommands(request):
 @PromptServer.instance.routes.get("/wechatauth/app")
 async def app(request):
     openId=request.rel_url.query['openId']
-    if openId not in Config().base['authorIds']:
+    nopenId=base64_decode(openId)
+    if nopenId != '':
+        openId=nopenId
+    elif openId not in Config().base['authorIds']:
         return web.Response(text='您没有权限访问！', content_type='text/html')
     if openId in PromptServer.instance.sockets:
         return web.Response(text='openId已在使用！', content_type='text/html')

@@ -400,7 +400,7 @@ const app = Vue.createApp({
                     }
                 }else if(messageJson['type']=='execution_success'){
                     if(that.form.prompt_id==messageJson['data']['prompt_id']){
-                        that.form.page_number=1;
+                        that.page_number=1;
                         that.getHistorys();
                     }
                 }else if(messageJson['type']=='executed'){
@@ -654,6 +654,37 @@ const app = Vue.createApp({
             that.page_number+=1;
             that.getHistorys();
         },
+        setRunTask(dataStr,prompt_id){
+            let that=this;
+            let params=JSON.parse(dataStr)
+            this.confirmSetParam(params)
+            axios.get('../api/queue')
+                .then(function(response) {
+                    let queue_pending=response.data.queue_pending;
+                    let queue_running=response.data.queue_running;
+                    for(let data of queue_running){
+                        if(data[1]==prompt_id){
+                            that.form.status='waiting';
+                            that.form.prompt_id=prompt_id;
+                            that.form.percenStatus='success';
+                            that.form.nodeIds=Object.keys(data[2]);
+                            return ;
+                        }
+                    }
+                    for(let data of queue_pending){
+                        if(data[1]==prompt_id){
+                            that.form.status='waiting';
+                            that.form.prompt_id=prompt_id;
+                            that.form.nodeIds=Object.keys(data[2]);
+                            return ;
+                        }
+                    }
+                }).catch(function(error) {
+                    console.log(error);
+                    ElementPlus.ElMessage.error(error);
+            })
+            
+        },
         getHistorys(){
             let that=this;
             that.loading=true;
@@ -665,10 +696,12 @@ const app = Vue.createApp({
                         that.historyList=[];
                     }
                     let datas=response.data;
+                    if(datas.length>0&&datas[0][4]=='waiting'){
+                        that.setRunTask(datas[0][2],datas[0][3])
+                    }
                     for(let res of datas){
                         let command=JSON.parse(res[2])
                         if (res[4] == 'waiting'){
-                            //setComand(command['command'],command)
                             continue
                         }else if(res[4]=='wcomplete'){
                             command['status']='wcomplete'
