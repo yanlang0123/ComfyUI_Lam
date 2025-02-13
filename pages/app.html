@@ -711,8 +711,8 @@ const app = Vue.createApp({
                         let texts=[];
                         for(let node_id in outputs){
                             let node_output = outputs[node_id]
-                            if(Object.keys(node_output).indexOf("images") >= 0){
-                                for(let img of node_output?.images){
+                            if(Object.keys(node_output).indexOf("outputImg") >= 0){
+                                for(let img of node_output?.outputImg){
                                     let url='../view?filename='+img.filename+'&type='+img.type+'&subfolder='+img.subfolder+'&rand='+Math.random();
                                     images.push(url)
                                 }
