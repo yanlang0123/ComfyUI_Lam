@@ -38,8 +38,8 @@
                     </template>
                 </div>
                 <div class="aigc-head__left-block"></div>
-                <div class="aigc-head__right-block">
-                    <!-- <el-popover placement="bottom" :width="300" trigger="click">
+                <div class="aigc-head__right-block" v-if="isShowAdmin()">
+                    <el-popover placement="bottom" :width="300" trigger="click" >
                         <template #reference>
                             <div style="color: aliceblue;" id="contact_administrator" class="aigc-head__right-block--qun aigc-head__right-block--commonbtn aigc-head__right-block--hover">
                                 联系管理员 </div>
@@ -57,10 +57,10 @@
                                 </div>
                             </div>
                         </template>
-                    </el-popover> -->
-                    <!-- <div class="aigc-head__right-block--avatarbox">
+                    </el-popover>
+                    <div class="aigc-head__right-block--avatarbox">
                     <el-avatar class="aigc-head__right-block--avatar" src="https://himg.bdimg.com/sys/portraith/item/public.1.e8294af1.YF07P1v3sOMXm56wbOMh9w"/>
-                    </div> -->
+                    </div>
                 </div>
             </div>
             <div  class="aigc-tab">
@@ -276,7 +276,7 @@ function getParams(url) {
   return params;
 }
 
-const openId='{{openId}}';
+let openId='{{openId}}';
 
 const app = Vue.createApp({
     data() {
@@ -312,10 +312,11 @@ const app = Vue.createApp({
         }
     },
     mounted: function() {
-        this.loadData();
-        document.getElementById("app").style.display = "block";
-        this.initWebSocket();
-        this.getHistorys();
+        if(openId){
+            this.initMain();
+        }else{
+            this.authUser();
+        }
     },
     watch:{
         loading(newVal, oldVal) {
@@ -329,6 +330,45 @@ const app = Vue.createApp({
         
     },
     methods: {
+        initMain(){
+            this.loadData();
+            document.getElementById("app").style.display = "block";
+            this.initWebSocket();
+            this.getHistorys();
+        },
+        authUser(msg=''){
+            let that = this;
+            ElementPlus.ElMessageBox.alert(`
+            <div class="box-title">微信扫码关注公众号获取授权码</div>
+            <img class="qrcode" src="{{qrcodeUrl}}" />
+            <div class="el-input el-input-group el-input-group--append">
+                <input class="el-input__inner" type="text" autocomplete="off" maxlength="6" tabindex="0" placeholder="输入授权码" id="code_input_id">
+            </div>
+            <div class="box-title" style="color: #ffb3b3;">`+msg+`</div>
+            `, 
+            "", {
+            showClose:false,
+            showCancelButton:false,
+            showConfirmButton:true,
+            dangerouslyUseHTMLString: true
+          })
+            .then(() => {
+              let code=document.getElementById("code_input_id").value;
+              if(code.length!=6){
+                that.authUser('验证码长度不正确！');
+                return ;
+              }
+              that.getUserOpenId(code);
+            })
+        },
+        isShowAdmin(){
+            if('pywebview' in window){
+                if(pywebview.api.isLogin()){
+                    return true;
+                }
+            }
+            return false;
+        },
         initWebSocket(){
             var that = this;
             var websocket = null;
@@ -349,6 +389,7 @@ const app = Vue.createApp({
                 // 获取所有在线用户
                 console.log("WebSocket连接成功");
                 that.isConnect=true;
+                
             }
             // 接收到消息的回调方法
             websocket.onmessage = async function (event) {
@@ -532,7 +573,7 @@ const app = Vue.createApp({
                 })
                 .catch(function(error) {
                     console.log(error);
-                    ElementPlus.ElMessage.error(error.response.data);
+                    ElementPlus.ElMessage.error(error);
                 })
             }, "image/png");
         },
@@ -564,6 +605,27 @@ const app = Vue.createApp({
                 that.canvas.renderAll();
             });
         },
+        getUserOpenId(code){
+            let that=this;
+            let formData = new FormData();
+            formData.append("code", code);
+            axios.post('../wechatauth/getUserOpenId', formData)
+                .then(function(response) {
+                    if(response.data.success){
+                        openId=response.data.openId;
+                        that.initMain();
+                        if('pywebview' in window ){
+                            pywebview.api.setOpenId(openId);
+                        }
+                    }else{
+                        that.authUser('授权码校验失败，请先扫码关注获取授权码！');
+                    }
+                })
+                .catch(function(error) {
+                    console.log(error);
+                    that.authUser(error);
+            })
+        },
         cancelTask(){
             let that=this;
             let formData = new FormData();
@@ -583,7 +645,7 @@ const app = Vue.createApp({
                 })
                 .catch(function(error) {
                     console.log(error);
-                    ElementPlus.ElMessage.error(error.response.data);
+                    ElementPlus.ElMessage.error(error);
             })
         },
         startTask(){
@@ -617,7 +679,7 @@ const app = Vue.createApp({
                 })
                 .catch(function(error) {
                     console.log(error);
-                    ElementPlus.ElMessage.error(error.response.data);
+                    ElementPlus.ElMessage.error(error);
             })
         },
         confirmSetParam(params){
@@ -773,6 +835,35 @@ loadLocales().then(() => {
 });
 </script>
 <style scoped>
+.el-message-box{
+    div.box-title{
+        width: 100%;
+        text-align: center;
+        font-size: large;
+        color: aliceblue;
+    }
+    .qrcode{
+        width: 100%; height: auto;
+    }
+    .el-input-group{
+        box-shadow: 0 0 0 1px var(--el-input-border-color, var(--el-border-color)) inset;
+        border-radius: var(--el-input-border-radius, var(--el-border-radius-base));
+    }
+    input{
+        text-align: center;
+    }
+    .el-input-group__append{
+        color: aliceblue;
+    }
+    margin-top: 4px;
+    padding: 20px 16px;
+    color: rgb(253 248 248 / 80%);
+    background-color: #606266;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: lighter;
+    border: 1px solid #606266;
+}
 .head-title{
     color: aliceblue;
     font-size: x-large;

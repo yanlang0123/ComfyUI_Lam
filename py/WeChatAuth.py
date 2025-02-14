@@ -884,14 +884,17 @@ async def getCommands(request):
 
 @PromptServer.instance.routes.get("/wechatauth/app")
 async def app(request):
-    openId=request.rel_url.query['openId']
-    nopenId=base64_decode(openId)
-    if nopenId != '':
-        openId=nopenId
-    elif openId not in Config().base['authorIds']:
-        return web.Response(text='您没有权限访问！', content_type='text/html')
-    if openId in PromptServer.instance.sockets:
-        return web.Response(text='openId已在使用！', content_type='text/html')
+    if "openId" in request.rel_url.query:
+        openId=request.rel_url.query['openId']
+        nopenId=base64_decode(openId)
+        if nopenId != '':
+            openId=nopenId
+        elif openId not in Config().base['authorIds']:
+            return web.Response(text='您没有权限访问！', content_type='text/html')
+        if openId in PromptServer.instance.sockets:
+            return web.Response(text='openId已在使用！', content_type='text/html')
+    else:
+        openId=''
     basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
     htmlPtah = os.path.join(basePath, 'ComfyUI_Lam', 'pages','app.html')
     # 打开文件
@@ -902,7 +905,31 @@ async def app(request):
     html_content = html_content.replace('{{openId}}', openId)
     html_content = html_content.replace('{{appLogo}}', str(Config().base['appLogo']) if 'appLogo' in Config().base else '')
     html_content = html_content.replace('{{appTitle}}', str(Config().base['appTitle']) if 'appTitle' in Config().base else '')
+    if "openId" not in request.rel_url.query:
+        qrcodeUrl=getQrCodeUrl()
+    else:
+        qrcodeUrl=''
+    html_content = html_content.replace('{{qrcodeUrl}}', qrcodeUrl)
     return web.Response(text=html_content, content_type='text/html')
+
+@PromptServer.instance.routes.post("/wechatauth/getUserOpenId")
+async def getUserOpenId(request):
+    try:
+        post = await request.post()
+        code = post.get("code")
+        if hasattr(PromptServer.instance,"userAuthCode")==False:
+            setattr(PromptServer.instance,"userAuthCode",{})
+        if code in PromptServer.instance.userAuthCode:
+            openId=PromptServer.instance.userAuthCode[code]
+            data={'openId':openId,'success':True}
+            return web.Response(text=json.dumps(data), content_type='application/json')
+        else:
+            data={'msg':'获取用户openId异常','success':False}
+            return web.Response(text=json.dumps(data), content_type='application/json')
+    except Exception as e:
+        logging.error('获取用户openId异常:'+str(e))
+        data={'msg':'获取用户openId异常','success':False}
+        return web.Response(text=json.dumps(data), content_type='application/json')
     
 @PromptServer.instance.routes.get("/wechatauth/app2")
 async def app(request):
@@ -1115,11 +1142,22 @@ async def handleMessagePost(request):
             Event = data.find('Event').text
             Event_key = data.find('EventKey').text
             CreateTime = int(time.time())
-            # 判断事件，并返回内容
-            reply_content = receive_event(Event,Event_key)
-            if reply_content:
+             # 扫码二维码页面授权
+            if Event_key == 'APP_AUTHORIZED':
+                if hasattr(PromptServer.instance,"userAuthCode")==False:
+                    setattr(PromptServer.instance,"userAuthCode",{})
+                #随机6位数字
+                code=random.randint(100000, 999999)
+                PromptServer.instance.userAuthCode[str(code)]=FromUserName
+                reply_content=f'您的授权码为：'+str(code)+'\n 请在应用中输入授权码验证进行使用。'
                 out = reply_text(FromUserName, ToUserName, CreateTime, reply_content)
                 return web.Response(text=out, content_type='application/xml')
+            else:
+                # 判断事件，并返回内容
+                reply_content = receive_event(Event,Event_key)
+                if isinstance(reply_content,str):
+                    out = reply_text(FromUserName, ToUserName, CreateTime, reply_content)
+                    return web.Response(text=out, content_type='application/xml')
         except Exception as e:
             logging.error('事件处理异常:'+str(e))
     return web.Response(status=200)

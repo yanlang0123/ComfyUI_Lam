@@ -209,6 +209,29 @@ def receive_event(event, key):
         return None
 
 
+def getQrCodeUrl(scene_str="APP_AUTHORIZED"):
+    if Config().wechat['app_auth_expires_at'] <= 0 or time.time() >= Config().wechat['app_auth_expires_at']:
+        params={"expire_seconds": 604800, "action_name": "QR_STR_SCENE", "action_info": {"scene": {"scene_str": scene_str}}}
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        accessToken=getAccessToken()
+        qrcodeUrl=f'https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token={accessToken}'
+        response = requests.post(qrcodeUrl, headers=headers, data=json.dumps(params))
+        data= response.json()
+        if 'ticket' in data:
+            ticket=data['ticket']
+            url = f'https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket={ticket}'
+            Config().wechat['app_auth_expires_at'] = time.time()+data['expire_seconds']-60
+            Config().wechat['app_auth_url'] = url
+            Config().save_config()
+            return url
+        else:
+            logging.info(qrcodeUrl,params)
+            logging.error('获取access_token失败'+str(data))
+    return Config().wechat['app_auth_url']
+
+
 def getAccessToken():
     if Config().wechat['access_token_expires_at'] <= 0 or time.time() >= Config().wechat['access_token_expires_at']:
         APPID = Config().wechat['appid']
