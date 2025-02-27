@@ -18,6 +18,8 @@
     <!--<script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>-->
     <script src="static/assets/axios.min.js"></script>
     <script src="static/assets/fabric.min.js"></script>
+    <script src="static/assets/jszip.min.js"></script>
+    <script src="static/assets/FileSaver.min.js"></script>
     <!--引入样式-->
     <link rel="stylesheet" href="../extensions/ComfyUI_Lam/static/css/app.css" />
 </head>
@@ -123,14 +125,19 @@
                                                 </el-popover>
                                                 </template>
                                             </el-image>
-                                            <el-popconfirm title="是否应用此参数?" @confirm="confirmSetParam(item.command)" >
-                                                <template #reference>
-                                                <div  class="bottom" style="color: #fff;">
-                                                    {{item.command.command}}({{item.images.length}})
-                                                </div>
-                                                </template>
-                                            </el-popconfirm>
-                                            
+                                            <div  class="bottom" style="color: #fff;">
+                                                {{item.command.command}}({{item.images.length}})
+                                                <el-popconfirm title="是否应用此参数?" @confirm="confirmSetParam(item.command)" >
+                                                    <template #reference>
+                                                        <el-icon><Edit /></el-icon>
+                                                    </template>
+                                                </el-popconfirm>
+                                                <el-popconfirm v-if="item.images.length>0" title="是否下载任务图片?" @confirm="handleDownload(item.files,item.prompt_id)" >
+                                                    <template #reference>
+                                                        <el-icon><Download /></el-icon>
+                                                    </template>
+                                                </el-popconfirm>
+                                            </div>
                                         </div>
                                     </template>
                                 </div><!---->
@@ -704,6 +711,29 @@ const app = Vue.createApp({
                 }
             }
         },
+        async handleDownload(imgs,name) {
+            let that=this;
+            var zip = new JSZip();
+            for (let img of imgs) {
+            let fileName = img.filename;
+            let { data } = await axios({
+                method: 'get',
+                url: img.url,
+                responseType: 'blob',
+            });
+            zip.file(fileName, data);
+            }
+            zip.generateAsync({ type: 'blob' }).then(function (content) {
+            let url = window.URL.createObjectURL(content);
+                that.downloadFile(url, name);
+            });
+        },
+        downloadFile(url, name) {
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            a.click();
+        },
         loadHistory(){
             let that=this;
             if(this.isNotData){
@@ -771,19 +801,22 @@ const app = Vue.createApp({
                         let outputs=JSON.parse(res[7])
                         let images=[];
                         let texts=[];
+                        let files=[];
                         for(let node_id in outputs){
                             let node_output = outputs[node_id]
                             if(Object.keys(node_output).indexOf("outputImg") >= 0){
                                 for(let img of node_output?.outputImg){
                                     let url='../view?filename='+img.filename+'&type='+img.type+'&subfolder='+img.subfolder+'&rand='+Math.random();
                                     images.push(url)
+                                    img['url']=url;
+                                    files.push(img);
                                 }
                             }else if(Object.keys(node_output).indexOf("wechat_text") >= 0){
                                 texts.push(...node_output.wechat_text);
                             }
                             
                         }
-                        that.historyList.push({'command':command,'images':images,'status':res[4],'texts':texts})
+                        that.historyList.push({'prompt_id':res[3],'command':command,'images':images,'files':files,'status':res[4],'texts':texts})
                     }
                     if(datas.length<10){
                         that.isNotData=true;

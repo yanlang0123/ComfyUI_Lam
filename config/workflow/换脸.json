@@ -1,0 +1,662 @@
+{
+  "10": {
+    "inputs": {
+      "provider": "CPU"
+    },
+    "class_type": "InstantIDFaceAnalysis",
+    "_meta": {
+      "title": "InstantID面部分析"
+    }
+  },
+  "11": {
+    "inputs": {
+      "control_net_name": "instantid\\diffusion_pytorch_model.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "ControlNet加载器"
+    }
+  },
+  "12": {
+    "inputs": {
+      "instantid_file": "ip-adapter.bin"
+    },
+    "class_type": "InstantIDModelLoader",
+    "_meta": {
+      "title": "InstnatID模型加载器"
+    }
+  },
+  "13": {
+    "inputs": {
+      "seed": 367821467240321
+    },
+    "class_type": "Seed Everywhere",
+    "_meta": {
+      "title": "全局随机种"
+    }
+  },
+  "20": {
+    "inputs": {
+      "strength": [
+        "482",
+        0
+      ],
+      "start_percent": 0,
+      "end_percent": [
+        "483",
+        0
+      ],
+      "positive": [
+        "44",
+        1
+      ],
+      "negative": [
+        "44",
+        2
+      ],
+      "control_net": [
+        "42",
+        0
+      ],
+      "image": [
+        "31",
+        0
+      ],
+      "vae": [
+        "44",
+        4
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "ControlNet应用（旧版高级）"
+    }
+  },
+  "24": {
+    "inputs": {
+      "crop_padding_factor": 0.25,
+      "cascade_xml": "lbpcascade_animeface.xml",
+      "image": [
+        "493",
+        0
+      ]
+    },
+    "class_type": "Image Crop Face",
+    "_meta": {
+      "title": "面部裁剪"
+    }
+  },
+  "27": {
+    "inputs": {
+      "ip_weight": 0.8,
+      "cn_strength": 0.8,
+      "start_at": 0,
+      "end_at": 1,
+      "noise": 0,
+      "combine_embeds": "average",
+      "instantid": [
+        "12",
+        0
+      ],
+      "insightface": [
+        "10",
+        0
+      ],
+      "control_net": [
+        "11",
+        0
+      ],
+      "image": [
+        "35",
+        0
+      ],
+      "model": [
+        "45",
+        0
+      ],
+      "positive": [
+        "432",
+        0
+      ],
+      "negative": [
+        "432",
+        1
+      ],
+      "image_kps": [
+        "31",
+        0
+      ]
+    },
+    "class_type": "ApplyInstantIDAdvanced",
+    "_meta": {
+      "title": "应用InstantID(高级)"
+    }
+  },
+  "28": {
+    "inputs": {
+      "crop_padding_factor": 0.25,
+      "cascade_xml": "lbpcascade_animeface.xml",
+      "image": [
+        "494",
+        0
+      ]
+    },
+    "class_type": "Image Crop Face",
+    "_meta": {
+      "title": "面部裁剪"
+    }
+  },
+  "29": {
+    "inputs": {
+      "crop_padding_factor": 0.25,
+      "cascade_xml": "lbpcascade_animeface.xml",
+      "image": [
+        "495",
+        0
+      ]
+    },
+    "class_type": "Image Crop Face",
+    "_meta": {
+      "title": "面部裁剪"
+    }
+  },
+  "30": {
+    "inputs": {
+      "noise_mask": true,
+      "positive": [
+        "27",
+        1
+      ],
+      "negative": [
+        "27",
+        2
+      ],
+      "vae": [
+        "44",
+        4
+      ],
+      "pixels": [
+        "40",
+        1
+      ],
+      "mask": [
+        "40",
+        2
+      ]
+    },
+    "class_type": "InpaintModelConditioning",
+    "_meta": {
+      "title": "内补模型条件"
+    }
+  },
+  "31": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "crop",
+      "method": "lanczos",
+      "round_to_multiple": "64",
+      "scale_to_side": "None",
+      "scale_to_length": 1536,
+      "background_color": "#000000",
+      "image": [
+        "40",
+        1
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "按宽高比缩放_V2"
+    }
+  },
+  "32": {
+    "inputs": {
+      "amount": 6,
+      "device": "auto",
+      "mask": [
+        "499",
+        0
+      ]
+    },
+    "class_type": "MaskBlur+",
+    "_meta": {
+      "title": "遮罩模糊"
+    }
+  },
+  "35": {
+    "inputs": {
+      "inputcount": 4,
+      "Update inputs": null,
+      "image_1": [
+        "24",
+        0
+      ],
+      "image_2": [
+        "28",
+        0
+      ],
+      "image_3": [
+        "29",
+        0
+      ],
+      "image_4": [
+        "36",
+        0
+      ]
+    },
+    "class_type": "ImageBatchMulti",
+    "_meta": {
+      "title": "图像组合批次（多重）"
+    }
+  },
+  "36": {
+    "inputs": {
+      "crop_padding_factor": 0.25,
+      "cascade_xml": "haarcascade_frontalface_default.xml",
+      "image": [
+        "492",
+        0
+      ]
+    },
+    "class_type": "Image Crop Face",
+    "_meta": {
+      "title": "面部裁剪"
+    }
+  },
+  "38": {
+    "inputs": {
+      "rescale_algorithm": "bislerp",
+      "stitch": [
+        "40",
+        0
+      ],
+      "inpainted_image": [
+        "39",
+        5
+      ]
+    },
+    "class_type": "InpaintStitch",
+    "_meta": {
+      "title": "局部重绘（接缝）"
+    }
+  },
+  "39": {
+    "inputs": {
+      "seed": [
+        "13",
+        0
+      ],
+      "steps": 15,
+      "cfg": 1,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "karras",
+      "denoise": [
+        "485",
+        0
+      ],
+      "preview_method": "auto",
+      "vae_decode": "true",
+      "model": [
+        "45",
+        0
+      ],
+      "positive": [
+        "30",
+        0
+      ],
+      "negative": [
+        "30",
+        1
+      ],
+      "latent_image": [
+        "30",
+        2
+      ],
+      "optional_vae": [
+        "44",
+        4
+      ]
+    },
+    "class_type": "KSampler (Efficient)",
+    "_meta": {
+      "title": "K采样器(效率)"
+    }
+  },
+  "40": {
+    "inputs": {
+      "context_expand_pixels": 20,
+      "context_expand_factor": 1,
+      "fill_mask_holes": true,
+      "blur_mask_pixels": 16,
+      "invert_mask": false,
+      "blend_pixels": 16,
+      "rescale_algorithm": "bicubic",
+      "mode": "forced size",
+      "force_width": 1280,
+      "force_height": 1280,
+      "rescale_factor": 1,
+      "min_width": 512,
+      "min_height": 512,
+      "max_width": 768,
+      "max_height": 768,
+      "padding": 32,
+      "image": [
+        "496",
+        0
+      ],
+      "mask": [
+        "32",
+        0
+      ]
+    },
+    "class_type": "InpaintCrop",
+    "_meta": {
+      "title": "局部重绘（裁剪）"
+    }
+  },
+  "41": {
+    "inputs": {
+      "images": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "SaveImgOutputLam",
+    "_meta": {
+      "title": "保存输出图片"
+    }
+  },
+  "42": {
+    "inputs": {
+      "control_net_name": "SDXL\\xinsir_controlnet-depth-sdxl-1.0.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "ControlNet加载器"
+    }
+  },
+  "43": {
+    "inputs": {
+      "preprocessor": "Zoe_DepthAnythingPreprocessor",
+      "resolution": 1472,
+      "image": [
+        "31",
+        0
+      ]
+    },
+    "class_type": "AIO_Preprocessor",
+    "_meta": {
+      "title": "Aux集成预处理器"
+    }
+  },
+  "44": {
+    "inputs": {
+      "ckpt_name": "sdxl\\XL_DreamShaper XL v2.1 Turbo 闪电_v2.1 Turbo.safetensors",
+      "vae_name": "sdxl_vae.safetensors",
+      "clip_skip": -2,
+      "lora_name": "None",
+      "lora_model_strength": 0.56,
+      "lora_clip_strength": 1,
+      "positive": [
+        "193",
+        0
+      ],
+      "negative": [
+        "480",
+        0
+      ],
+      "token_normalization": "none",
+      "weight_interpretation": "A1111",
+      "empty_latent_width": 512,
+      "empty_latent_height": 512,
+      "batch_size": 1
+    },
+    "class_type": "Efficient Loader",
+    "_meta": {
+      "title": "效率加载器"
+    }
+  },
+  "45": {
+    "inputs": {
+      "model": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "DifferentialDiffusion",
+    "_meta": {
+      "title": "差异扩散"
+    }
+  },
+  "193": {
+    "inputs": {
+      "text": ""
+    },
+    "class_type": "TextInput_",
+    "_meta": {
+      "title": "文本"
+    }
+  },
+  "432": {
+    "inputs": {
+      "strength": [
+        "482",
+        0
+      ],
+      "start_percent": 0,
+      "end_percent": [
+        "483",
+        0
+      ],
+      "positive": [
+        "20",
+        0
+      ],
+      "negative": [
+        "20",
+        1
+      ],
+      "control_net": [
+        "433",
+        0
+      ],
+      "image": [
+        "434",
+        0
+      ],
+      "vae": [
+        "44",
+        4
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "ControlNet应用（旧版高级）"
+    }
+  },
+  "433": {
+    "inputs": {
+      "control_net_name": "SDXL\\mistoLine_rank256.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "ControlNet加载器"
+    }
+  },
+  "434": {
+    "inputs": {
+      "preprocessor": "AnyLineArtPreprocessor_aux",
+      "resolution": 1472,
+      "image": [
+        "31",
+        0
+      ]
+    },
+    "class_type": "AIO_Preprocessor",
+    "_meta": {
+      "title": "Aux集成预处理器"
+    }
+  },
+  "480": {
+    "inputs": {
+      "text": "nsfw,ng_deepnegative_vl_75t,badhandv4,(worst quality:2),(1ow quality:2), (normalquality:2),1owes,watermark,monochrose,(3d:1 5),(paintingt1.5)."
+    },
+    "class_type": "CR Text",
+    "_meta": {
+      "title": "文本"
+    }
+  },
+  "482": {
+    "inputs": {
+      "value": 0.5
+    },
+    "class_type": "ImpactFloat",
+    "_meta": {
+      "title": "浮点"
+    }
+  },
+  "483": {
+    "inputs": {
+      "value": 0.5
+    },
+    "class_type": "ImpactFloat",
+    "_meta": {
+      "title": "浮点"
+    }
+  },
+  "485": {
+    "inputs": {
+      "value": 0.6000000000000001
+    },
+    "class_type": "ImpactFloat",
+    "_meta": {
+      "title": "浮点"
+    }
+  },
+  "492": {
+    "inputs": {
+      "image_path": "./ComfyUI/input/example.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "人脸1"
+    }
+  },
+  "493": {
+    "inputs": {
+      "image_path": "./ComfyUI/input/example.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "人脸2"
+    }
+  },
+  "494": {
+    "inputs": {
+      "image_path": "./ComfyUI/input/example.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "人脸3"
+    }
+  },
+  "495": {
+    "inputs": {
+      "image_path": "./ComfyUI/input/example.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "人脸4"
+    }
+  },
+  "496": {
+    "inputs": {
+      "image_path": "./ComfyUI/input/example.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "头像"
+    }
+  },
+  "497": {
+    "inputs": {
+      "image_path": "./ComfyUI/input/example.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "遮罩"
+    }
+  },
+  "498": {
+    "inputs": {
+      "channel": "red",
+      "image": [
+        "500",
+        0
+      ]
+    },
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "图像到遮罩"
+    }
+  },
+  "499": {
+    "inputs": {
+      "mask": [
+        "498",
+        0
+      ]
+    },
+    "class_type": "InvertMask",
+    "_meta": {
+      "title": "遮罩反转"
+    }
+  },
+  "500": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "width": [
+        "501",
+        0
+      ],
+      "height": [
+        "501",
+        1
+      ],
+      "crop": "disabled",
+      "image": [
+        "497",
+        0
+      ]
+    },
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "图像缩放"
+    }
+  },
+  "501": {
+    "inputs": {
+      "image": [
+        "496",
+        0
+      ]
+    },
+    "class_type": "GetImageSize+",
+    "_meta": {
+      "title": "获取图像尺寸"
+    }
+  }
+}

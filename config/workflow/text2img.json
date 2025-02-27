@@ -1,22 +1,42 @@
 {
+  "1": {
+    "inputs": {
+      "unet_name": "flux1-dev-Q4_0.gguf"
+    },
+    "class_type": "UnetLoaderGGUF",
+    "_meta": {
+      "title": "Unet Loader (GGUF)"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name1": "t5-v1_1-xxl-encoder-Q8_0.gguf",
+      "clip_name2": "clip_l.safetensors",
+      "type": "flux"
+    },
+    "class_type": "DualCLIPLoaderGGUF",
+    "_meta": {
+      "title": "DualCLIPLoader (GGUF)"
+    }
+  },
   "3": {
     "inputs": {
-      "seed": 1068764177227380,
-      "steps": 5,
+      "seed": 119505262627551,
+      "steps": 25,
       "cfg": 1,
-      "sampler_name": "lcm",
+      "sampler_name": "euler",
       "scheduler": "normal",
       "denoise": 1,
       "model": [
-        "10",
+        "1",
         0
       ],
       "positive": [
-        "6",
+        "13",
         0
       ],
       "negative": [
-        "7",
+        "17",
         0
       ],
       "latent_image": [
@@ -24,102 +44,109 @@
         0
       ]
     },
-    "class_type": "KSampler"
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
   },
   "4": {
     "inputs": {
-      "ckpt_name": "juggernautXL_version6Rundiffusion.safetensors"
+      "text": [
+        "16",
+        0
+      ],
+      "clip": [
+        "2",
+        0
+      ]
     },
-    "class_type": "CheckpointLoaderSimple"
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
   },
   "5": {
     "inputs": {
-      "width": [
-        "14",
-        0
-      ],
-      "height": [
-        "14",
-        1
-      ],
+      "width": 1024,
+      "height": 1024,
       "batch_size": 1
     },
-    "class_type": "EmptyLatentImage"
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "空Latent"
+    }
   },
-  "6": {
-    "inputs": {
-      "text": [
-        "20",
-        0
-      ],
-      "clip": [
-        "10",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode"
-  },
-  "7": {
-    "inputs": {
-      "text": "undefined",
-      "clip": [
-        "4",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode"
-  },
-  "8": {
+  "9": {
     "inputs": {
       "samples": [
         "3",
         0
       ],
       "vae": [
-        "4",
-        2
-      ]
-    },
-    "class_type": "VAEDecode"
-  },
-  "9": {
-    "inputs": {
-      "filename_prefix": "ComfyUI",
-      "images": [
-        "8",
+        "10",
         0
       ]
     },
-    "class_type": "SaveImage"
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
   },
   "10": {
     "inputs": {
-      "lora_name": "lcm-lora-sdxl.safetensors",
-      "strength_model": 1,
-      "strength_clip": 1,
-      "model": [
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "VAE加载器"
+    }
+  },
+  "13": {
+    "inputs": {
+      "guidance": 3.5,
+      "conditioning": [
         "4",
         0
-      ],
-      "clip": [
-        "4",
-        1
       ]
     },
-    "class_type": "LoraLoader"
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "Flux引导"
+    }
   },
-  "14": {
+  "16": {
     "inputs": {
-      "aspect_ratio": "1152×896 ∣ 9:7",
-      "width": 0,
-      "height": 0
+      "text_trans": "一个男人，推着婴儿车，背景是阳光明媚的秋天"
     },
-    "class_type": "AspectRatio"
+    "class_type": "ZhPromptTranslator",
+    "_meta": {
+      "title": "中文翻译"
+    }
   },
-  "20": {
+  "17": {
     "inputs": {
-      "text_trans": "一只小狗"
+      "text": "",
+      "clip": [
+        "2",
+        0
+      ]
     },
-    "class_type": "ZhPromptTranslator"
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
+  },
+  "18": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "SaveImgOutputLam",
+    "_meta": {
+      "title": "保存图像应用输出"
+    }
   }
 }

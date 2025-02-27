@@ -163,7 +163,7 @@
         0
       ]
     },
-    "class_type": "GetImageSize",
+    "class_type": "GetImageSize+",
     "_meta": {
       "title": "GetImageSize"
     }
@@ -194,7 +194,7 @@
         0
       ]
     },
-    "class_type": "SaveImage",
+    "class_type": "SaveImgOutputLam",
     "_meta": {
       "title": "保存图像"
     }

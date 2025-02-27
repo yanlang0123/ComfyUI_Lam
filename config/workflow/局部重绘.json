@@ -1,0 +1,258 @@
+{
+  "3": {
+    "inputs": {
+      "seed": 809308338515272,
+      "steps": 20,
+      "cfg": 8,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "4",
+        0
+      ],
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "latent_image": [
+        "13",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "4": {
+    "inputs": {
+      "ckpt_name": "DreamShaperXLv2.1Turbov2.1Turbo.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Checkpoint加载器(简易)"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": [
+        "20",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "正向提示词"
+    }
+  },
+  "7": {
+    "inputs": {
+      "text": "text, watermark",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码器"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "11": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImgOutputLam",
+    "_meta": {
+      "title": "保存图像应用输出"
+    }
+  },
+  "13": {
+    "inputs": {
+      "grow_mask_by": 6,
+      "pixels": [
+        "14",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ],
+      "mask": [
+        "19",
+        0
+      ]
+    },
+    "class_type": "VAEEncodeForInpaint",
+    "_meta": {
+      "title": "VAE内补编码器"
+    }
+  },
+  "14": {
+    "inputs": {
+      "image_path": "input//ComfyUI_01647_.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "图像"
+    }
+  },
+  "15": {
+    "inputs": {
+      "image_path": "input//mask_0.9623280348317427ComfyUI_01647_.png",
+      "RGBA": "false",
+      "filename_text_extension": "true"
+    },
+    "class_type": "LamLoadPathImage",
+    "_meta": {
+      "title": "遮罩"
+    }
+  },
+  "16": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "width": [
+        "17",
+        0
+      ],
+      "height": [
+        "17",
+        1
+      ],
+      "crop": "disabled",
+      "image": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "图像缩放"
+    }
+  },
+  "17": {
+    "inputs": {
+      "image": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "GetImageSize+",
+    "_meta": {
+      "title": "获取图像尺寸"
+    }
+  },
+  "18": {
+    "inputs": {
+      "channel": "red",
+      "image": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "图像到遮罩"
+    }
+  },
+  "19": {
+    "inputs": {
+      "mask": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "InvertMask",
+    "_meta": {
+      "title": "遮罩反转"
+    }
+  },
+  "20": {
+    "inputs": {
+      "text_trans": "小鸡"
+    },
+    "class_type": "ZhPromptTranslator",
+    "_meta": {
+      "title": "中文翻译"
+    }
+  },
+  "21": {
+    "inputs": {
+      "images": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "22": {
+    "inputs": {
+      "images": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "预览图像"
+    }
+  },
+  "23": {
+    "inputs": {
+      "mask": [
+        "19",
+        0
+      ]
+    },
+    "class_type": "MaskPreview+",
+    "_meta": {
+      "title": "遮罩预览"
+    }
+  },
+  "25": {
+    "inputs": {
+      "mask": [
+        "15",
+        1
+      ]
+    },
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "遮罩到图像"
+    }
+  }
+}
