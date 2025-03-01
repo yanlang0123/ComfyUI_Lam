@@ -34,7 +34,11 @@ const widget = {
             const connectedNodes = recursiveLinkUpstream(node, node.inputs[index+node.originalsize].type, 0, index+node.originalsize)
             
             if (connectedNodes.length !== 0) {
-                for (let [node_ID, depth] of connectedNodes) {
+                for(let i=0;i<connectedNodes.length;i++){
+                    if(!connectedNodes[i]){
+                        continue
+                    }
+                    let [node_ID, depth] = connectedNodes[i]
                     let connectedNode = node.graph._nodes_by_id[node_ID]
                     if (connectedNode.type != node.type) {
                         const [x, y] = connectedNode.pos

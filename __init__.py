@@ -33,4 +33,5 @@ WEB_DIRECTORY = "./js"
 file_directory = os.path.dirname(os.path.abspath(__file__))
 
 PromptServer.instance.app.router.add_static("/wechatauth/static", file_directory+"/pages/static")
+PromptServer.instance.app.router.add_static("/paint-board", file_directory+"/pages/paint-board")
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS","WEB_DIRECTORY"]

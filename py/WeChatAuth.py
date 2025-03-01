@@ -935,19 +935,28 @@ async def getUserOpenId(request):
 async def app(request):
     if "openId" in request.rel_url.query:
         openId=request.rel_url.query['openId']
-        openId=base64_decode(openId)
-        basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
-        htmlPtah = os.path.join(basePath, 'ComfyUI_Lam', 'pages','app2.html')
-        # 打开文件
-        with open(htmlPtah, 'r', encoding='utf-8') as file:
-            # 读取文件内容
-            html_content = file.read()
-
-        html_content = html_content.replace('{{openId}}', openId)
-        return web.Response(text=html_content, content_type='text/html')
-        #return web.FileResponse(htmlPtah)
+        nopenId=base64_decode(openId)
+        if nopenId != '':
+            openId=nopenId
+        elif openId not in Config().base['authorIds']:
+            return web.Response(text='您没有权限访问！', content_type='text/html')
+        if openId in PromptServer.instance.sockets:
+            return web.Response(text='openId已在使用！', content_type='text/html')
     else:
-        return web.Response(status=404)
+        openId=''
+    basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
+    htmlPtah = os.path.join(basePath, 'ComfyUI_Lam', 'pages','index.html')
+    # 打开文件
+    with open(htmlPtah, 'r', encoding='utf-8') as file:
+        # 读取文件内容
+        html_content = file.read()
+    return web.Response(text=html_content, content_type='text/html')
+
+@PromptServer.instance.routes.get("/wechatauth/getQrCodeUrl")
+async def getQrUrl(request):
+    qrcodeUrl=getQrCodeUrl()
+    data={'qrcodeUrl':qrcodeUrl,'success':True}
+    return web.Response(text=json.dumps(data), content_type='application/json')
     
 @PromptServer.instance.routes.get("/wechatauth/handleMessage")
 async def handleMessageGet(request):

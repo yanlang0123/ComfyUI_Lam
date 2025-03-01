@@ -419,16 +419,11 @@ class openPoseEditorPlus:
         return (poseImage, handImage,painterImage, width, height, head_masks, body_masks,body_boxs,backgImg,prompts,negatives,)
 
     @classmethod
-    def IS_CHANGED(self, image):
-        image_path = os.path.join(
-            folder_paths.get_temp_directory(), image)
-        # print(f'Change: {image_path}')
-
-        m = hashlib.sha256()
-        with open(image_path, 'rb') as f:
-            m.update(f.read())
-        return m.digest().hex()
-
+    def IS_CHANGED(cls, should_change=True, *args, **kwargs):
+        if should_change:
+            return float("NaN")
+        else:
+            return False
 
 NODE_CLASS_MAPPINGS = {
     "LAM.OpenPoseEditorPlus": openPoseEditorPlus

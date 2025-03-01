@@ -16,6 +16,13 @@ class LoadDirImgPaths:
 
     CATEGORY = "lam"
 
+    @classmethod
+    def IS_CHANGED(cls, should_change=True, *args, **kwargs):
+        if should_change:
+            return float("NaN")
+        else:
+            return False
+
     def get_img_paths(self,input_img_dir):
         if not os.path.exists(input_img_dir):
             raise Exception('路径不存在')
