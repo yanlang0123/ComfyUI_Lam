@@ -572,9 +572,9 @@ def setPost(self,FromUserName):
 @run_with_reconnect
 def selServer(json_data,prompt_id):
     json_data['prompt_id']=prompt_id
+    name=getCkptName(json_data['prompt'])
     if Config().cluster and 'redis'==Config().cluster["clusterType"] and r:
         if Config().cluster['modelPriority']==True :
-            name=getCkptName(json_data['prompt'])
             if name:
                 ckkeys=r.keys('ckpt:*:'+name)
                 nport=None
