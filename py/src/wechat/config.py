@@ -46,14 +46,18 @@ class Config(object):
             shutil.copyfile(f"{self.pwd}/weChat.yaml.template", f"{self.pwd}/weChat.yaml")
             with open(f"{self.pwd}/weChat.yaml", "rb") as fp:
                 yconfig = yaml.safe_load(fp)
+                fp.close()
 
         return yconfig
     
     def save_config(self):
         yconfig = self._load_config()
         yconfig["wechat"] = self.wechat
+        yconfig["base"] = self.base
+        yconfig["commands"] = self.commands
         with open(f"{self.pwd}/weChat.yaml", 'w', encoding='utf-8') as file:
             yaml.dump(yconfig, file,sort_keys=False,default_flow_style=False,allow_unicode=True, encoding='utf-8')
+            file.close()
 
     def reload(self) -> None:
         yconfig = self._load_config()
@@ -61,6 +65,7 @@ class Config(object):
         self.base = yconfig.get("base", {})
         self.ai = yconfig.get("ai", {})
         self.redis = yconfig.get("redis", {})
+        self.commands= yconfig.get("commands", {})
         if "cluster" in args and args.cluster:
             self.cluster = yconfig.get("cluster", {})
             self.cluster["isSection"] = args.isSection

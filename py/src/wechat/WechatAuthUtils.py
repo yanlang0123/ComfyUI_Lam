@@ -157,7 +157,7 @@ def getCommandMsg(command, isEnterprise):
 
 def receive_msg(msg, isPrepare=False, isWaiting=False,userId=''):
     # 这是一个将疑问改成成熟句子的函数，例如：你好吗 公众号回复：你好
-    commands = Config().wechat['commands']
+    commands = Config().commands
     isEnterprise = Config().wechat['isEnterprise']
     query_commands = Config().wechat['query_commands']
     if msg == u'帮助':

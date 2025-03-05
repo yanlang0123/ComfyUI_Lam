@@ -122,12 +122,12 @@ def generate_image(prompt,userId,batch_size=1,command='文生图'):
         return data
 
     adminNo=base64_decode(Config().wechat['adminNo'])
-    if adminNo!=userId and Config().wechat['freeSize']>0:
+    if adminNo!=userId and Config().base['freeSize']>0:
         db=DataBaseUtil()
         if db.isUsable:
             data=db.get_user_frequency(userId)
             if data[0]==None:
-                db.user_recharge(userId,Config().wechat['freeSize'])
+                db.user_recharge(userId,Config().base['freeSize'])
                 data=db.get_user_frequency(userId)
             countd=db.get_user_task_count(userId)
             
@@ -136,11 +136,11 @@ def generate_image(prompt,userId,batch_size=1,command='文生图'):
                 data={'res':msg,'success':False,"res_type": "text"}
                 return data
     
-    params=Config().wechat['commands'][command]['params']
+    params=Config().commands[command]['params']
     paramName=''
     userData={'openId':userId,'command':command,'status':'prepare','isAi':True}
-    if 'type' in Config().wechat['commands'][command]:
-        userData['type']=Config().wechat['commands'][command]['type']
+    if 'type' in Config().commands[command]:
+        userData['type']=Config().commands[command]['type']
     
     if "prompt" in params:
         userData['prompt']=prompt
@@ -507,7 +507,7 @@ def setPost(self,FromUserName):
     self.user_command[FromUserName]['status']='waiting' #prepare:准备 waiting:待执行  wcomplete完成
     params=self.user_command[FromUserName]
     basePath=folder_paths.folder_names_and_paths['custom_nodes'][0][0]
-    comand=Config().wechat['commands'][params['command']]
+    comand=Config().commands[params['command']]
     filePath = os.path.join(basePath,'ComfyUI_Lam','config','workflow',comand['filename'])
     if os.path.exists(filePath)==False:
         logging.warning("文件不存在："+filePath)
@@ -572,9 +572,10 @@ def setPost(self,FromUserName):
 @run_with_reconnect
 def selServer(json_data,prompt_id):
     json_data['prompt_id']=prompt_id
-    name=getCkptName(json_data['prompt'])
+    name=None
     if Config().cluster and 'redis'==Config().cluster["clusterType"] and r:
         if Config().cluster['modelPriority']==True :
+            name=getCkptName(json_data['prompt'])
             if name:
                 ckkeys=r.keys('ckpt:*:'+name)
                 nport=None
@@ -811,12 +812,12 @@ async def addTask(request):
             return web.Response(text=json.dumps(data), content_type='application/json')
 
         adminNo=base64_decode(Config().wechat['adminNo'])
-        if adminNo!=openId and Config().wechat['freeSize']>0:
+        if adminNo!=openId and Config().base['freeSize']>0:
             db=DataBaseUtil()
             if db.isUsable:
                 data=db.get_user_frequency(openId)
                 if data[0]==None:
-                    db.user_recharge(openId,Config().wechat['freeSize'])
+                    db.user_recharge(openId,Config().base['freeSize'])
                     data=db.get_user_frequency(openId)
                 countd=db.get_user_task_count(openId)
                 
@@ -825,11 +826,11 @@ async def addTask(request):
                     data={'msg':msg,'success':False}
                     return web.Response(text=json.dumps(data), content_type='application/json')
         
-        params=Config().wechat['commands'][command]['params']
+        params=Config().commands[command]['params']
         paramName=''
         userData={'openId':openId,'command':command,'status':'prepare','isWeb':True}
-        if 'type' in Config().wechat['commands'][command]:
-            userData['type']=Config().wechat['commands'][command]['type']
+        if 'type' in Config().commands[command]:
+            userData['type']=Config().commands[command]['type']
         
         for param in params:
             val=post.get(param)
@@ -868,17 +869,18 @@ async def addTask(request):
     
 @PromptServer.instance.routes.get("/wechatauth/getCommands")
 async def getCommands(request):
-    commands=Config().wechat['commands']
+    commands=Config().commands
     comms={}
-    if "type" in request.rel_url.query:
-        type=request.rel_url.query['type']
-        for key in commands:
-            if 'type' in commands[key] and commands[key]['type']==type:
-                comms[key] = commands[key]
-    else:
-        for key in commands:
-            if 'type' not in commands[key]:
-                comms[key] = commands[key]
+    if len(commands.keys())>0:
+        if "type" in request.rel_url.query:
+            type=request.rel_url.query['type']
+            for key in commands:
+                if 'type' in commands[key] and commands[key]['type']==type:
+                    comms[key] = commands[key]
+        else:
+            for key in commands:
+                if 'type' not in commands[key]:
+                    comms[key] = commands[key]
     #type: paint-board
     return web.Response(text=json.dumps(comms), content_type='application/json')
 
@@ -1015,7 +1017,7 @@ async def handleMessagePost(request):
                     if db.isUsable:
                         data=db.get_user_frequency(FromUserName)
                         if data[0]==None:
-                            db.user_recharge(FromUserName,Config().wechat['freeSize'])
+                            db.user_recharge(FromUserName,Config().base['freeSize'])
                             data=db.get_user_frequency(FromUserName)
                         countd=db.get_user_task_count(FromUserName)
                         
@@ -1030,9 +1032,9 @@ async def handleMessagePost(request):
                     else:
                         PromptServer.instance.user_command[FromUserName]={'openId':FromUserName,'status':'prepare','command':otherName,'waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))}
 
-                    msg,comlist=getCommandMsg(Config().wechat['commands'][otherName],Config().wechat['isEnterprise'])
+                    msg,comlist=getCommandMsg(Config().commands[otherName],Config().wechat['isEnterprise'])
                     if comlist:
-                        sendServiceMenuMessage(msg,Config().wechat['commands'][otherName]['replyText'],comlist, FromUserName)
+                        sendServiceMenuMessage(msg,Config().commands[otherName]['replyText'],comlist, FromUserName)
                         return web.Response(status=200)
                 out = reply_text(FromUserName, ToUserName, CreateTime, msg)
                 return web.Response(text=out, content_type='application/xml')
@@ -1060,7 +1062,7 @@ async def handleMessagePost(request):
             elif reply_content=='ok':
                 if otherName and len(otherName)>0:
                     PromptServer.instance.user_command[FromUserName]['prompt']=PromptServer.instance.user_command[FromUserName]['prompt']+otherName if 'prompt' in PromptServer.instance.user_command[FromUserName] else otherName
-                params=Config().wechat['commands'][PromptServer.instance.user_command[FromUserName]['command']]['params']
+                params=Config().commands[PromptServer.instance.user_command[FromUserName]['command']]['params']
                 paramName=''
                 for param in params:
                     if params[param]['isRequired'] and param not in PromptServer.instance.user_command[FromUserName]:
@@ -1107,16 +1109,16 @@ async def handleMessagePost(request):
             elif isPrepare:
                 msg=''
                 commandName=PromptServer.instance.user_command[FromUserName]['command']
-                if reply_content in Config().wechat['commands'][commandName]['params'] and 'type' in Config().wechat['commands'][commandName]['params'][reply_content] and Config().wechat['commands'][commandName]['params'][reply_content]['type']=='image':
+                if reply_content in Config().commands[commandName]['params'] and 'type' in Config().commands[commandName]['params'][reply_content] and Config().commands[commandName]['params'][reply_content]['type']=='image':
                     PromptServer.instance.user_command[FromUserName]['waitKey']=reply_content
-                    msg='待上传图片参数'+Config().wechat['commands'][commandName]['params'][reply_content]['zhName']
+                    msg='待上传图片参数'+Config().commands[commandName]['params'][reply_content]['zhName']
                 elif reply_content and otherName!=None:
-                    if reply_content in Config().wechat['commands'][commandName]['params']:
-                        if 'options' in Config().wechat['commands'][commandName]['params'][reply_content]:
-                            PromptServer.instance.user_command[FromUserName][reply_content]=Config().wechat['commands'][commandName]['params'][reply_content]['options'][otherName]
+                    if reply_content in Config().commands[commandName]['params']:
+                        if 'options' in Config().commands[commandName]['params'][reply_content]:
+                            PromptServer.instance.user_command[FromUserName][reply_content]=Config().commands[commandName]['params'][reply_content]['options'][otherName]
                         else:
                             PromptServer.instance.user_command[FromUserName][reply_content]=otherName
-                        msg='已填选'+Config().wechat['commands'][commandName]['params'][reply_content]['zhName']+':'+otherName
+                        msg='已填选'+Config().commands[commandName]['params'][reply_content]['zhName']+':'+otherName
                 else:
                     PromptServer.instance.user_command[FromUserName]['prompt']= reply_content
                     msg='已填入提示词：'+reply_content
@@ -1135,11 +1137,11 @@ async def handleMessagePost(request):
             msg=''
             if PromptServer.instance.user_command[FromUserName]['waitKey']:
                 PromptServer.instance.user_command[FromUserName][PromptServer.instance.user_command[FromUserName]['waitKey']]=PicUrl
-                msg='已上传图片参数'+Config().wechat['commands'][commandName]['params'][PromptServer.instance.user_command[FromUserName]['waitKey']]['zhName']
+                msg='已上传图片参数'+Config().commands[commandName]['params'][PromptServer.instance.user_command[FromUserName]['waitKey']]['zhName']
                 PromptServer.instance.user_command[FromUserName]['waitKey']=''
-            elif 'image' in Config().wechat['commands'][commandName]['params']:
+            elif 'image' in Config().commands[commandName]['params']:
                 PromptServer.instance.user_command[FromUserName]['image']=PicUrl
-                msg='已上传图片参数'+Config().wechat['commands'][commandName]['params']['image']['zhName']
+                msg='已上传图片参数'+Config().commands[commandName]['params']['image']['zhName']
 
             out = reply_text(FromUserName, ToUserName, CreateTime, msg)
             return web.Response(text=out, content_type='application/xml')

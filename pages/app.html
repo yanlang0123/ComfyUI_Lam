@@ -35,7 +35,7 @@
                             </div>
                         </template>
                     </el-image>
-                    <template v-if="'{{appLogo}}'!='None'">
+                    <template v-if="'{{appLogo}}'.length>10">
                         | {{appTitle}}
                     </template>
                 </div>
@@ -156,7 +156,7 @@
                                 <el-rate v-model="queue_remaining" :max="11"   :icons="['UserFilled','UserFilled','UserFilled']" :void-icon="'User'" disabled-void-icon="User"  disabled />
                             </el-form-item>
                             <template v-for="(param,paramKey, paramindex) in paramList ">
-                                <div class="aigc-prompt" v-if="paramKey == 'prompt' || paramKey == 'negative'">
+                                <div class="aigc-prompt" v-if="param.type == 'customtext'||paramKey == 'prompt' || paramKey == 'negative'">
                                     <div class="aigc-prompt__head">
                                         <div class="aigc-prompt__head--text">{{param.zhName}}</div>
                                         <div class="aigc-prompt__head--clear" @click="clearValue(param)"> 清除 </div>
