@@ -349,6 +349,58 @@ async function setAppParams(data) {
     }
 }
 function add_param(w,appNode){
+    let typeEl=null;
+    if(w.type=='number'||w.type=='slider'){
+        typeEl=$el('td',[
+            $el('select',{value:w.type,$:(el) =>{el.onchange=()=>{
+                appNode.properties['paramList'].find(obj => obj.id === el.parentNode.parentNode.dataset.id).type=el.value
+            }}},[
+                $el('option',{textContent:'数值输入',value:'number'}),
+                $el('option',{textContent:'数值滑条',value:'slider'}),
+            ])
+        ])
+    }else{
+        typeEl=$el('td',{textContent:w.type})
+    }
+    let maskEl=null;
+    let maskd=appNode.properties['paramList'].find(obj => obj.id==w?.maskKey)
+    if(w.type=='image'){
+        maskEl=$el('td',[
+            $el('span',{textContent:maskd?'已关联:'+maskd.zhName:'关联遮罩',$:(el) => {
+                el.onclick = () => {
+                    let thIndex=appNode.properties['paramList'].findIndex(obj => obj.id==el.parentNode.parentNode.dataset.id)
+                    let imgs=appNode.properties['paramList'].filter(obj => obj.type === 'image'&&obj.id!=el.parentNode.parentNode.dataset.id)
+                    let maskKey=appNode.properties['paramList'][thIndex]?.maskKey
+                    if(imgs.length>0){
+                        if(!maskKey){
+                            appNode.properties['paramList'][thIndex]['maskKey']=imgs[0].id
+                            el.innerHTML='已关联：'+imgs[0].zhName
+                        }else{
+                            if(imgs.length==1){
+                                appNode.properties['paramList'][thIndex]['maskKey']=null
+                                el.innerHTML='关联遮罩'
+                            }else{
+                                let imgIndex=imgs.findIndex(obj => obj.id === maskKey)
+                                if(imgIndex==-1||imgIndex+1>=imgs.length){
+                                    appNode.properties['paramList'][thIndex]['maskKey']=null
+                                    el.innerHTML='关联遮罩'
+                                }else{
+                                    appNode.properties['paramList'][thIndex]['maskKey']=imgs[imgIndex+1].id
+                                    el.innerHTML='已关联：'+imgs[imgIndex+1].zhName
+                                }
+                            }
+                        }
+                    }else{
+                        el.innerHTML='关联遮罩'
+                        alert('请先添加遮罩图片参数')
+                    }
+                    
+                }}
+            })
+        ])
+    }else{
+        maskEl=$el('td')
+    }
     
     return $el('tr',{
         dataset: {
@@ -365,7 +417,8 @@ function add_param(w,appNode){
                 appNode.properties['paramList'].find(obj => obj.id === el.parentNode.parentNode.dataset.id).zhName=el.value
             }}})
         ]),
-        $el('td',{textContent:w.type}),
+        typeEl,
+        maskEl,
         $el('td',{},[$el('button',{textContent:'删除',$:(el) => {
             el.onclick = () => {
                 appNode.properties['paramList'].splice(appNode.properties['paramList'].findIndex(obj => obj.id === el.parentNode.parentNode.dataset.id),1)
@@ -389,6 +442,7 @@ app.registerExtension({
                         $el('td',{textContent:'参数名'}),
                         $el('td',{textContent:'中文名'}),
                         $el('td',{textContent:'组件类型'}),
+                        $el('td',{textContent:'绘制遮罩'}),
                         $el('td',{textContent:'操作'}),
                     ])
                 ]);
@@ -459,7 +513,6 @@ async function addConvertToGroupOptions() {
                             }
                             let paramData={id:'n'+node.id+'_'+w.name,keys:[''+node.id,'inputs',w.name],name:w.name,zhName:w.label,type:w.type,default:w.value,isRequired:false}
                             if(w.type=='number'){
-                                paramData['type']='slider'
                                 paramData['min']=w.options.min
                                 paramData['max']=w.options.max
                                 paramData['step']=w.options.round
@@ -479,8 +532,10 @@ async function addConvertToGroupOptions() {
                             }
                             if(node.type=="LamLoadPathImage"&&w.name=='image_path'){
                                 paramData['type']='image'
+                                paramData['default']=''
                             }else if(node.type=="LamLoadImageBase64"&&w.name=='image'){
                                 paramData['type']='base64img'
+                                paramData['isRequired']=true
                             }else if(w.name=='seed'){
                                 paramData['type']='seed'
                             }else if(w.name=='batch_size'){
