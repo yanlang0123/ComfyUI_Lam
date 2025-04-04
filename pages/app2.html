@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>简单画板</title>
+    <!--<link rel="stylesheet" href="https://unpkg.com/element-plus@2.4.4/dist/index.css"/>-->
+    <link rel="stylesheet" href="static/assets/index.css" />
+    <!--<script src="https://unpkg.com/vue@3.3.12/dist/vue.global.js"></script>-->
+    <script src="static/assets/vue.global.js"></script>
+    <!--<script src="https://unpkg.com/vue-i18n@9.8.0/dist/vue-i18n.global.js"></script>-->
+    <script src="static/assets/vue-i18n.global.js"></script>
+    <!--<script src="https://unpkg.com/element-plus@2.4.4/dist/index.full.min.js"></script>-->
+    <script src="static/assets/index.full.min.js"></script>
+    <!--<script src="https://unpkg.com/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>-->
+    <script src="static/assets/index.iife.min.js"></script>
+    <!--<script src="https://unpkg.com/clipboard@2.0.11/dist/clipboard.min.js"></script>-->
+    <script src="static/assets/clipboard.min.js"></script>
+    <!--<script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>-->
+    <script src="static/assets/axios.min.js"></script>
+    <script src="static/assets/fabric.min.js"></script>
+  </head>
+  <body>
+    <div id="app" class="image-comparator">
+      <section  class="aigc-preview"  >
+        <el-carousel class="aigc-preview__img"  :interval="5000" arrow="always" :autoplay="false">
+            <el-carousel-item v-for="item in 4" :key="item">
+                <el-image class="aigc-preview__img"  src="../view?filename=ComfyUI_03170_.png&type=input&subfolder=" fit="contain" ></el-image>
+            </el-carousel-item>
+        </el-carousel>
+      </section>
+        <!-- 核心标签代码   -->
+        <div class="container" @mouseenter="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag">
+          <div class="image-wrapper"
+               :style="{ clipPath: `inset(0 ${100 - (dividerPosition / containerWidth * 100)}% 0 0)` }">
+               <el-image src="https://fuss10.elemecdn.com/9/bb/e27858e973f5d7d3904835f46abbdjpeg.jpeg" class="image" fit="contain"/>
+          </div>
+          <div class="divider" :style="{ left: `${dividerPosition}px` }"></div>
+          <div class="image-wrapper" :style="{ clipPath: `inset(0 0 0 ${(dividerPosition / containerWidth * 100)}%)` }">
+            <el-image src="https://fuss10.elemecdn.com/d/e6/c4d93a3805b3ce3f323f7974e6f78jpeg.jpeg" class="image" fit="contain"/>
+          </div>
+        </div>
+    </div>
+  </body>
+
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          containerWidth: 500,
+          dividerPosition: 250,
+          dragging: false,
+          containerRect: null,
+        };
+      },
+      methods: {
+        updateContainerWidth() {
+          this.containerWidth = document.querySelector(".container").clientWidth;
+        },
+        startDrag(event) {
+          this.dragging = true;
+          this.containerRect = document.querySelector(".container").getBoundingClientRect();
+        },
+        onDrag(event) {
+          if (this.dragging && this.containerRect) {
+            let newPosition = event.clientX - this.containerRect.left;
+            if (newPosition < 0) newPosition = 0;
+            if (newPosition > this.containerRect.width)
+              newPosition = this.containerRect.width;
+            this.dividerPosition = newPosition;
+          }
+        },
+        endDrag() {
+          this.dragging = false;
+          this.containerRect = null;
+        },
+      },
+      mounted() {
+        this.updateContainerWidth();
+        window.addEventListener("resize", this.updateContainerWidth);
+      },
+      beforeDestroy() {
+        window.removeEventListener("resize", this.updateContainerWidth);
+      },
+    });
+    app.use(ElementPlus);
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+      app.component(key, component);
+    }
+    app.mount("#app");
+  </script>
+  <style scoped lang="less">
+    .image-comparator {
+      width: 90%;
+      /*max-width: 600px;*/
+      margin: 0 auto;
+
+      .container {
+        position: relative;
+        width: 100%;
+        height: 600px;
+        overflow: hidden;
+      }
+
+      .image-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .divider {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: black;
+        cursor: ew-resize;
+        z-index: 10;
+      }
+    }
+  </style>
+</html>
