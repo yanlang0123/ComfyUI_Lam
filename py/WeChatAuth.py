@@ -23,8 +23,6 @@ from threading import Thread, current_thread
 from typing import List, Literal, NamedTuple, Optional
 import copy
 import asyncio
-from zhipuai import ZhipuAI
-from openai import OpenAI
 import websocket
 from .src.utils.chooser import ChooserMessage
  
@@ -34,8 +32,10 @@ client=None
 userHistory={}
 if len(Config().ai.keys())>0:
     if Config().ai['ai_type']=='glm4':
+        from zhipuai import ZhipuAI
         client = ZhipuAI(api_key=Config().ai['api_key'])
     elif Config().ai['ai_type']=='openAi':
+        from openai import OpenAI
         client = OpenAI(
             api_key=Config().ai['api_key'],
             base_url=Config().ai['base_url'],
@@ -57,13 +57,9 @@ async def ai_auto_reply(msg,userId):
         return 
     if userId not in userHistory or time.time()-userHistory[userId]['time']>5*60:
         userHistory[userId]={'time':time.time(),'messages':[{"role": "system", "content": Config().ai['sys_pompt']}]}
-        userHistory[userId]['messages'].append({"role": "user", "content": '帮我生成一只猫的图片'})
-        userHistory[userId]['messages'].append({'content': '', 'role': 'assistant', 'function_call': None, 'tool_calls': [{'id': '0194f2d11ac6d233b0220bc6683f42a3', 'function': {'arguments': '{"prompt":"a cute cat"}', 'name': 'generate_image'}, 'type': 'function'}]})
-        userHistory[userId]['messages'].append({'role': 'tool','content': "图片生成成功",'tool_call_id': "0194f2d11ac6d233b0220bc6683f42a3"})
-        userHistory[userId]['messages'].append({"role": "assistant", "content": "已经为您生成图片。"})
     else:
-        while len(userHistory[userId]['messages'])>=maxsize+5:
-            userHistory[userId]['messages'].pop(5)
+        while len(userHistory[userId]['messages'])>=maxsize+1:
+            userHistory[userId]['messages'].pop(1)
     userHistory[userId]['messages'].append({"role": "user", "content": msg})
     userHistory[userId]['time'] = time.time()
     try:
@@ -142,12 +138,12 @@ def generate_image(prompt,userId,batch_size=1,command='文生图'):
     if 'type' in Config().commands[command]:
         userData['type']=Config().commands[command]['type']
     
-    if "prompt" in params:
-        userData['prompt']=prompt
-    
-    if "batch_size" in params:
-        userData['batch_size']=batch_size
-
+    for key in params:
+        if params[key]['zhName']=='正向提示词':
+            userData[key]=prompt
+        if params[key]['zhName']=='批次大小':
+            userData[key]=batch_size
+            
     if paramName:
         msg = '参数"'+paramName+'"不能为空！'
         data={'res':msg,'success':False,"res_type": "text"}

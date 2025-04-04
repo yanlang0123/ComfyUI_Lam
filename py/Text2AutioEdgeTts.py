@@ -1,5 +1,4 @@
 import asyncio
-import edge_tts
 import numpy as np
 import folder_paths
 import os
@@ -38,6 +37,7 @@ class Text2AutioEdgeTts:
 
 
 async def edge_tts_text_2_aution(VOICE,TEXT,OUTPUT_FILE) -> None:
+    import edge_tts
     communicate = edge_tts.Communicate(TEXT, VOICE)
     await communicate.save(OUTPUT_FILE)
 
