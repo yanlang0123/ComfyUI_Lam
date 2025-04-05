@@ -229,7 +229,10 @@ class ManagerMenuDialog extends ComfyDialog {
                     updateInitData()
                 }
             }}),
-            $el('span.btn',{textContent:'预览',onclick:()=>{
+            $el('span.btn',{textContent:'应用预览',onclick:()=>{
+                openAppPage('default')
+            }}),
+            $el('span.btn',{textContent:'画板预览',onclick:()=>{
                 openAppPage()
             }})
         ])];
@@ -270,13 +273,13 @@ class ManagerMenuDialog extends ComfyDialog {
 		this.element.style.display = "block";
 	}
 }
-async function openAppPage() {
+async function openAppPage(type) {
     try {
         const resp = await api.fetchApi(`/lam/getAdminNo`);
         if (resp.status === 200) {
             let data = await resp.json();
             //打开新标签页面
-            window.open('/wechatauth/app?openId='+data.data);
+            window.open('/wechatauth/app'+(type=='default'?'':'2')+'?openId='+data.data);
             return true;
         }
         throw new Error(resp.data.msg);
@@ -450,7 +453,8 @@ app.registerExtension({
                     textContent:'应用预览',
                     style:{},
                     onclick:()=>{
-                        openAppPage()
+                        let appType = this.widgets[this.widgets.findIndex(obj => obj.name === 'appType')];
+                        openAppPage(appType.value)
                     }}),$el('button',{
                         textContent:'参数应用',
                         style:{},
