@@ -143,18 +143,14 @@ def generate_image(prompt,userId,batch_size=1,command='文生图'):
             userData[key]=prompt
         if params[key]['zhName']=='批次大小':
             userData[key]=batch_size
+        if params[key]['type']=='seed' and (userData[key].isdigit()==False or int(userData[key])==-1):
+            userData[key]=''.join(random.sample('123456789012345678901234567890',14))
             
     if paramName:
         msg = '参数"'+paramName+'"不能为空！'
         data={'res':msg,'success':False,"res_type": "text"}
         return data
     
-    if 'seed' in userData:
-        if userData['seed'].isdigit()==False or int(userData['seed'])==-1:
-            userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
-    else:
-        userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
-
     if hasattr(PromptServer.instance,"user_command")==False:
         setattr(PromptServer.instance,"user_command",{})
 
@@ -835,18 +831,14 @@ async def addTask(request):
                 break
             if val:
                 userData[param]=val
+            if params[param]['type']=='seed' and (userData[param].isdigit()==False or int(userData[param])==-1):
+                userData[param]=''.join(random.sample('123456789012345678901234567890',14))
 
         if paramName:
             msg = '参数"'+paramName+'"不能为空！'
             data={'msg':msg,'success':False}
             return web.Response(text=json.dumps(data), content_type='application/json')
         
-        if 'seed' in userData:
-            if userData['seed'].isdigit()==False or int(userData['seed'])==-1:
-                userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
-        else:
-            userData['seed']=''.join(random.sample('123456789012345678901234567890',14))
-
         if hasattr(PromptServer.instance,"user_command")==False:
             setattr(PromptServer.instance,"user_command",{})
 

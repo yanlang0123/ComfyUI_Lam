@@ -1,6 +1,7 @@
 from server import PromptServer
 from .src.wechat.WechatAuthUtils import *
 from aiohttp import web
+import copy
 
 basePath=folder_paths.folder_names_and_paths['custom_nodes'][0][0]
 @PromptServer.instance.routes.post("/lam/setAppParams")
@@ -60,13 +61,16 @@ async def updateAppData(request):
         Config().base['appLogo']=appLogo
         Config().base['authorIds']=authorIds
         Config().base['freeSize']=freeSize
-        commons=Config().commands
+        commons=copy.deepcopy(Config().commands)
         #判断commandNames是否为空字典
         if commandNames is None or len(commandNames.keys())<=0:
             Config().commands={}
         else:
             for commandName in commons:
                 if commandName not in commandNames:
+                    #删除文件
+                    filePath = os.path.join(basePath,'ComfyUI_Lam','config','workflow',Config().commands[commandName]['filename'])
+                    os.remove(filePath)
                     Config().commands.pop(commandName)
         Config().save_config()
         data={'msg':'修改配置成功','success':True}

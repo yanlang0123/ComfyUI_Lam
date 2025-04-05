@@ -355,8 +355,8 @@ function add_param(w,appNode){
             $el('select',{value:w.type,$:(el) =>{el.onchange=()=>{
                 appNode.properties['paramList'].find(obj => obj.id === el.parentNode.parentNode.dataset.id).type=el.value
             }}},[
-                $el('option',{textContent:'数值输入',value:'number'}),
-                $el('option',{textContent:'数值滑条',value:'slider'}),
+                $el('option',{selected:w.type=='number',textContent:'数值输入',value:'number'}),
+                $el('option',{selected:w.type=='slider',textContent:'数值滑条',value:'slider'}),
             ])
         ])
     }else{
@@ -503,11 +503,11 @@ async function addConvertToGroupOptions() {
                             console.log(w)
                             let nodes=graph.computeExecutionOrder(false)
                             let appNode=nodes[nodes.findIndex(obj => obj.type === 'AppParams')]
-                            console.log(appNode)
                             if(!appNode){
                                 alert('请先添加AppParams节点');
                                 return;
                             }
+                            let appTypeEl = appNode.widgets[appNode.widgets.findIndex(obj => obj.name === 'appType')];
                             if(!w.type in type2paramType){
                                 return;
                             }
@@ -538,9 +538,21 @@ async function addConvertToGroupOptions() {
                                 paramData['isRequired']=true
                             }else if(w.name=='seed'){
                                 paramData['type']='seed'
+                                if(appTypeEl.value=='paint-board'){
+                                    paramData['default']=-1
+                                }
                             }else if(w.name=='batch_size'){
                                 paramData['type']='number'
-                            }
+                            }else if(w.name=='denoise'){
+                                paramData['type']='slider'
+                                if(appTypeEl.value=='paint-board'){
+                                    paramData['min']=0
+                                    paramData['max']=100
+                                    paramData['step']=1
+                                    paramData['original']=1
+                                }
+                                paramData['default']=parseFloat(paramData['default'].toFixed(2))
+                            }   
 
                             let index=appNode.properties['paramList'].findIndex(obj => obj.id === paramData.id)
                             if(index>=0){
