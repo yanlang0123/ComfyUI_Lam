@@ -779,30 +779,29 @@ async def cancelTask(request):
 
 @PromptServer.instance.routes.post("/wechatauth/addTask")
 async def addTask(request):
+    if 'api_is_used' in Config().base and Config().base['api_is_used']==False:
+        logging.error('服务限制访问')
+        data={'msg':'服务限制访问','success':False}
+        return web.Response(text=json.dumps(data), content_type='application/json')
+    
+    post = await request.post()
+    command = post.get("command")
+    if command == None:
+        msg = '指令不能为空！'
+        data={'msg':msg,'success':False}
+        return web.Response(text=json.dumps(data), content_type='application/json')
+
+    openId = post.get("openId")
+    if openId == None:
+        msg = '用户编码不能为空！'
+        data={'msg':msg,'success':False}
+        return web.Response(text=json.dumps(data), content_type='application/json')
+    
+    if hasattr(PromptServer.instance,'user_command') and openId in PromptServer.instance.user_command and PromptServer.instance.user_command[openId]['status']=='waiting':
+        msg = '您已经在队列中，请勿重复提交！'
+        data={'msg':msg,'success':False}
+        return web.Response(text=json.dumps(data), content_type='application/json')
     try:
-        if 'api_is_used' in Config().base and Config().base['api_is_used']==False:
-            logging.error('服务限制访问')
-            data={'msg':'服务限制访问','success':False}
-            return web.Response(text=json.dumps(data), content_type='application/json')
-        
-        post = await request.post()
-        command = post.get("command")
-        if command == None:
-            msg = '指令不能为空！'
-            data={'msg':msg,'success':False}
-            return web.Response(text=json.dumps(data), content_type='application/json')
-
-        openId = post.get("openId")
-        if openId == None:
-            msg = '用户编码不能为空！'
-            data={'msg':msg,'success':False}
-            return web.Response(text=json.dumps(data), content_type='application/json')
-        
-        if hasattr(PromptServer.instance,'user_command') and openId in PromptServer.instance.user_command and PromptServer.instance.user_command[openId]['status']=='waiting':
-            msg = '您已经在队列中，请勿重复提交！'
-            data={'msg':msg,'success':False}
-            return web.Response(text=json.dumps(data), content_type='application/json')
-
         adminNo=base64_decode(Config().wechat['adminNo'])
         if adminNo!=openId and Config().base['freeSize']>0:
             db=DataBaseUtil()
@@ -848,10 +847,12 @@ async def addTask(request):
             data={'msg':'任务成功加入队列请等待','prompt_id':resp,'nodeIds':nodeIds,'success':True}
             return web.Response(text=json.dumps(data), content_type='application/json')
         else:
+            PromptServer.instance.user_command.pop(openId,None)
             data={'msg':'任务加入队列失败','success':False}
             return web.Response(text=json.dumps(data), content_type='application/json')
     except Exception as e:
         logging.error('任务加入队列处理异常:'+str(e))
+        PromptServer.instance.user_command.pop(openId,None)
         data={'msg':'任务加入队列失败','success':False}
         return web.Response(text=json.dumps(data), content_type='application/json')
     

@@ -1,0 +1,663 @@
+{
+  "last_node_id": 24,
+  "last_link_id": 44,
+  "nodes": [
+    {
+      "id": 7,
+      "type": "PreviewImageLam",
+      "pos": {
+        "0": 1487,
+        "1": 591
+      },
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 9,
+          "label": "images"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            32
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "IMAGE"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImageLam"
+      }
+    },
+    {
+      "id": 9,
+      "type": "LamCommonPrint",
+      "pos": {
+        "0": 970,
+        "1": 277
+      },
+      "size": {
+        "0": 210,
+        "1": 200
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "obj",
+          "type": "*",
+          "link": 31,
+          "label": "obj"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "obj",
+          "type": "*",
+          "links": [
+            37
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "obj"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LamCommonPrint"
+      },
+      "widgets_values": [
+        "13"
+      ]
+    },
+    {
+      "id": 23,
+      "type": "LamCommonPrint",
+      "pos": {
+        "0": 2114,
+        "1": -55
+      },
+      "size": {
+        "0": 210,
+        "1": 200
+      },
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "obj",
+          "type": "*",
+          "link": 42,
+          "label": "obj"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "obj",
+          "type": "*",
+          "links": null,
+          "shape": 3,
+          "label": "obj"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LamCommonPrint"
+      },
+      "widgets_values": [
+        "13"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "PreviewImage",
+      "pos": {
+        "0": 2124,
+        "1": 246
+      },
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 36,
+          "label": "图像"
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 19,
+      "type": "DoWhileStart",
+      "pos": {
+        "0": 317,
+        "1": -48
+      },
+      "size": {
+        "0": 210,
+        "1": 86
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "obj",
+          "type": "*",
+          "link": 43,
+          "label": "obj"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "DOWHILE",
+          "type": "DOWHILE",
+          "links": [
+            30
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "DOWHILE"
+        },
+        {
+          "name": "循环次数",
+          "type": "INT",
+          "links": [
+            31,
+            34
+          ],
+          "slot_index": 1,
+          "shape": 3,
+          "label": "循环次数"
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "seed"
+        },
+        {
+          "name": "回传数据",
+          "type": "*",
+          "links": [],
+          "slot_index": 3,
+          "shape": 3,
+          "label": "回传数据"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DoWhileStart"
+      }
+    },
+    {
+      "id": 5,
+      "type": "IfInnerExecute",
+      "pos": {
+        "0": 992,
+        "1": 569
+      },
+      "size": {
+        "0": 210,
+        "1": 66
+      },
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "ANY",
+          "type": "*",
+          "link": 4,
+          "label": "ANY"
+        },
+        {
+          "name": "IF_TRUE",
+          "type": "*",
+          "link": 44,
+          "label": "IF_TRUE"
+        },
+        {
+          "name": "IF_FALSE",
+          "type": "*",
+          "link": 6,
+          "label": "IF_FALSE"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "?",
+          "type": "*",
+          "links": [
+            9
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "?"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "IfInnerExecute"
+      }
+    },
+    {
+      "id": 4,
+      "type": "LoadImage",
+      "pos": {
+        "0": 494,
+        "1": 762
+      },
+      "size": {
+        "0": 315,
+        "1": 314.0000305175781
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            6
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "图像"
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "25500459117e67af73f186605f8658c.png",
+        "image"
+      ]
+    },
+    {
+      "id": 24,
+      "type": "LoadImage",
+      "pos": {
+        "0": 460,
+        "1": 376
+      },
+      "size": {
+        "0": 315,
+        "1": 314.0000305175781
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            44
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "图像"
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "3口全家福_.png",
+        "image"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "MultiParamFormula",
+      "pos": {
+        "0": 1215,
+        "1": 285
+      },
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "p0",
+          "type": "*",
+          "link": 37,
+          "label": "p0"
+        },
+        {
+          "name": "p1",
+          "type": "*",
+          "link": null,
+          "label": "p1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "p0",
+          "type": "*",
+          "links": [
+            4
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "p0"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MultiParamFormula"
+      },
+      "widgets_values": [
+        "import time \n\ntime.sleep(1)\nresult=p0>0",
+        "enable"
+      ]
+    },
+    {
+      "id": 22,
+      "type": "LoadImage",
+      "pos": {
+        "0": -91,
+        "1": -53
+      },
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            43
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "图像"
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "3口全家福_.png",
+        "image"
+      ]
+    },
+    {
+      "id": 21,
+      "type": "MultiParamFormula",
+      "pos": {
+        "0": 1211,
+        "1": 28
+      },
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "p0",
+          "type": "*",
+          "link": 34,
+          "label": "p0"
+        },
+        {
+          "name": "p1",
+          "type": "*",
+          "link": null,
+          "label": "p1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "p0",
+          "type": "*",
+          "links": [
+            33
+          ],
+          "shape": 3,
+          "label": "p0"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MultiParamFormula"
+      },
+      "widgets_values": [
+        "p0<13",
+        "disable"
+      ]
+    },
+    {
+      "id": 20,
+      "type": "DoWhileEnd",
+      "pos": {
+        "0": 1753,
+        "1": -56
+      },
+      "size": [
+        245.531041712587,
+        67.74558389447958
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "start",
+          "type": "DOWHILE",
+          "link": 30,
+          "label": "start"
+        },
+        {
+          "name": "ANY",
+          "type": "*",
+          "link": 33,
+          "label": "ANY"
+        },
+        {
+          "name": "obj",
+          "type": "*",
+          "link": 32,
+          "label": "obj"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "i",
+          "type": "INT",
+          "links": [
+            42
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "i"
+        },
+        {
+          "name": "endObj",
+          "type": "*",
+          "links": [
+            36
+          ],
+          "slot_index": 1,
+          "shape": 3,
+          "label": "endObj"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DoWhileEnd"
+      }
+    }
+  ],
+  "links": [
+    [
+      4,
+      6,
+      0,
+      5,
+      0,
+      "*"
+    ],
+    [
+      6,
+      4,
+      0,
+      5,
+      2,
+      "*"
+    ],
+    [
+      9,
+      5,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      30,
+      19,
+      0,
+      20,
+      0,
+      "DOWHILE"
+    ],
+    [
+      31,
+      19,
+      1,
+      9,
+      0,
+      "*"
+    ],
+    [
+      32,
+      7,
+      0,
+      20,
+      2,
+      "*"
+    ],
+    [
+      33,
+      21,
+      0,
+      20,
+      1,
+      "*"
+    ],
+    [
+      34,
+      19,
+      1,
+      21,
+      0,
+      "*"
+    ],
+    [
+      36,
+      20,
+      1,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      37,
+      9,
+      0,
+      6,
+      0,
+      "*"
+    ],
+    [
+      42,
+      20,
+      0,
+      23,
+      0,
+      "*"
+    ],
+    [
+      43,
+      22,
+      0,
+      19,
+      0,
+      "*"
+    ],
+    [
+      44,
+      24,
+      0,
+      5,
+      1,
+      "*"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.7247295000000012,
+      "offset": [
+        -541.0154210313345,
+        644.3460484928061
+      ]
+    }
+  },
+  "version": 0.4
+}

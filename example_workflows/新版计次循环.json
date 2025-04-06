@@ -1,0 +1,569 @@
+{
+  "last_node_id": 18,
+  "last_link_id": 21,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": {
+        "0": 523.6044921875,
+        "1": 861.4976196289062
+      },
+      "size": {
+        "0": 315,
+        "1": 314.0000305175781
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "图像"
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "2口人杨.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 15,
+      "type": "LoadImage",
+      "pos": {
+        "0": 508,
+        "1": 488
+      },
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            17
+          ],
+          "shape": 3,
+          "label": "图像"
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "3口全家福_.png",
+        "image"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "LamCommonPrint",
+      "pos": {
+        "0": 926,
+        "1": 360
+      },
+      "size": {
+        "0": 210,
+        "1": 200
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "obj",
+          "type": "*",
+          "link": 16,
+          "label": "obj"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "obj",
+          "type": "*",
+          "links": [
+            4
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "obj"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LamCommonPrint"
+      },
+      "widgets_values": [
+        "14"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "IfInnerExecute",
+      "pos": {
+        "0": 974,
+        "1": 769
+      },
+      "size": {
+        "0": 210,
+        "1": 66
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "ANY",
+          "type": "*",
+          "link": 1,
+          "label": "ANY"
+        },
+        {
+          "name": "IF_TRUE",
+          "type": "*",
+          "link": 17,
+          "label": "IF_TRUE"
+        },
+        {
+          "name": "IF_FALSE",
+          "type": "*",
+          "link": 3,
+          "label": "IF_FALSE"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "?",
+          "type": "*",
+          "links": [
+            19
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "?"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "IfInnerExecute"
+      }
+    },
+    {
+      "id": 18,
+      "type": "MultiParamFormula",
+      "pos": {
+        "0": 1293,
+        "1": 705
+      },
+      "size": {
+        "0": 397.3512268066406,
+        "1": 211.31069946289062
+      },
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "p0",
+          "type": "*",
+          "link": 19,
+          "label": "p0"
+        },
+        {
+          "name": "p1",
+          "type": "*",
+          "link": 21,
+          "label": "p1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "p0",
+          "type": "*",
+          "links": [
+            20
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "p0"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MultiParamFormula"
+      },
+      "widgets_values": [
+        "import time \ntime.sleep(1)\nresult=p0",
+        "enable"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "MultiParamFormula",
+      "pos": {
+        "0": 1287,
+        "1": 369
+      },
+      "size": {
+        "0": 397.3512268066406,
+        "1": 211.31069946289062
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "p0",
+          "type": "*",
+          "link": 4,
+          "label": "p0"
+        },
+        {
+          "name": "p1",
+          "type": "*",
+          "link": null,
+          "label": "p1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "p0",
+          "type": "*",
+          "links": [
+            1,
+            21
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "p0"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MultiParamFormula"
+      },
+      "widgets_values": [
+        "p0%2==1",
+        "disable"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "PreviewImageLam",
+      "pos": {
+        "0": 1727,
+        "1": 713
+      },
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 20,
+          "label": "images"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            18
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "IMAGE"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImageLam"
+      }
+    },
+    {
+      "id": 5,
+      "type": "PreviewImage",
+      "pos": {
+        "0": 2042,
+        "1": 347
+      },
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 15,
+          "label": "图像"
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 14,
+      "type": "ForInnerEnd",
+      "pos": {
+        "0": 1822,
+        "1": 95
+      },
+      "size": [
+        262.4264844294098,
+        56.10056046149947
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "start",
+          "type": "DOWHILE",
+          "link": 14,
+          "label": "start"
+        },
+        {
+          "name": "obj",
+          "type": "*",
+          "link": 18,
+          "label": "obj"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "objs",
+          "type": "*",
+          "links": [
+            15
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "objs"
+        },
+        {
+          "name": "endObj",
+          "type": "*",
+          "links": null,
+          "shape": 3,
+          "label": "endObj"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ForInnerEnd"
+      }
+    },
+    {
+      "id": 13,
+      "type": "ForInnerStart",
+      "pos": {
+        "0": 531,
+        "1": 74
+      },
+      "size": {
+        "0": 315,
+        "1": 206
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "DOWHILE",
+          "type": "DOWHILE",
+          "links": [
+            14
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "DOWHILE"
+        },
+        {
+          "name": "循环次数",
+          "type": "INT",
+          "links": [
+            16
+          ],
+          "slot_index": 1,
+          "shape": 3,
+          "label": "循环次数"
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "seed"
+        },
+        {
+          "name": "回传数据",
+          "type": "*",
+          "links": null,
+          "shape": 3,
+          "label": "回传数据"
+        },
+        {
+          "name": "总数",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "总数"
+        },
+        {
+          "name": "步长",
+          "type": "INT",
+          "links": null,
+          "shape": 3,
+          "label": "步长"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ForInnerStart"
+      },
+      "widgets_values": [
+        15,
+        1,
+        0
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      3,
+      0,
+      2,
+      0,
+      "*"
+    ],
+    [
+      3,
+      1,
+      0,
+      2,
+      2,
+      "*"
+    ],
+    [
+      4,
+      6,
+      0,
+      3,
+      0,
+      "*"
+    ],
+    [
+      14,
+      13,
+      0,
+      14,
+      0,
+      "DOWHILE"
+    ],
+    [
+      15,
+      14,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      16,
+      13,
+      1,
+      6,
+      0,
+      "*"
+    ],
+    [
+      17,
+      15,
+      0,
+      2,
+      1,
+      "*"
+    ],
+    [
+      18,
+      4,
+      0,
+      14,
+      1,
+      "*"
+    ],
+    [
+      19,
+      2,
+      0,
+      18,
+      0,
+      "*"
+    ],
+    [
+      20,
+      18,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      21,
+      3,
+      0,
+      18,
+      1,
+      "*"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6588450000000017,
+      "offset": [
+        -400.48620957336436,
+        401.7140021170757
+      ]
+    }
+  },
+  "version": 0.4
+}
