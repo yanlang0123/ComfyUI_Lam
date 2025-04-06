@@ -25,17 +25,27 @@ import copy
 import asyncio
 import websocket
 from .src.utils.chooser import ChooserMessage
- 
+
+ZhipuAI_IS_INIT=True
+try:
+    from zhipuai import ZhipuAI
+except:
+    ZhipuAI_IS_INIT=False
+
+OpenAI_IS_INIT=True
+try:
+    from openai import OpenAI
+except:
+    OpenAI_IS_INIT=False
+
 # 创建一个指定长度的队列
 maxsize = 10  # 队列的最大长度
 client=None
 userHistory={}
 if len(Config().ai.keys())>0:
-    if Config().ai['ai_type']=='glm4':
-        from zhipuai import ZhipuAI
+    if Config().ai['ai_type']=='glm4' and ZhipuAI_IS_INIT:
         client = ZhipuAI(api_key=Config().ai['api_key'])
-    elif Config().ai['ai_type']=='openAi':
-        from openai import OpenAI
+    elif Config().ai['ai_type']=='openAi' and OpenAI_IS_INIT:
         client = OpenAI(
             api_key=Config().ai['api_key'],
             base_url=Config().ai['base_url'],
