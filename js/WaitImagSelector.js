@@ -32,8 +32,8 @@ class chooserImageDialog extends ComfyDialog {
                         this.select_index.push(index)
                         imgEl.classList.add('selected')
                     }
-                    if (node.selected.has(index)) node.selected.delete(index);
-                    else node.selected.add(index);
+                    if (node.selecteds.has(index)) node.selecteds.delete(index);
+                    else node.selecteds.add(index);
                 }
             })
             return imgEl
@@ -71,16 +71,16 @@ class chooserImageDialog extends ComfyDialog {
 function progressButtonPressed() {
     const node = app.graph._nodes_by_id[this.node_id];
     if (node) {
-        const selected = [...node.selected]
-        if(selected?.length>0){
-            node.setProperty('values',selected)
+        const selecteds = [...node.selecteds]
+        if(selecteds?.length>0){
+            node.setProperty('values',selecteds)
         }
         if (FlowState.paused()) {
-            send_message(node.id, [...node.selected, -1, ...node.anti_selected]);
+            send_message(node.id, [...node.selecteds, -1, ...node.anti_selected]);
         }
         if (FlowState.idle()) {
             skip_next_restart_message();
-            restart_from_here(node.id).then(() => { send_message(node.id, [...node.selected, -1, ...node.anti_selected]); });
+            restart_from_here(node.id).then(() => { send_message(node.id, [...node.selecteds, -1, ...node.anti_selected]); });
         }
     }
 }
@@ -110,7 +110,7 @@ app.registerExtension({
     setup(app) {
 
         const draw = LGraphCanvas.prototype.draw;
-        LGraphCanvas.prototype.draw = function() {
+        LGraphCanvas.prototype.draw = function(ctx, node, widgetWidth, widgetY) {
             if (hud.update()) {
                 app.graph._nodes.forEach((node)=> { if (node.update) { node.update(); } })
             }
@@ -141,8 +141,8 @@ app.registerExtension({
         function on_execution_start(event) {
             if (send_onstart()) {
                 app.graph._nodes.forEach((node)=> {
-                    if (node.selected || node.anti_selected) {
-                        node.selected.clear();
+                    if (node.selecteds || node.anti_selected) {
+                        node.selecteds.clear();
                         node.anti_selected.clear();
                         node.update();
                     }
@@ -157,11 +157,19 @@ app.registerExtension({
         if(node.comfyClass == 'WaitImagSelector'){
             node.setProperty('values',[])
 
+            // node.selecteds=new Set()
+            // node.anti_selected=new Set()
+
             /* A property defining the top of the image when there is just one */
             if(node?.imageIndex === undefined){
               Object.defineProperty(node, 'imageIndex', {
                     get : function() { return null; },
-                    set: function (v) {node.overIndex= v},
+                    set: function (v) {
+                        node.overIndex= v;
+                        if(v!=null){
+                            this.imageClicked(v);
+                        }
+                    },
                 })
             }
             if(node?.imagey === undefined){
@@ -170,40 +178,42 @@ app.registerExtension({
                     set: function (v) {return node.widgets[node.widgets.length-1].last_y+LiteGraph.NODE_WIDGET_HEIGHT;},
                 })
             }
+           
 
-            /* Capture clicks */
-            const org_onMouseDown = node.onMouseDown;
-            node.onMouseDown = function( e, pos, canvas ) {
-                if (e.isPrimary) {
-                    const i = click_is_in_image(node, pos);
-                    if (i>=0) { this.imageClicked(i); }
-                }
-                return (org_onMouseDown && org_onMouseDown.apply(this, arguments));
-            }
-
-            node.send_button_widget = node.addWidget("button", "确认", "", progressButtonPressed);
-            //node.cancel_button_widget = node.addWidget("button", "", "", cancelButtonPressed);
-            //enable_disabling(node.cancel_button_widget);
+            node.send_button_widget = node.addWidget("button", "换一批", "", progressButtonPressed);
             enable_disabling(node.send_button_widget);
-            //disable_serialize(node.cancel_button_widget);
             disable_serialize(node.send_button_widget);
 
+            let addCustomWidget= node.addCustomWidget;
+            node.addCustomWidget = function(widget) {
+                addCustomWidget.apply(this, arguments);
+                const draw = widget.draw;
+                widget.draw = function (ctx,parentNode, widgetWidth, y, widgetHeight) {
+                    draw?.apply(this, arguments);
+                    if(node?.imgs?.length>0){
+                        additionalDrawBackground(node, ctx);
+                    }
+                }
+            }
         }
     },
 
     beforeRegisterNodeDef(nodeType, nodeData, app) {
         if(nodeData?.name == 'WaitImagSelector'){
 
-            const onDrawBackground = nodeType.prototype.onDrawBackground;
-            nodeType.prototype.onDrawBackground = function(ctx) {
-                onDrawBackground.apply(this, arguments);
-                additionalDrawBackground(this, ctx);
-            }
+            // const onDrawBackground = nodeType.prototype.onDrawBackground;
+            // nodeType.prototype.onDrawBackground = function(ctx) {
+            //     onDrawBackground.apply(this, arguments);
+            //     additionalDrawBackground(this, ctx);
+            // }
 
             nodeType.prototype.imageClicked = function (imageIndex) {
                 if (nodeType?.comfyClass==="WaitImagSelector") {
-                    if (this.selected.has(imageIndex)) this.selected.delete(imageIndex);
-                    else this.selected.add(imageIndex);
+                    if (this.selecteds.has(imageIndex)){
+                        this.selecteds.delete(imageIndex);
+                    }else{
+                        this.selecteds.add(imageIndex);
+                    }
                     this.update();
                 }
             }
@@ -213,16 +223,14 @@ app.registerExtension({
                 if (update) update.apply(this,arguments);
                 if (this.send_button_widget) {
                     this.send_button_widget.node_id = this.id;
-                    const selection = ( this.selected ? this.selected.size : 0 ) + ( this.anti_selected ? this.anti_selected.size : 0 )
+                    const selection = ( this.selecteds ? this.selecteds.size : 0 ) + ( this.anti_selected ? this.anti_selected.size : 0 )
                     const maxlength = this.imgs?.length || 0;
                     if (FlowState.paused_here(this.id) && selection>0) {
-                        this.send_button_widget.name = (selection>1) ? "确认选择 (" + selection + '/' + maxlength  +")" : "确认选择";
+                        this.send_button_widget.label = (selection>0) ? "确认选择 (" + selection + '/' + maxlength  +")" : "确认选择";
+                    }else{
+                        this.send_button_widget.label = "换一批";
                     }
                 }
-                // if (this.cancel_button_widget) {
-                //     const isRunning = FlowState.running()
-                //     this.cancel_button_widget.name = isRunning ? "取消选择" : "";
-                // }
                 this.setDirtyCanvas(true,true);
             }
 		}

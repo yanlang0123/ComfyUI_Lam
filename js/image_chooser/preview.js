@@ -5,7 +5,7 @@ const kSampler = ['easy kSampler', 'easy kSamplerTiled', 'easy fullkSampler']
 function display_preview_images(event) {
     const node = app.graph._nodes_by_id[event.detail.id];
     if (node) {
-        node.selected = new Set();
+        node.selecteds = new Set();
         node.anti_selected = new Set();
         const image = showImages(node, event.detail.urls);
         return {node,image,isKSampler:kSampler.includes(node.type)}
@@ -27,7 +27,7 @@ function showImages(node, urls) {
 }
 
 function drawRect(node, s, ctx) {
-    const padding = 1;
+    const padding = 2;
     var rect;
     if (node.imageRects) {
         rect = node.imageRects[s];
@@ -35,7 +35,7 @@ function drawRect(node, s, ctx) {
         const y = node.imagey;
         rect = [padding,y+padding,node.size[0]-2*padding,node.size[1]-y-2*padding];
     }
-    ctx.strokeRect(rect[0]+padding, rect[1]+padding, rect[2]-padding*2, rect[3]-padding*2);
+    rect&&ctx.strokeRect(rect[0]+padding, rect[1]+padding, rect[2]-padding*2, rect[3]-padding*2);
 }
 
 function additionalDrawBackground(node, ctx) {
@@ -66,7 +66,7 @@ function additionalDrawBackground(node, ctx) {
     }
     ctx.lineWidth = 2;
     ctx.strokeStyle = "green";
-    node?.selected?.forEach((s) => { drawRect(node,s, ctx) })
+    node?.selecteds?.forEach((s) => { drawRect(node,s, ctx) })
     ctx.strokeStyle = "#F88";
     node?.anti_selected?.forEach((s) => { drawRect(node,s, ctx) })
 }
@@ -87,4 +87,4 @@ function click_is_in_image(node, pos) {
     return -1;
 }
 
-export { display_preview_images, additionalDrawBackground, click_is_in_image }
+export { display_preview_images,drawRect, additionalDrawBackground, click_is_in_image }
