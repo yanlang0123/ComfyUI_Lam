@@ -8,8 +8,8 @@ class MultiTextConcatenate:
         return {
             "required": {
                 "linebreak_addition": (['false', 'true'],),
-                "text0": ("STRING", {"forceInput": True}),
-                "text1": ("STRING", {"forceInput": True}),
+                "text0": ("TEXT,STRING", ),
+                "text1": ("TEXT,STRING", ),
             },
             "optional": {
                 "delimiter": ('STRING', {"forceInput": False}),

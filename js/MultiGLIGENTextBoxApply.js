@@ -217,8 +217,6 @@ app.registerExtension({
 				CUSTOM_INT(this, "resolutionX", 512, function (v, _, node) {const s = this.options.step / 10; this.value = Math.round(v / s) * s; node.properties["width"] = this.value})
 				CUSTOM_INT(this, "resolutionY", 512, function (v, _, node) {const s = this.options.step / 10; this.value = Math.round(v / s) * s; node.properties["height"] = this.value})
                 
-				addMultiGLIGENTextBoxApplyCanvas(this, app)
-
 				CUSTOM_INT(
 					this,
 					"index",
@@ -240,6 +238,10 @@ app.registerExtension({
 				CUSTOM_INT(this, "y", 0, function (v, _, node) {transformFunc(this, v, node, 1)})
 				CUSTOM_INT(this, "width", 0, function (v, _, node) {transformFunc(this, v, node, 2)})
 				CUSTOM_INT(this, "height", 0, function (v, _, node) {transformFunc(this, v, node, 3)})
+
+				addMultiGLIGENTextBoxApplyCanvas(this, app)
+				
+				this.index=this.widgets.findIndex(obj => obj.name === 'index')
 
 				this.getExtraMenuOptions = function(_, options) {
 					options.unshift(

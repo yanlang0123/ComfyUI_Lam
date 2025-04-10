@@ -70,32 +70,32 @@ app.registerExtension({
                 function changCustomtext(){
                     //this.setSize( this.computeSize() );
                 }
-                this.widgets?.forEach(function(widget) {
-                    if(widget.type!="customtext"){
-                        return ;
-                    }
-                    const draw = widget.draw;
-                    widget.draw = function (ctx,parentNode, widgetWidth, y, widgetHeight) {
-                        draw?.apply(this, arguments);
-                        if (this.inputEl.hidden) return;
-                        const  margin = 20,
-                        clientRectBound = ctx.canvas.getBoundingClientRect(),
-                        transform = new DOMMatrix()
-                        .scaleSelf(
-                            clientRectBound.width / ctx.canvas.width,
-                            clientRectBound.height / ctx.canvas.height
-                        )
-                        .multiplySelf(ctx.getTransform())
-                        .translateSelf(margin, margin + y),
-                        w = (widgetWidth - (margin * 4) ) ;
-                        let maxIoputSize=Math.max(...[parentNode.inputs.length,parentNode.outputs.length])
-                        Object.assign(this.inputEl.style, {
-                            left: `${transform.a * margin + transform.e}px`,
-                            top: `${transform.d + transform.f-10}px`,
-                            width: `${w}px`,
-                        });
-                    }
-                });
+                // this.widgets?.forEach(function(widget) {
+                //     if(widget.type!="customtext"){
+                //         return ;
+                //     }
+                //     const draw = widget.draw;
+                //     widget.draw = function (ctx,parentNode, widgetWidth, y, widgetHeight) {
+                //         draw?.apply(this, arguments);
+                //         if (this.inputEl.hidden) return;
+                //         const  margin = 20,
+                //         clientRectBound = ctx.canvas.getBoundingClientRect(),
+                //         transform = new DOMMatrix()
+                //         .scaleSelf(
+                //             clientRectBound.width / ctx.canvas.width,
+                //             clientRectBound.height / ctx.canvas.height
+                //         )
+                //         .multiplySelf(ctx.getTransform())
+                //         .translateSelf(margin, margin + y),
+                //         w = (widgetWidth - (margin * 4) ) ;
+                //         let maxIoputSize=Math.max(...[parentNode.inputs.length,parentNode.outputs.length])
+                //         Object.assign(this.inputEl.style, {
+                //             left: `${transform.a * margin + transform.e}px`,
+                //             top: `${transform.d + transform.f-10}px`,
+                //             width: `${w}px`,
+                //         });
+                //     }
+                // });
                 this.getExtraMenuOptions = function(_, options) {
                     if(this.outputPrefix){
                         options.unshift(

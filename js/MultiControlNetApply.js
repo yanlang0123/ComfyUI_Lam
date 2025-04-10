@@ -102,6 +102,8 @@ app.registerExtension({
 				//CUSTOM_COMBO(this, "control_net_name", netNames[0],function (v, _, node) {node.properties["values"][node.widgets[node.index].value][0] = this.value},{values:netNames}).widget;
                 //this.widgets.reverse();
                 addMultiControlNetApplySelectCanvas(this, app)
+
+                this.index=this.widgets.findIndex(obj => obj.name === 'index')
                 
                 this.getExtraMenuOptions = function(_, options) {
                     options.unshift(

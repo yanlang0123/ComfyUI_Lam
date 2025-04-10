@@ -91,7 +91,7 @@ app.registerExtension({
 				const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
                 this.selected=false;
                 this.defaultValue=null
-                this.index=2
+                this.index=0
 				this.originalsize=4 
                 this.inputType="STRING"
                 this.inputPrefix="text"
@@ -104,7 +104,6 @@ app.registerExtension({
                 }else if('MultiTextSetMask'==nodeData.name){
                     this.defaultValue=[1.0,"default"];
                 }else if('MultiIPAdapterRegional'==nodeData.name){
-                    this.index=0
                     this.originalsize=1
                     this.inputType="IMAGE"
                     this.inputPrefix="image"
@@ -113,7 +112,6 @@ app.registerExtension({
                 if(this.defaultValue){
                     this.setProperty("values", [this.defaultValue,this.defaultValue])
                 }
-                
                 
                 CUSTOM_INT(
 					this,
@@ -146,6 +144,7 @@ app.registerExtension({
                     CUSTOM_INT(this, "end_at", 1.0,function (v, _, node) {node.properties["values"][node.widgets[node.index].value][3] = this.value},{"default": 1.0, "min": -1.0, "max": 3.0, "step": 0.05,precision: 2 })
                 }
                 addMultiTextSetMaskSelectCanvas(this, app)
+                this.index=this.widgets.findIndex(obj => obj.name === 'index')
                 
                 this.getExtraMenuOptions = function(_, options) {
                     options.unshift(

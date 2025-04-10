@@ -7,12 +7,12 @@ class MultiTextSelelct:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                 "i": ("INT", {"forceInput": True}),
+                 "i": ("NUMBER,INT",),
             },
             "optional": {
                 "textList": ("LIST",),
-                "text0": ("STRING", {"forceInput": True}),
-                "text1": ("STRING", {"forceInput": True}),
+                "text0": ("TEXT,STRING", ),
+                "text1": ("TEXT,STRING", ),
             }
         }
 

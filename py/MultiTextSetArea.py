@@ -13,8 +13,8 @@ class MultiTextSetArea:
             },
             "optional": {
                 "textList": ("LIST",),
-                "text0": ("STRING", {"forceInput": True}),
-                "text1": ("STRING", {"forceInput": True}),
+                "text0": ("TEXT,STRING", ),
+                "text1": ("TEXT,STRING", ),
             },
             "hidden": {"extra_pnginfo": "EXTRA_PNGINFO", "unique_id": "UNIQUE_ID"},
         }

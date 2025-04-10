@@ -494,7 +494,7 @@ async function addConvertToGroupOptions() {
     const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
     LGraphCanvas.prototype.getNodeMenuOptions = function (node) {
         const options = getNodeMenuOptions.apply(this, arguments);
-        if (!GroupNodeHandler.isGroupNode(node)&&node.type!='AppParams'){
+        if (!GroupNodeHandler.isGroupNode(node)&&node.type!='AppParams'&&node.widgets){
             let toInput = [];
             for (const w of node.widgets) {
                 if (w.options?.forceInput) {
