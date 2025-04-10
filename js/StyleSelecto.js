@@ -255,6 +255,7 @@ app.registerExtension({
                 let style_type = this.widgets[this.widgets.findIndex(obj => obj.name === 'style_type')];
                 this.setProperty("values", [])
                 this.setProperty("selTags", {})
+                let that=this;
                 //stylesEl.inputEl.classList.add("lam-model-notes");
                 const list = $el("ol.lam_style-model-tags-list",[]);
                 const lists = $el("ol.lam_style-model-tags-sel-list",[]);
@@ -271,9 +272,51 @@ app.registerExtension({
 
                         }}
                     ),list,$el('span',{textContent:"选择内容"}),lists,
-                    $el('img',{id:'show_image_id',
-                    style:{display:'none',position:'absolute'},
-                    src:''})]));
+                    $el('img',{id:'show_image_id',style:{display:'none',position:'absolute'},src:''})]),{
+                        getValue(){
+                            let namestr=Object.keys(that.properties['selTags']).join(',')
+                            let delList=[]
+                            styles.element.children[3].querySelectorAll(".lam_style-model-tag--del").forEach(el => {
+                                delList.push(el.dataset.tag)
+                            })
+                            styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
+                                if(el.classList.value.indexOf("lam_style-model-tag--selected")>=0&&!delList.includes(el.dataset.tag)){
+                                    if(!that.properties["values"].includes(el.dataset.tag)){
+                                        that.properties["values"].push(el.dataset.tag);
+                                    }
+                                    if(!Object.keys(that.properties['selTags']).includes(el.dataset.name)){
+                                        that.properties['selTags'][el.dataset.tag]={imgName:el.dataset.imgName,tag:el.dataset.tag,name:el.dataset.name}
+                                    }
+                                }else{
+                                    if(delList.includes(el.dataset.tag)){
+                                        el.classList.remove("lam_style-model-tag--selected");
+                                        delList=delList.filter(v=>v!=el.dataset.tag)
+                                    }
+                                    if(that.properties["values"].includes(el.dataset.tag)){
+                                        that.properties["values"]=that.properties["values"].filter(v=>v!=el.dataset.tag);
+                                        delete that.properties['selTags'][el.dataset.tag];
+                                    }
+                                }
+
+                            });
+                            for(let i=0;i<delList.length;i++){
+                                if(that.properties["values"].includes(delList[i])){
+                                    that.properties["values"]=that.properties["values"].filter(v=>v!=delList[i]);
+                                    delete that.properties['selTags'][delList[i]];
+                                }
+                            }
+                            if(namestr!=Object.keys(that.properties['selTags']).join(',')||styles.element.children[3].innerHTML==''){
+                                if(Object.keys(that.properties['selTags']).length>0){
+                                    let sellist=getSelList(that.properties['selTags'])
+                                    styles.element.children[3].innerHTML=''
+                                    styles.element.children[3].append(...sellist)
+                                }else{
+                                    styles.element.children[3].innerHTML=''
+                                }
+                            }
+                            return that.properties["values"].join(',');
+                        }
+                    });
                 let st_values='';
                 Object.defineProperty(style_type, "value", {
                     set: (x) => {
@@ -313,55 +356,6 @@ app.registerExtension({
                             this.setSize([500, 600]);
                         }
                         return st_values;
-                    }
-                });
-                let stylesValue=''
-                Object.defineProperty(styles, "value", {
-                    set: (x) => {
-                    },
-                    get: () => {
-                        let namestr=Object.keys(this.properties['selTags']).join(',')
-                        let delList=[]
-                        styles.element.children[3].querySelectorAll(".lam_style-model-tag--del").forEach(el => {
-                            delList.push(el.dataset.tag)
-                        })
-                        styles.element.children[1].querySelectorAll(".lam_style-model-tag").forEach(el => {
-                            if(el.classList.value.indexOf("lam_style-model-tag--selected")>=0&&!delList.includes(el.dataset.tag)){
-                                if(!this.properties["values"].includes(el.dataset.tag)){
-                                    this.properties["values"].push(el.dataset.tag);
-                                }
-                                if(!Object.keys(this.properties['selTags']).includes(el.dataset.name)){
-                                    this.properties['selTags'][el.dataset.tag]={imgName:el.dataset.imgName,tag:el.dataset.tag,name:el.dataset.name}
-                                }
-                            }else{
-                                if(delList.includes(el.dataset.tag)){
-                                    el.classList.remove("lam_style-model-tag--selected");
-                                    delList=delList.filter(v=>v!=el.dataset.tag)
-                                }
-                                if(this.properties["values"].includes(el.dataset.tag)){
-                                    this.properties["values"]=this.properties["values"].filter(v=>v!=el.dataset.tag);
-                                    delete this.properties['selTags'][el.dataset.tag];
-                                }
-                            }
-
-                        });
-                        for(let i=0;i<delList.length;i++){
-                            if(this.properties["values"].includes(delList[i])){
-                                this.properties["values"]=this.properties["values"].filter(v=>v!=delList[i]);
-                                delete this.properties['selTags'][delList[i]];
-                            }
-                        }
-                        if(namestr!=Object.keys(this.properties['selTags']).join(',')||styles.element.children[3].innerHTML==''){
-                            if(Object.keys(this.properties['selTags']).length>0){
-                                let sellist=getSelList(this.properties['selTags'])
-                                styles.element.children[3].innerHTML=''
-                                styles.element.children[3].append(...sellist)
-                            }else{
-                                styles.element.children[3].innerHTML=''
-                            }
-                        }
-                        stylesValue = this.properties["values"].join(',');
-                        return stylesValue;
                     }
                 });
                 

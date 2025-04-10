@@ -2,6 +2,7 @@ import { app } from "/scripts/app.js";
 import { $el } from "../../../scripts/ui.js";
 import { ComfyWidgets } from "/scripts/widgets.js";
 import { api } from "../../../scripts/api.js";
+import {CUSTOM_COMBO} from "./utils.js"
 
 $el("style", {
 	textContent: `
@@ -258,7 +259,8 @@ app.registerExtension({
                 const r = onNodeCreated?.apply(this, arguments);
                 this.setProperty("values", [])
                 this.setProperty("selTags", {})
-                ComfyWidgets["COMBO"](this, "category", ['a','b']).widget;
+                let that=this;
+                CUSTOM_COMBO(this, "category", "",function (v, _, node) {},{values:["default", "mask bounds"]}).widget;
                 const list = $el("ol.lam-model-tags-list",[]);
                 const lists = $el("ol.lam-model-tags-sel-list",[]);
                 let tags=this.addDOMWidget('tags',"list",$el('div.lam_style-preview',[$el('button',{
@@ -273,7 +275,68 @@ app.registerExtension({
                             tags.element.children[3].innerHTML=''
 
                         }}
-                    ),list,$el('span',{textContent:"选择内容"}),lists]));
+                    ),list,$el('span',{textContent:"选择内容"}),lists]),{
+                        getValue(){
+                            let namestr=Object.values(that.properties["selTags"]).map(item => {
+                                if(item.weight!=1) {
+                                    return `(${item.tag}:${item.weight})`;
+                                } else {
+                                    return item.tag;
+                                }
+                            }).join(',')
+                            let delList=[]
+                            tags.element.children[3].querySelectorAll(".lam-model-tag--del").forEach(el => {
+                                delList.push(el.dataset.tag)
+                            })
+                            tags.element.children[1].querySelectorAll(".lam-model-tag").forEach(el => {
+                                if(el.classList.value.indexOf("lam-model-tag--selected")>=0&&!delList.includes(el.dataset.tag)){
+                                    if(!that.properties["values"].includes(el.dataset.tag)){
+                                        that.properties["values"].push(el.dataset.tag);
+                                    }
+                                    if(!Object.keys(that.properties['selTags']).includes(el.dataset.tag)){
+                                        that.properties['selTags'][el.dataset.tag]={tag:el.dataset.tag,name:el.dataset.name,cat:el.dataset.cat,weight:Number(el.dataset.weight)}
+                                    }
+                                }else{
+                                    if(delList.includes(el.dataset.tag)){
+                                        el.classList.remove("lam-model-tag--selected");
+                                        delList=delList.filter(v=>v!=el.dataset.tag)
+                                    }
+                                    if(that.properties["values"].includes(el.dataset.tag)){
+                                        that.properties["values"]=that.properties["values"].filter(v=>v!=el.dataset.tag);
+                                        delete that.properties['selTags'][el.dataset.tag];
+                                    }
+                                }
+                            });
+                            tags.element.children[3].querySelectorAll(".lam-model-tag").forEach(el => {
+                                if(Object.keys(that.properties['selTags']).includes(el.dataset.tag)){
+                                    that.properties['selTags'][el.dataset.tag]={tag:el.dataset.tag,name:el.dataset.name,cat:el.dataset.cat,weight:Number(el.dataset.weight)}
+                                }
+                            })
+                            for(let i=0;i<delList.length;i++){
+                                if(that.properties["values"].includes(delList[i])){
+                                    that.properties["values"]=that.properties["values"].filter(v=>v!=delList[i]);
+                                    delete that.properties['selTags'][delList[i]];
+                                }
+                            }
+                            tagsValue = Object.values(that.properties["selTags"]).map(item => {
+                                if(item.weight!=1) {
+                                    return `(${item.tag}:${item.weight})`;
+                                } else {
+                                    return item.tag;
+                                }
+                            }).join(',');
+                            if(namestr!=tagsValue||tags.element.children[3].innerHTML==''){
+                                if(Object.keys(that.properties['selTags']).length>0){
+                                    let sellist=getSelList(that.properties['selTags'])
+                                    tags.element.children[3].innerHTML=''
+                                    tags.element.children[3].append(...sellist)
+                                }else{
+                                    tags.element.children[3].innerHTML=''
+                                }
+                            }
+                            return tagsValue;
+                        }
+                    });
                 let prompt_type = this.widgets[this.widgets.findIndex(obj => obj.name === 'prompt_type')];
                 let textEl = this.widgets[this.widgets.findIndex(obj => obj.name === 'text')];
                 let category = this.widgets[this.widgets.findIndex(obj => obj.name === 'category')];
@@ -333,71 +396,7 @@ app.registerExtension({
                         return cat_value;
                     }
                 });               
-                Object.defineProperty(tags, "value", {
-                    set: (x) => {
-                        
-                    },
-                    get: () => {
-                        let namestr=Object.values(this.properties["selTags"]).map(item => {
-                            if(item.weight!=1) {
-                                return `(${item.tag}:${item.weight})`;
-                            } else {
-                                return item.tag;
-                            }
-                        }).join(',')
-                        let delList=[]
-                        tags.element.children[3].querySelectorAll(".lam-model-tag--del").forEach(el => {
-                            delList.push(el.dataset.tag)
-                        })
-                        tags.element.children[1].querySelectorAll(".lam-model-tag").forEach(el => {
-                            if(el.classList.value.indexOf("lam-model-tag--selected")>=0&&!delList.includes(el.dataset.tag)){
-                                if(!this.properties["values"].includes(el.dataset.tag)){
-                                    this.properties["values"].push(el.dataset.tag);
-                                }
-                                if(!Object.keys(this.properties['selTags']).includes(el.dataset.tag)){
-                                    this.properties['selTags'][el.dataset.tag]={tag:el.dataset.tag,name:el.dataset.name,cat:el.dataset.cat,weight:Number(el.dataset.weight)}
-                                }
-                            }else{
-                                if(delList.includes(el.dataset.tag)){
-                                    el.classList.remove("lam-model-tag--selected");
-                                    delList=delList.filter(v=>v!=el.dataset.tag)
-                                }
-                                if(this.properties["values"].includes(el.dataset.tag)){
-                                    this.properties["values"]=this.properties["values"].filter(v=>v!=el.dataset.tag);
-                                    delete this.properties['selTags'][el.dataset.tag];
-                                }
-                            }
-                        });
-                        tags.element.children[3].querySelectorAll(".lam-model-tag").forEach(el => {
-                            if(Object.keys(this.properties['selTags']).includes(el.dataset.tag)){
-                                this.properties['selTags'][el.dataset.tag]={tag:el.dataset.tag,name:el.dataset.name,cat:el.dataset.cat,weight:Number(el.dataset.weight)}
-                            }
-                        })
-                        for(let i=0;i<delList.length;i++){
-                            if(this.properties["values"].includes(delList[i])){
-                                this.properties["values"]=this.properties["values"].filter(v=>v!=delList[i]);
-                                delete this.properties['selTags'][delList[i]];
-                            }
-                        }
-                        tagsValue = Object.values(this.properties["selTags"]).map(item => {
-                            if(item.weight!=1) {
-                                return `(${item.tag}:${item.weight})`;
-                            } else {
-                                return item.tag;
-                            }
-                        }).join(',');
-                        if(namestr!=tagsValue||tags.element.children[3].innerHTML==''){
-                            if(Object.keys(this.properties['selTags']).length>0){
-                                let sellist=getSelList(this.properties['selTags'])
-                                tags.element.children[3].innerHTML=''
-                                tags.element.children[3].append(...sellist)
-                            }else{
-                                tags.element.children[3].innerHTML=''
-                            }
-                        }
-                        return tagsValue;
-                    }
-                });
+                
                 this.setSize([600, 700]);
                 return r;
             };
