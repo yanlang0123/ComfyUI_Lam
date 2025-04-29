@@ -570,7 +570,7 @@ async function addConvertToGroupOptions() {
                 }
             }
             const index = options.findIndex((o) => o?.content === "Outputs") + 1 || options.length - 1;
-            options.splice(index + 1, null, {
+            toInput.length>0&&options.splice(index + 1, null, {
                 content: `设置应用参数`,
                 submenu: {
                     options: toInput
