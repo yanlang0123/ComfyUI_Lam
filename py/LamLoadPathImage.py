@@ -46,7 +46,12 @@ class LamLoadPathImage:
             i = self.download_image(image_path)
         else:
             try:
-                i = Image.open(image_path)
+                #判断文件是否存在
+                if os.path.exists(image_path):
+                    i = Image.open(image_path)
+                else:
+                    image_path = folder_paths.get_annotated_filepath(image_path, folder_paths.base_path)
+                    i = Image.open(image_path)
             except OSError:
                 print(f"The image `{image_path.strip()}` specified doesn't exist!")
                 i = Image.new(mode='RGB', size=(512, 512), color=(0, 0, 0))
