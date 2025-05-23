@@ -1,0 +1,205 @@
+{
+    "3": {
+        "inputs": {
+            "seed": 156680208700286,
+            "steps": 20,
+            "cfg": 8,
+            "sampler_name": "euler",
+            "scheduler": "normal",
+            "denoise": 1,
+            "model": [
+                "4",
+                0
+            ],
+            "positive": [
+                "11",
+                1
+            ],
+            "negative": [
+                "7",
+                0
+            ],
+            "latent_image": [
+                "5",
+                0
+            ]
+        },
+        "class_type": "KSampler",
+        "_meta": {
+            "title": "K采样器"
+        }
+    },
+    "4": {
+        "inputs": {
+            "ckpt_name": "yamer_Cartoon_xenoArcadiaCD.safetensors"
+        },
+        "class_type": "CheckpointLoaderSimple",
+        "_meta": {
+            "title": "Checkpoint加载器(简易)"
+        }
+    },
+    "5": {
+        "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+        },
+        "class_type": "EmptyLatentImage",
+        "_meta": {
+            "title": "空Latent"
+        }
+    },
+    "6": {
+        "inputs": {
+            "text": "",
+            "clip": [
+                "4",
+                1
+            ]
+        },
+        "class_type": "CLIPTextEncode",
+        "_meta": {
+            "title": "CLIP文本编码器"
+        }
+    },
+    "7": {
+        "inputs": {
+            "text": "text, watermark",
+            "clip": [
+                "4",
+                1
+            ]
+        },
+        "class_type": "CLIPTextEncode",
+        "_meta": {
+            "title": "CLIP文本编码器"
+        }
+    },
+    "8": {
+        "inputs": {
+            "samples": [
+                "3",
+                0
+            ],
+            "vae": [
+                "4",
+                2
+            ]
+        },
+        "class_type": "VAEDecode",
+        "_meta": {
+            "title": "VAE解码"
+        }
+    },
+    "10": {
+        "inputs": {
+            "image": ""
+        },
+        "class_type": "LamLoadImageBase64",
+        "_meta": {
+            "title": "Base64图片加载"
+        }
+    },
+    "11": {
+        "inputs": {
+            "strength": 1,
+            "start_percent": 0,
+            "end_percent": 1,
+            "positive": [
+                "6",
+                0
+            ],
+            "negative": [
+                "7",
+                0
+            ],
+            "control_net": [
+                "12",
+                0
+            ],
+            "image": [
+                "17",
+                0
+            ],
+            "vae": [
+                "4",
+                2
+            ]
+        },
+        "class_type": "ControlNetApplyAdvanced",
+        "_meta": {
+            "title": "ControlNet应用（旧版高级）"
+        }
+    },
+    "12": {
+        "inputs": {
+            "control_net_name": "control_v11p_sd15_lineart.pth"
+        },
+        "class_type": "ControlNetLoader",
+        "_meta": {
+            "title": "ControlNet加载器"
+        }
+    },
+    "13": {
+        "inputs": {
+            "filename_prefix": "ComfyUI",
+            "images": [
+                "8",
+                0
+            ]
+        },
+        "class_type": "SaveImgOutputLam",
+        "_meta": {
+            "title": "保存图像应用输出"
+        }
+    },
+    "15": {
+        "inputs": {
+            "channel": "red",
+            "image": [
+                "10",
+                0
+            ]
+        },
+        "class_type": "ImageToMask",
+        "_meta": {
+            "title": "图像到遮罩"
+        }
+    },
+    "16": {
+        "inputs": {
+            "mask": [
+                "15",
+                0
+            ]
+        },
+        "class_type": "InvertMask (segment anything)",
+        "_meta": {
+            "title": "反转遮罩"
+        }
+    },
+    "17": {
+        "inputs": {
+            "mask": [
+                "16",
+                0
+            ]
+        },
+        "class_type": "MaskToImage",
+        "_meta": {
+            "title": "遮罩到图像"
+        }
+    },
+    "18": {
+        "inputs": {
+            "appName": "简笔画2",
+            "appType": "paint-board",
+            "appDesc": "",
+            "styles": ""
+        },
+        "class_type": "AppParams",
+        "_meta": {
+            "title": "应用参数管理"
+        }
+    }
+}

@@ -496,8 +496,9 @@ async function addConvertToGroupOptions() {
         const options = getNodeMenuOptions.apply(this, arguments);
         if (!GroupNodeHandler.isGroupNode(node)&&node.type!='AppParams'&&node.widgets){
             let toInput = [];
+            let wNames=node.inputs.filter(obj => obj.widget !== undefined && obj.link === null).map(obj => obj.name);
             for (const w of node.widgets) {
-                if (w.options?.forceInput) {
+                if (w.options?.forceInput || !wNames.includes(w.name)) {
                     continue;
                 }
                 if (w.type !== CONVERTED_TYPE) {
