@@ -129,6 +129,9 @@ app.registerExtension({
                                     let indexesToRemove = []
     
                                     for (let i = 0; i < this.inputs.length; i++) {
+                                        if(this.inputs[i].widget){
+                                            continue;
+                                        }
                                         if (!this.inputs[i].link&&i>=this.originalsize) {
                                             indexesToRemove.push(i)
                                         }
@@ -210,6 +213,9 @@ app.registerExtension({
                                     let indexesToRemove = []
     
                                     for (let i = 0; i < this.inputs.length; i++) {
+                                        if(this.inputs[i].widget){
+                                            continue;
+                                        }
                                         if (!this.inputs[i].link&&i>=this.originalsize) {
                                             indexesToRemove.push(i)
                                         }

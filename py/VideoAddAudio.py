@@ -20,7 +20,8 @@ class VideoAddAudio:
                 }
 
     CATEGORY = "lam"
-    RETURN_TYPES = ()
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("视频地址",)
     FUNCTION = "video_add_audio"
     OUTPUT_NODE = True
 
@@ -31,7 +32,7 @@ class VideoAddAudio:
             raise Exception('音频文件不存在')
         _ext_video = os.path.basename(videoPath).strip().split('.')[-1]
         _ext_audio = os.path.basename(audioPath).strip().split('.')[-1]
-        if _ext_audio not in ['mp3', 'wav']:
+        if _ext_audio not in ['mp3', 'wav','flac']:
             raise Exception('只支持mp3和wav格式的音频')
         _codec = 'copy'
         if _ext_audio == 'wav':
@@ -43,7 +44,7 @@ class VideoAddAudio:
         cmd = r'ffmpeg -y -hide_banner -loglevel error -i "%s" -i "%s" -vcodec copy "%s"' % (videoPath, audioPath, result)
         os.system(cmd)  
         return {"ui": {"text": ["视频插入音频成功，保存路径："+result],
-        'videos':[{'filename':file,'type':'output','subfolder':'video'}]}}
+        'videos':[{'filename':file,'type':'output','subfolder':'video'}]},"result": (file,)}
 
 NODE_CLASS_MAPPINGS = {
     "VideoAddAudio": VideoAddAudio

@@ -19,7 +19,7 @@ class LamLoadVideo:
         return {"required":
                     {
                     "videoPath": ("STRING", {"forceInput": True}),
-                    "sample_start_idx": ("INT", {"default": 1, "min": 1, "max": 10000}),
+                    "sample_start_idx": ("INT", {"default": 1, "min": -10000, "max": 10000}),
                     "n_sample_frames": ("INT", {"default": 0, "min": 0, "max": 100000}),
                     "extract_audio": ([True,False], ),
                     "filename_prefix": ("STRING", {"default": "comfyUI"}),
@@ -31,7 +31,7 @@ class LamLoadVideo:
     RETURN_TYPES = ("IMAGE","INT","INT","STRING",)
     RETURN_NAMES = ("图片","帧率","总帧数","音频文件名",)
     FUNCTION = "load_image"
-    OUTPUT_NODE = True
+    OUTPUT_NODE = False
 
     def load_image(self, videoPath,sample_start_idx,n_sample_frames,extract_audio,filename_prefix):
         if os.path.exists(videoPath) == False:
@@ -43,6 +43,9 @@ class LamLoadVideo:
         if not flag:
             print("\033[31mLine 65 error\033[31m: open" + videoPath + "error!")
 
+        if sample_start_idx<0: #负数则倒数
+            sample_start_idx = frames+sample_start_idx+1
+            
         sample_frames = []
         count=0
         while True:
@@ -52,6 +55,7 @@ class LamLoadVideo:
             count+=1
             if sample_start_idx>count:
                 continue
+
             if n_sample_frames>0:
                 if (sample_start_idx+n_sample_frames)<=count:
                     break

@@ -102,11 +102,16 @@ export function swapInputs(node, indexA, indexB) {
 }
 
 export function renameNodeInputs(node, name, offset=0) {
+	let index=0;
 	for (let i=offset; i < node.inputs.length; i++) {
-		node.inputs[i].name = `${name}${i-offset}`
-		if(node.inputs[i].label){
-			node.inputs[i].label = `${name}${i-offset}`
+		if(node.inputs[i].widget){
+			continue;
 		}
+		node.inputs[i].name = `${name}${index}`
+		if(node.inputs[i].label){
+			node.inputs[i].label = `${name}${index}`
+		}
+		index++;
 	}
 }
 
@@ -186,7 +191,7 @@ export function removeNodeInputs(node, indexesToRemove, offset=0) {
 			node.widgets[node.index].value = inputLenght
 		}
 	}
-	node.onResize(node.size)
+	node?.onResize?.();
 }
 
 export function swapOutputsNot01(node, indexesToRemove){

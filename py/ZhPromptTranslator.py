@@ -99,7 +99,7 @@ class ZhPromptTranslator:
         return {
             "required": {
                 "text_trans": ("STRING", {"multiline": True, "default": ""}),
-                # "trans_switch": (["enabled", "disabled"],),
+                "match_prompt": (["enabled", "disabled"],),
             },
             "optional": {
                 "textList": ("LIST",),
@@ -110,26 +110,27 @@ class ZhPromptTranslator:
     FUNCTION = "translation"
     CATEGORY = "lam"
 
-    def translation(self, text_trans,textList=[]):
+    def translation(self, text_trans,textList=[],match_prompt="enabled"):
         if text_trans == "undefined":
             text_trans = ""
 
         cache = load_csv(self.my_translations)
-        target_text = self.trans_switch(cache,text_trans)
+        target_text = self.trans_switch(cache,text_trans,match_prompt)
         targetList=[]
         for text in textList:
-            targetList.append(self.trans_switch(cache,text))
+            targetList.append(self.trans_switch(cache,text,match_prompt))
         
         return (target_text,targetList)
     
-    def trans_switch(self,cache,text_trans):
+    def trans_switch(self,cache,text_trans,match_prompt):
         if len(text_trans)==0:
             return ""
         if contains_chinese(text_trans):
-            text_trans = remove_unnecessary_spaces(text_trans)
-            modified_text = replace_text(text_trans, cache)
-            print("modified_text: " + modified_text)
-
+            if match_prompt=="enabled":
+                text_trans = remove_unnecessary_spaces(text_trans)
+                modified_text = replace_text(text_trans, cache)
+            else:
+                modified_text=text_trans
             target_text = self.process_text(modified_text)
             target_text = re.sub('♪','', target_text)
         else:

@@ -5,21 +5,22 @@ import folder_paths
 import os
 class AutioPath:
     def __init__(self):
-        self.input_autio_dir = os.path.join(folder_paths.get_input_directory(), 'autio')
+        self.input_autio_dir = folder_paths.get_input_directory()
         if not os.path.exists(self.input_autio_dir):
-            os .makedirs(self.input_autio_dir)
+            os.makedirs(self.input_autio_dir)
 
     @classmethod
     def INPUT_TYPES(cls):
-        input_autio_dir = os.path.join(folder_paths.get_input_directory(), 'autio')
+        input_autio_dir = folder_paths.get_input_directory()
         if not os.path.exists(input_autio_dir):
             os .makedirs(input_autio_dir)
-        autiofiles = [f for f in os.listdir(input_autio_dir) if os.path.isfile(os.path.join(input_autio_dir, f))]
+        files = folder_paths.filter_files_content_types(os.listdir(input_autio_dir), ["audio"])
         return {
             "required": {
-                "autio": (sorted(autiofiles), ),
+                "autio": (sorted(files),  {"audio_upload": True} ),
             }
         }
+    
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("音频地址",)
     FUNCTION = "get_autio_path"
@@ -29,6 +30,13 @@ class AutioPath:
     def get_autio_path(self,autio):
         autio_path = folder_paths.get_annotated_filepath(autio,self.input_autio_dir)
         return (autio_path, )
+    
+    @classmethod
+    def IS_CHANGED(cls, autio):
+        autio_path = folder_paths.get_annotated_filepath(autio,cls.input_autio_dir)
+        mod_time = os.path.getmtime(autio_path)
+        return mod_time
+
 
 NODE_CLASS_MAPPINGS = {
     "AutioPath": AutioPath
