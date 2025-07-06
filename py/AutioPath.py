@@ -33,7 +33,8 @@ class AutioPath:
     
     @classmethod
     def IS_CHANGED(cls, autio):
-        autio_path = folder_paths.get_annotated_filepath(autio,cls.input_autio_dir)
+        input_autio_dir = folder_paths.get_input_directory()
+        autio_path = folder_paths.get_annotated_filepath(autio,input_autio_dir)
         mod_time = os.path.getmtime(autio_path)
         return mod_time
 

@@ -39,7 +39,7 @@ class MultiParamFormula:
         }
 
     RETURN_TYPES = AlwaysTupleZero(AlwaysEqualProxy("*"),)
-    RETURN_NAMES = ('p0',)
+    RETURN_NAMES = ('r0',)
     FUNCTION = "evaluate"
     CATEGORY = "lam"
     OUTPUT_NODE = False
