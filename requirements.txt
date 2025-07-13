@@ -23,3 +23,5 @@ zhipuai
 opencv-contrib-python
 websocket-client
 insightface
+basiclibrary-py
+pymediainfo

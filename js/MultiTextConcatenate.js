@@ -41,7 +41,7 @@ app.registerExtension({
 
             };
         }
-        var names=["MultiTextConcatenate",'MultiTextSelelct',"MultiIntFormula","MultiParamFormula","LamSwitcherCase"]
+        var names=["MultiTextConcatenate","JyMultiMediaGroup","JyMultiAudioGroup","JyMultiCaptionsGroup","JyMultiEffectGroup",'MultiTextSelelct',"MultiIntFormula","MultiParamFormula","LamSwitcherCase"]
         if (names.indexOf(nodeData.name)>=0) {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
 			nodeType.prototype.onNodeCreated = function () {
@@ -50,6 +50,22 @@ app.registerExtension({
                 this.inputType="STRING"
                 this.inputPrefix="text"
                 this.outputPrefix=""
+                if("JyMultiMediaGroup"==nodeData.name){
+                    this.inputType="MEIDA,ANIMATION_MEIDA,TRANSITION"
+                    this.inputPrefix="meida"
+                }
+                if("JyMultiAudioGroup"==nodeData.name){
+                    this.inputType="JY_AUDIO"
+                    this.inputPrefix="audio"
+                }
+                if("JyMultiCaptionsGroup"==nodeData.name){
+                    this.inputType="JY_CAPTIONS"
+                    this.inputPrefix="captions"
+                }
+                if("JyMultiEffectGroup"==nodeData.name){
+                    this.inputType="JY_EFFECT"
+                    this.inputPrefix="effect"
+                }
                 if('MultiTextSelelct'==nodeData.name){
                     this.originalsize=2
                 }

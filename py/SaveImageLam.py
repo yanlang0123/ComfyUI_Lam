@@ -28,7 +28,8 @@ class SaveImageLam(SaveImage):
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "unique_id": "UNIQUE_ID"},
                 }
 
-    RETURN_TYPES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE","STRING",)
+    RETURN_NAMES = ("图像","图像地址",)
     FUNCTION = "save_images"
     OUTPUT_NODE = False
     CATEGORY = "image"
@@ -38,6 +39,7 @@ class SaveImageLam(SaveImage):
         full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(
             filename_prefix, self.output_dir, images[0].shape[1], images[0].shape[0])
         results = list()
+        paths=[]
         for (batch_number, image) in enumerate(images):
             i = 255. * image.cpu().numpy()
             img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
@@ -60,16 +62,18 @@ class SaveImageLam(SaveImage):
             filename_with_batch_num = filename.replace(
                 "%batch_num%", str(batch_number))
             file = f"{filename_with_batch_num}_{counter:05}_.png"
-            img.save(os.path.join(full_output_folder, file),
+            filePath=os.path.join(full_output_folder, file)
+            img.save(filePath,
                      pnginfo=metadata, compress_level=self.compress_level)
             results.append({
                 "filename": file,
                 "subfolder": subfolder,
                 "type": self.type
             })
+            paths.append(filePath)
             counter += 1
 
-        return { "ui": { "images": results }, "result": (images,) }
+        return { "ui": { "images": results }, "result": (images,",".join(paths),) }
     
 NODE_CLASS_MAPPINGS = {
     "SaveImageLam": SaveImageLam

@@ -55,6 +55,7 @@ class Config(object):
         yconfig["wechat"] = self.wechat
         yconfig["base"] = self.base
         yconfig["commands"] = self.commands
+        yconfig["jian_ying"] = self.jianYing
         with open(f"{self.pwd}/weChat.yaml", 'w', encoding='utf-8') as file:
             yaml.dump(yconfig, file,sort_keys=False,default_flow_style=False,allow_unicode=True, encoding='utf-8')
             file.close()
@@ -66,6 +67,7 @@ class Config(object):
         self.ai = yconfig.get("ai", {})
         self.redis = yconfig.get("redis", {})
         self.commands= yconfig.get("commands", {})
+        self.jianYing= yconfig.get("jian_ying", {})
         if "cluster" in args and args.cluster:
             self.cluster = yconfig.get("cluster", {})
             self.cluster["isSection"] = args.isSection

@@ -6,7 +6,7 @@ import numpy as np
 
 class LamLoadVideo:
     def __init__(self):
-        self.output_dir = os.path.join(folder_paths.get_output_directory(), 'autio')
+        self.output_dir = os.path.join(folder_paths.get_output_directory(), 'audio')
         if not os.path.exists(self.output_dir):
             os .makedirs(self.output_dir)
     @classmethod
