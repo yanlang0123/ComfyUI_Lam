@@ -27,7 +27,10 @@ ai:
   base_url: https://api.deepseek.com
   is_tools: true
   sys_pompt: 你是一个AI助手，能帮助我解答问题，回答内容最多不用超过200字
-
+jian_ying:
+  drafts_root: C:\Users\Administrator\AppData\Local\JianyingPro\User Data\Projects\com.lveditor.draft\
+  #图片生成视频的时候，每幅图片的持续时间，单位是微秒
+  image_duration: 5000000
 wechat:
   appid: wxa50ed345b253964d                        #公众号appid 
   secret: 327ac9ba06d214d2fcfe2e9ed0520684         #公众号秘钥
