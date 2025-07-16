@@ -5,6 +5,9 @@ from .JianYingDraft.core.draft import Draft
 from .JianYingDraft.core.otherSettings import Clip_settings
 import whisper
 import os
+import folder_paths
+import zipfile
+import shutil
 
 class JyMediaAnimation:
     """
@@ -548,8 +551,75 @@ class JySaveDraft:
                 draft.add_subtitle(**c)
 
         draft.save()
+        
         timeSize=draft.calc_draft_duration()
         return (timeSize/1000000,)
+    
+class JySaveOutDraft:
+    def __init__(self):
+        self.output_dir = folder_paths.get_temp_directory()
+        self.type = "temp"
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "medias": ("MEIDA_GROUP", ),
+                "draft_name": ("STRING", {"default": "Draft", "tooltip": "保存的草稿名称"}),
+                "width": ("INT", {"default": 1920, "min": 1, "max": 9999999, "step": 1, "tooltip": "草稿宽"}),
+                "height": ("INT", {"default": 1080, "min": 1, "max": 9999999, "step": 1, "tooltip": "草稿高"}),
+            },
+            "optional": {
+                "audios": ("AUDIO_GROUP", ),
+                "effects": ("EFFECT_GROUP", ),
+                "captions": ("CAPTIONS_GROUP", ),
+            }
+        }
+
+    RETURN_TYPES = ("FLOAT",)
+    RETURN_NAMES = ("草稿时长",)
+    FUNCTION = "save_draft"
+    
+    OUTPUT_NODE = True
+    CATEGORY = "lam"
+
+    def save_draft(self,medias,draft_name,width,height,audios=None,effects=None,captions=None):
+        draft = Draft(draft_name,width,height,draft_root=self.output_dir)
+        mediaList = [m for m in medias]
+        if audios:
+            mediaList.extend([a for a in audios])
+        for m in mediaList:
+            draft.add_media(**m)
+        
+        if effects:
+            for e in effects:
+                draft.add_effect(**e)
+        
+        if captions:
+            for c in captions:
+                draft.add_subtitle(**c)
+
+        draft.save()
+        folder_to_zip=os.path.join(self.output_dir, draft_name)
+        zip_filename=os.path.join(self.output_dir, draft_name+".zip")
+        # 创建一个ZipFile对象
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            # os.walk遍历文件夹中的所有文件和子文件夹
+            for foldername, subfolders, filenames in os.walk(folder_to_zip):
+                for filename in filenames:
+                    # 构建完整的文件路径并添加到压缩包中，注意路径的处理以正确反映目录结构
+                    file_path = os.path.join(foldername, filename)
+                    arcname = os.path.relpath(file_path, folder_to_zip)  # 使用相对路径以保持目录结构
+                    zipf.write(file_path, arcname=arcname)
+        #删除临时文件夹
+        shutil.rmtree(folder_to_zip)
+        timeSize=draft.calc_draft_duration()
+        results=[]
+        results.append({
+            "filename": draft_name+".zip",
+            "subfolder": '',
+            "type": self.type
+        })
+        return {"ui": {"down": results}, "result": (timeSize/1000000,)} 
 
 NODE_CLASS_MAPPINGS = {
     "JyMediaAnimation": JyMediaAnimation,
@@ -566,7 +636,8 @@ NODE_CLASS_MAPPINGS = {
     "JyMultiCaptionsGroup":JyMultiCaptionsGroup,
     "JyMultiEffectGroup":JyMultiEffectGroup,
     "JyAudio2CaptionsGroup":JyAudio2CaptionsGroup,
-    "JySaveDraft":JySaveDraft
+    "JySaveDraft":JySaveDraft,
+    "JySaveOutDraft":JySaveOutDraft,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -584,5 +655,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "JyMultiCaptionsGroup": "字幕组",
     "JyMultiEffectGroup": "特效组",
     "JyAudio2CaptionsGroup": "音频转字幕组",
-    "JySaveDraft": "保存草稿"
+    "JySaveDraft": "保存草稿",
+    "JySaveOutDraft": "临时保存下载",
 }

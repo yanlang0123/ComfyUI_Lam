@@ -3,6 +3,18 @@ import { ComfyWidgets } from "/scripts/widgets.js";
 import { $el } from "../../../scripts/ui.js";
 import {CUSTOM_INT, recursiveLinkUpstream, transformFunc, swapInputs,swapOutputs, renameNodeInputs,renameNodeOutputs, removeNodeInputs,removeNodeOutputs, getDrawColor, computeCanvasSize} from "./utils.js"
 
+
+function download_file(url, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.responseType = "blob";
+    xhr.onload = function () {
+        if (this.status == 200&&callback) {
+            callback(this.response);
+        }
+    };
+    xhr.send();
+}
 app.registerExtension({
     name: "Comfy.lam.MultiTextConcatenate",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
@@ -14,24 +26,27 @@ app.registerExtension({
                 try {
                     const r = onDrawForeground?.apply?.(this, arguments);
                     const v = app.nodeOutputs?.[this.id + ""];
-                    if (!this.flags.collapsed && v) {
-                        let text=''
-                        if(['ForInnerEnd','DoWhileEnd'].indexOf(nodeData.name)>=0){
-                            if(v.value[0].indexOf('DOWHILE')!=-1){
-                                text=v.value[0].split('DOWHILE')[1]
-                                oldText=text
+                    if (!this.flags.collapsed && v ) {
+                        if(v.value){
+                            let text=''
+                            if(['ForInnerEnd','DoWhileEnd'].indexOf(nodeData.name)>=0){
+                                if(v.value[0].indexOf('DOWHILE')!=-1){
+                                    text=v.value[0].split('DOWHILE')[1]
+                                    oldText=text
+                                }else{
+                                    text=oldText
+                                }
                             }else{
-                                text=oldText
+                                text = v.value[0] + "";
                             }
-                        }else{
-                            text = v.value[0] + "";
+                            ctx.save();
+                            ctx.font = "bold 12px sans-serif";
+                            ctx.fillStyle = "dodgerblue";
+                            const sz = ctx.measureText(text);
+                            ctx.fillText(text, this.size[0]/2 - (sz.width + 5)/2, LiteGraph.NODE_SLOT_HEIGHT * 1);
+                            ctx.restore();
                         }
-                        ctx.save();
-                        ctx.font = "bold 12px sans-serif";
-                        ctx.fillStyle = "dodgerblue";
-                        const sz = ctx.measureText(text);
-                        ctx.fillText(text, this.size[0]/2 - (sz.width + 5)/2, LiteGraph.NODE_SLOT_HEIGHT * 1);
-                        ctx.restore();
+                        
                     }
                     return r;
                 } catch(e) {

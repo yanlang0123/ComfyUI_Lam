@@ -23,13 +23,13 @@ class Draft:
     _draft_content_file_base_name = "draft_content.json"
     _draft_meta_info_file_base_name = "draft_meta_info.json"
 
-    def __init__(self, name: str = "",width: int = 1920, height: int = 1080):
+    def __init__(self, name: str = "",width: int = 1920, height: int = 1080,draft_root: str = None):
         if not name:
             name = time.strftime("%Y%m%d.%H%M%S", time.localtime())
         pass
 
         # 草稿保存位置pi 
-        self._drafts_root = Config().jianYing['drafts_root']
+        self._drafts_root = draft_root if draft_root else Config().jianYing['drafts_root']
         self._draft_folder = os.path.join(self._drafts_root, name)
 
         # 从模板获取草稿的基础数据
