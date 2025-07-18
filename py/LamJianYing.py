@@ -3,11 +3,13 @@ from .JianYingDraft.utils.innerBizTypes import *
 from .JianYingDraft.utils import tools
 from .JianYingDraft.core.draft import Draft
 from .JianYingDraft.core.otherSettings import Clip_settings
-import whisper
+
 import os
 import folder_paths
 import zipfile
 import shutil
+import uuid
+import json
 
 class JyMediaAnimation:
     """
@@ -491,6 +493,7 @@ class JyAudio2CaptionsGroup:
     CATEGORY = "lam"
 
     def jy_audio2captions_group(self,model, file_path,start_at_track,color,size,transform_x,transform_y,captions_group=[]):
+        import whisper
         if not os.path.exists(file_path):
             raise Exception('对应文件不存在')
         model = whisper.load_model(model)
@@ -554,7 +557,51 @@ class JySaveDraft:
         
         timeSize=draft.calc_draft_duration()
         return (timeSize/1000000,)
-    
+
+importStr=r"""import json
+import os
+import shutil
+
+def replace_text(contentText, data):
+    for i in data:
+        primary=i["primary"]
+        newfile=i["newfile"]
+        #获取newfile的绝对路径
+        newfile=os.path.abspath(newfile)
+        #替换
+        contentText.replace(primary,newfile)
+    return contentText
+
+inputPath=input("请输入剪映草稿目录:")
+if not inputPath:
+    inputPath=r"C:\Users\Administrator\AppData\Local\JianyingPro\User Data\Projects\com.lveditor.draft/"
+#当前目录文件夹名称
+folderName=os.path.basename(os.getcwd())
+print(f"正在处理“{folderName}”目录下的剪映草稿...")
+
+data=json.load(open("file_counter.json"))
+contentText=""
+with open("draft_content.json","r") as f:
+    contentText=f.read()
+
+with open("draft_content.json","w") as f:
+    f.write(replace_text(contentText,data))
+
+with open("draft_meta_info.json","r") as f:
+    contentText=f.read()
+
+with open("draft_meta_info.json","w") as f:
+    f.write(replace_text(contentText,data))
+
+newDraftsPath=os.path.join(inputPath,folderName)
+os.makedirs(newDraftsPath,exist_ok=True)
+
+shutil.copyfile("draft_content.json",os.path.join(newDraftsPath,"draft_content.json"))
+shutil.copyfile("draft_meta_info.json",os.path.join(newDraftsPath,"draft_meta_info.json"))"""
+
+importBat='''python importDraft.py
+pause
+'''
 class JySaveOutDraft:
     def __init__(self):
         self.output_dir = folder_paths.get_temp_directory()
@@ -587,8 +634,12 @@ class JySaveOutDraft:
         mediaList = [m for m in medias]
         if audios:
             mediaList.extend([a for a in audios])
+
+        fileList=[]
+        fileCounter=[]
         for m in mediaList:
             draft.add_media(**m)
+            fileList.append(m['media_file_full_name'])
         
         if effects:
             for e in effects:
@@ -597,9 +648,30 @@ class JySaveOutDraft:
         if captions:
             for c in captions:
                 draft.add_subtitle(**c)
-
         draft.save()
         folder_to_zip=os.path.join(self.output_dir, draft_name)
+        filePath=os.path.join(folder_to_zip, "files")
+        if not os.path.exists(filePath):
+            os.makedirs(filePath)
+        
+        for file in fileList:
+            #复制文件到当前目录
+            newFile=os.path.join(filePath, os.path.basename(file))
+            if os.path.exists(newFile):
+                newFile=os.path.join(filePath, os.path.splitext(os.path.basename(file))[0]+"_"+str(uuid.uuid4())+os.path.splitext(file)[1])
+            shutil.copy(file, newFile)
+
+            fileCounter.append({"primary":file, "newfile":"files/"+os.path.basename(newFile)})
+        
+        with open(os.path.join(folder_to_zip, "file_counter.json"), "w", encoding="utf-8") as f:
+            f.write(json.dumps(fileCounter))
+
+        with open(os.path.join(folder_to_zip, "importDraft.py"), "w", encoding="utf-8") as f:
+            f.write(importStr)
+
+        with open(os.path.join(folder_to_zip, "导入草稿.bat"), "w", encoding="utf-8") as f:
+            f.write(importBat)
+
         zip_filename=os.path.join(self.output_dir, draft_name+".zip")
         # 创建一个ZipFile对象
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
