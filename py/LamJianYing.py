@@ -144,7 +144,7 @@ class JyCaptionsNative:
         return {
             "required": {
                 "text": ("STRING",{"default": "","multiline": True,"tooltip": "字幕内容"}),
-                "color": ("STRING",{"default": "#000000","tooltip": "字幕颜色"}),
+                "color": ("STRING",{"default": "#FFFFFF","tooltip": "字幕颜色"}),
                 "size": ("FLOAT", {"default": 8.0, "min": 0.0, "max":300, "step": 1.0,"tooltip": "字幕大小"}),
                 "transform_x": ("FLOAT", {"default": 0.0, "min": -1.0, "max":1.0, "step": 0.1,"tooltip": "水平位移, 单位为半个画布宽"}),
                 "transform_y": ("FLOAT", {"default": -0.8, "min": -1.0, "max":1.0, "step": 0.1,"tooltip": "垂直位移, 单位为半个画布高"}),
@@ -475,7 +475,7 @@ class JyAudio2CaptionsGroup:
                 "model":(["tiny","base","small","medium","large-v1","large-v2","large-v3"],{"default": "medium"}),
                 "file_path": ("STRING",{"default": "","tooltip": "音频地址"}),
                 "start_at_track": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "草稿添加时间（秒）"}),
-                "color": ("STRING",{"default": "#000000","tooltip": "字幕颜色"}),
+                "color": ("STRING",{"default": "#FFFFFF","tooltip": "字幕颜色"}),
                 "size": ("FLOAT", {"default": 8.0, "min": 0.0, "max":300, "step": 1.0,"tooltip": "字幕大小"}),
                 "transform_x": ("FLOAT", {"default": 0.0, "min": -1.0, "max":1.0, "step": 0.1,"tooltip": "水平位移, 单位为半个画布宽"}),
                 "transform_y": ("FLOAT", {"default": -0.8, "min": -1.0, "max":1.0, "step": 0.1,"tooltip": "垂直位移, 单位为半个画布高"}),

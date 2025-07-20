@@ -28,12 +28,12 @@ class AudioPath:
 
     CATEGORY = "lam"
 
-    def get_audio_path(self,audio):
+    def get_audio_path(self,audio,audioUI=None):
         autio_path = folder_paths.get_annotated_filepath(audio,self.input_audio_dir)
         return (autio_path, )
     
     @classmethod
-    def IS_CHANGED(cls, audio):
+    def IS_CHANGED(cls, audio,audioUI=None):
         input_audio_dir = folder_paths.get_input_directory()
         audio_path = folder_paths.get_annotated_filepath(audio,input_audio_dir)
         mod_time = os.path.getmtime(audio_path)

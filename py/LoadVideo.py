@@ -21,7 +21,7 @@ class LamLoadVideo:
                     "videoPath": ("STRING", {"forceInput": True}),
                     "sample_start_idx": ("INT", {"default": 1, "min": -10000, "max": 10000}),
                     "n_sample_frames": ("INT", {"default": 0, "min": 0, "max": 100000}),
-                    "extract_audio": ([True,False], ),
+                    "extract_audio": ([True,False],{"default": False} ),
                     "filename_prefix": ("STRING", {"default": "comfyUI"}),
                     },
                 }
