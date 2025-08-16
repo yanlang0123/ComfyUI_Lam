@@ -569,8 +569,9 @@ def replace_text(contentText, data):
         newfile=i["newfile"]
         #获取newfile的绝对路径
         newfile=os.path.abspath(newfile)
+        newfile=newfile.replace("\\","/")
         #替换
-        contentText.replace(primary,newfile)
+        contentText=contentText.replace(primary,newfile)
     return contentText
 
 inputPath=input("请输入剪映草稿目录:")
