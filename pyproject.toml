@@ -1,7 +1,7 @@
 [project]
 name = "comfyui_lam"
 description = "This extension has some useful nodes, loops, wechat public number +AI chat drawing, distributed cluster"
-version = "0.2.3"
+version = "0.3.50"
 license = {file = "LICENSE"}
 dependencies = ["openai", "opencv-python", "edge_tts", "matplotlib", "scikit-image", "omegaconf", "pytorch_lightning", "pandas", "kornia", "qrcode", "imageio", "imageio-ffmpeg", "tensorflow", "yacs", "pydub", "filterpy", "facexlib", "librosa", "face_alignment", "pyzbar", "redis", "zhipuai"]
 
