@@ -485,8 +485,8 @@ class JyAudio2CaptionsGroup:
             }
         }
 
-    RETURN_TYPES = ("CAPTIONS_GROUP",)
-    RETURN_NAMES = ("字幕组",)
+    RETURN_TYPES = ("CAPTIONS_GROUP","STRING",)
+    RETURN_NAMES = ("字幕组","文字内容",)
     OUTPUT_NODE = False
     FUNCTION = "jy_audio2captions_group"
 
@@ -499,6 +499,7 @@ class JyAudio2CaptionsGroup:
         model = whisper.load_model(model)
         result = model.transcribe(file_path)
         segments = result["segments"]
+        resultText = result["text"]
         captions_group=[*captions_group]
         for i in range(len(segments)):
             text = segments[i]["text"]
@@ -508,7 +509,7 @@ class JyAudio2CaptionsGroup:
             captions={"subtitle": text,"color":color,"size":size, "start_at_track": int(start*1000000), "duration": int(duration*1000000)}
             captions['clip_settings']=Clip_settings(transform_y=transform_y,transform_x=transform_x)
             captions_group.append(captions)
-        return (captions_group,)
+        return (captions_group,resultText,)
 
 class JySaveDraft:
     def __init__(self):
