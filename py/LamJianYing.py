@@ -559,7 +559,8 @@ class JySaveDraft:
         timeSize=draft.calc_draft_duration()
         return (timeSize/1000000,)
 
-importStr=r"""import json
+importStr=r"""# -*- coding: utf-8 -*-
+import json
 import os
 import shutil
 
@@ -583,16 +584,16 @@ print(f"正在处理“{folderName}”目录下的剪映草稿...")
 
 data=json.load(open("file_counter.json"))
 contentText=""
-with open("draft_content.json","r") as f:
+with open("draft_content.json","r",encoding='utf-8') as f:
     contentText=f.read()
 
-with open("draft_content.json","w") as f:
+with open("draft_content.json","w",encoding='utf-8') as f:
     f.write(replace_text(contentText,data))
 
-with open("draft_meta_info.json","r") as f:
+with open("draft_meta_info.json","r",encoding='utf-8') as f:
     contentText=f.read()
 
-with open("draft_meta_info.json","w") as f:
+with open("draft_meta_info.json","w",encoding='utf-8') as f:
     f.write(replace_text(contentText,data))
 
 newDraftsPath=os.path.join(inputPath,folderName)
