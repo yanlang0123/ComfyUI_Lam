@@ -6,15 +6,11 @@ editlist=[{
 	"changs":[
 		{
 			"primit":'''else:
-                return web.json_response({"error": "no prompt", "node_errors": []}, status=400)''',
+                error = {''',
 			"edit":'''elif 'prompt_id' in json_data:
                 return web.json_response(json_data)
             else:
-                return web.json_response({"error": "no prompt", "node_errors": []}, status=400)'''
-		},
-		{
-			"primit":'''info['display_name'] = nodes.NODE_DISPLAY_NAME_MAPPINGS[node_class] if node_class in nodes.NODE_DISPLAY_NAME_MAPPINGS.keys() else node_class''',
-			"edit":'''info['display_name'] = self.displayName[node_class] if hasattr(self,'displayName') and node_class in self.displayName.keys() else nodes.NODE_DISPLAY_NAME_MAPPINGS[node_class] if node_class in nodes.NODE_DISPLAY_NAME_MAPPINGS.keys() else node_class'''
+                error = {'''
 		}
 	]
 },{
