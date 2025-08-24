@@ -8,6 +8,7 @@ pytorch_lightning
 pandas
 kornia
 qrcode
+uiautomation
 imageio
 imageio-ffmpeg
 tensorflow
@@ -25,4 +26,3 @@ websocket-client
 insightface
 basiclibrary-py
 pymediainfo
-uiautomation
