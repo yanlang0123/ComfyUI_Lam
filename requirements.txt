@@ -25,3 +25,4 @@ websocket-client
 insightface
 basiclibrary-py
 pymediainfo
+uiautomation

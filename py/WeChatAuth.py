@@ -19,7 +19,7 @@ import folder_paths
 from comfy.cli_args import args
 from .src.wechat.redisSub import RedisSubscriber,run_with_reconnect,r
 from .src.wechat.webSocketUtil import WebSocketClient
-from threading import Thread, current_thread
+import threading
 from typing import List, Literal, NamedTuple, Optional
 import copy
 import asyncio
@@ -664,6 +664,24 @@ def trigger_on_prompt(self,json_data,isRun=True):
     json_data=section_handle(json_data)
     return self.old_trigger_on_prompt(json_data)
 
+def run_async_in_thread(coro):
+    """在新线程中运行异步代码"""
+    result = None
+    event = threading.Event()
+
+    def run():
+        nonlocal result
+        try:
+            result = asyncio.run(coro)
+        except Exception as e:
+            result = {"error": str(e)}
+        finally:
+            event.set()
+
+    thread = threading.Thread(target=run)
+    thread.start()
+    event.wait()
+    return result
 def prompt(self,json_data):
     json_data=section_handle(json_data)
     json_data = self.old_trigger_on_prompt(json_data)
@@ -684,7 +702,11 @@ def prompt(self,json_data):
 
         if "prompt" in json_data:
             prompt = json_data["prompt"]
-            valid = execution.validate_prompt(prompt)
+            partial_execution_targets = None
+            if "partial_execution_targets" in json_data:
+                partial_execution_targets = json_data["partial_execution_targets"]
+
+            valid = run_async_in_thread(execution.validate_prompt(prompt_id, prompt, partial_execution_targets))
             extra_data = {}
             if "extra_data" in json_data:
                 extra_data = json_data["extra_data"]
@@ -1187,9 +1209,9 @@ if  Config().cluster:
         prefix=''
         if Config().cluster["isSection"]:
             prefix='section'
-        Thread(target=refresh_heartbeat,daemon=True, args=(prefix,)).start()
+        threading.Thread(target=refresh_heartbeat,daemon=True, args=(prefix,)).start()
     
-    Thread(target=addSubscribe,daemon=True, args=()).start()
+    threading.Thread(target=addSubscribe,daemon=True, args=()).start()
     if PromptServer.instance.prompt_queue:
         PromptServer.instance.prompt_queue.task_done=types.MethodType(task_done,PromptServer.instance.prompt_queue)
         

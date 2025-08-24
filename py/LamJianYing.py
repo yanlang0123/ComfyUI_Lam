@@ -1,16 +1,116 @@
-from .JianYingDraft.utils.dataStruct import TransitionData, AnimationData
-from .JianYingDraft.utils.innerBizTypes import *
-from .JianYingDraft.utils import tools
-from .JianYingDraft.core.draft import Draft
-from .JianYingDraft.core.otherSettings import Clip_settings
-
 import os
 import folder_paths
 import zipfile
 import shutil
 import uuid
 import json
+from . import pyJianYingDraft as draft
+from .pyJianYingDraft import Intro_type,Outro_type,Group_animation_type, Transition_type, trange, tim
 
+class JyAudioTrack:
+    """
+    音频轨道
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "audio_group":("AUDIO_GROUP",),
+                "track_name": ("STRING",{"default": "audio","tooltip": "轨道名称"}),
+            }
+        }
+
+    RETURN_TYPES = ("TRACK",)
+    RETURN_NAMES = ("轨道",)
+
+    OUTPUT_NODE = False     #是否为输出节点
+
+    FUNCTION = "get_track"
+
+    CATEGORY = "lam"
+
+    def get_track(self, audio_group, track_name):
+        track={"track_type": draft.Track_type.audio,"track_name":track_name,"group":audio_group}
+        return (track,)
+    
+class JyMediaTrack:
+    """
+    视频/图片轨道
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "meida_group":("MEIDA_GROUP",),
+                "track_name": ("STRING",{"default": "audio","tooltip": "轨道名称"}),
+            }
+        }
+
+    RETURN_TYPES = ("TRACK",)
+    RETURN_NAMES = ("轨道",)
+
+    OUTPUT_NODE = False     #是否为输出节点
+
+    FUNCTION = "get_track"
+
+    CATEGORY = "lam"
+
+    def get_track(self, meida_group, track_name):
+        track={"track_type": draft.Track_type.video,"track_name":track_name,"group":meida_group}
+        return (track,)
+    
+class JyCaptionsTrack:
+    """
+    字幕轨道
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "captions_group":("CAPTIONS_GROUP",),
+                "track_name": ("STRING",{"default": "audio","tooltip": "轨道名称"}),
+            }
+        }
+
+    RETURN_TYPES = ("TRACK",)
+    RETURN_NAMES = ("轨道",)
+
+    OUTPUT_NODE = False     #是否为输出节点
+
+    FUNCTION = "get_track"
+
+    CATEGORY = "lam"
+
+    def get_track(self, captions_group, track_name):
+        track={"track_type": draft.Track_type.audio,"track_name":track_name,"group":captions_group}
+        return (track,)
+    
+class JyEffectTrack:
+    """
+    特效轨道
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "effect_group":("EFFECT_GROUP",),
+                "track_name": ("STRING",{"default": "audio","tooltip": "轨道名称"}),
+            }
+        }
+
+    RETURN_TYPES = ("TRACK",)
+    RETURN_NAMES = ("轨道",)
+
+    OUTPUT_NODE = False     #是否为输出节点
+
+    FUNCTION = "get_track"
+
+    CATEGORY = "lam"
+
+    def get_track(self, effect_group, track_name):
+        track={"track_type": draft.Track_type.effect,"track_name":track_name,"group":effect_group}
+        return (track,)
+    
 class JyMediaAnimation:
     """
     带动画图片/视频
@@ -26,6 +126,7 @@ class JyMediaAnimation:
                 "start_in_media": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "视频开始时间（秒）"}),
                 "start_at_track": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "草稿添加时间（秒）"}),
                 "duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 9999999, "step": 0.01,"tooltip": "持续时间（秒）"}),
+                "volume": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 20.0, "step": 0.01,"tooltip": "音量"}),
             },
             "optional": {
                 "meida_group":("MEIDA_GROUP",),
@@ -35,7 +136,7 @@ class JyMediaAnimation:
             }
         }
 
-    RETURN_TYPES = ("ANIMATION_MEIDA","MEIDA_GROUP",)
+    RETURN_TYPES = ("MEIDA","MEIDA_GROUP",)
     RETURN_NAMES = ("带动画图片/视频","图片/视频组",)
 
     OUTPUT_NODE = False     #是否为输出节点
@@ -44,18 +145,18 @@ class JyMediaAnimation:
 
     CATEGORY = "lam"
 
-    def animation_video(self, file_path, start_in_media, start_at_track, duration,meida_group=[], animation_in:AnimationData=None, animation_group:AnimationData=None, animation_out:AnimationData=None):
+    def animation_video(self, file_path, start_in_media, start_at_track, duration,volume,meida_group=[], animation_in=None, animation_group=None, animation_out=None):
         if not os.path.exists(file_path):
             raise Exception('对应文件不存在')
         meida_group=[*meida_group]
-        animation_datas: list[AnimationData] = []
+        animation_datas = []
         if animation_in:
             animation_datas.append(animation_in)
         if animation_group:
             animation_datas.append(animation_group)
         if animation_out:
             animation_datas.append(animation_out)
-        meida={"media_file_full_name": file_path, "start_in_media": int(start_in_media*1000000), "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000), "animation_datas": animation_datas}
+        meida={"media_file_full_name": file_path, "start_in_media": int(start_in_media*1000000), "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000),"volume":volume, "animation_datas": animation_datas}
         meida_group.append(meida)
         return (meida,meida_group,)
 
@@ -74,6 +175,7 @@ class JyMediaNative:
                 "start_in_media": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "视频开始时间（秒）"}),
                 "start_at_track": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "草稿添加时间（秒）"}),
                 "duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 9999999, "step": 0.01,"tooltip": "持续时间（秒）"}),
+                "volume": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 20.0, "step": 0.01,"tooltip": "音量"}),
             },
             "optional": {
                 "meida_group":("MEIDA_GROUP",)
@@ -87,11 +189,11 @@ class JyMediaNative:
 
     CATEGORY = "lam"
 
-    def jy_media(self, file_path, start_in_media, start_at_track, duration,meida_group=[]):
+    def jy_media(self, file_path, start_in_media, start_at_track, duration,volume,meida_group=[]):
         if not os.path.exists(file_path):
             raise Exception('对应文件不存在')
         meida_group=[*meida_group]
-        meida={"media_file_full_name": file_path, "start_in_media": int(start_in_media*1000000), "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000)}
+        meida={"media_file_full_name": file_path, "start_in_media": int(start_in_media*1000000), "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000),"volume":volume}
         meida_group.append(meida)
         return (meida,meida_group,)
 
@@ -110,6 +212,7 @@ class JyAudioNative:
                 "start_in_media": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "音频开始时间（秒）"}),
                 "start_at_track": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "草稿添加时间（秒）"}),
                 "duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 9999999, "step": 0.01,"tooltip": "持续时间（秒）"}),
+                "volume": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 20.0, "step": 0.01,"tooltip": "音量"}),
             },
             "optional": {
                 "audio_group":("AUDIO_GROUP",)
@@ -124,11 +227,11 @@ class JyAudioNative:
 
     CATEGORY = "lam"
 
-    def jy_audio(self, file_path, start_in_media, start_at_track, duration,audio_group=[]):
+    def jy_audio(self, file_path, start_in_media, start_at_track, duration,volume,audio_group=[]):
         if not os.path.exists(file_path):
             raise Exception('对应文件不存在')
         audio_group=[*audio_group]
-        audio={"media_file_full_name": file_path, "start_in_media": int(start_in_media*1000000), "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000)}
+        audio={"media_file_full_name": file_path, "start_in_media": int(start_in_media*1000000), "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000),"volume":volume}
         audio_group.append(audio)
         return (audio,audio_group,)
 
@@ -144,11 +247,12 @@ class JyCaptionsNative:
         return {
             "required": {
                 "text": ("STRING",{"default": "","multiline": True,"tooltip": "字幕内容"}),
+                "font":(draft.Font_type.get_all_names(),{"default": "宋体","tooltip": "字体"}),
                 "color": ("STRING",{"default": "#FFFFFF","tooltip": "字幕颜色"}),
                 "size": ("FLOAT", {"default": 8.0, "min": 0.0, "max":300, "step": 1.0,"tooltip": "字幕大小"}),
                 "transform_x": ("FLOAT", {"default": 0.0, "min": -1.0, "max":1.0, "step": 0.1,"tooltip": "水平位移, 单位为半个画布宽"}),
                 "transform_y": ("FLOAT", {"default": -0.8, "min": -1.0, "max":1.0, "step": 0.1,"tooltip": "垂直位移, 单位为半个画布高"}),
-                "start_at_track": ("FLOAT", {"default": 1.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "草稿添加时间（秒）"}),
+                "start_at_track": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "草稿添加时间（秒）"}),
                 "duration": ("FLOAT", {"default": 0.1, "min": 0.0, "max": 9999999, "step": 0.01,"tooltip": "持续时间（秒）"}),
             },
             "optional": {
@@ -164,10 +268,10 @@ class JyCaptionsNative:
 
     CATEGORY = "lam"
 
-    def jy_captions(self, text, color,size,transform_x,transform_y, start_at_track, duration,captions_group=[]):
+    def jy_captions(self, text,font, color,size,transform_x,transform_y, start_at_track, duration,captions_group=[]):
         captions_group=[*captions_group]
-        captions={"subtitle": text,"color":color,"size":size, "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000)}
-        captions['clip_settings']=Clip_settings(transform_y=transform_y,transform_x=transform_x)
+        captions={"subtitle": text,"font":font,"color":color,"size":size, "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000)}
+        captions['clip_settings']=draft.Clip_settings(transform_y=transform_y,transform_x=transform_x)
         captions_group.append(captions)
         return (captions,captions_group,)
 
@@ -182,7 +286,7 @@ class JyEffectNative:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "effect": (list(effectDict.keys()),),
+                "effect": (list(draft.Video_scene_effect_type.get_all_names()),),
                 "start_at_track": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "草稿添加时间（秒）"}),
                 "duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 9999999, "step": 0.01,"tooltip": "持续时间（秒）"}),
             },
@@ -217,37 +321,32 @@ class JyTransition:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "transition": (list(transitionDict.keys()),),
+                "transition": (list(Transition_type.get_all_names()),),
                 "duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 9999999, "step": 0.01,"tooltip": "持续时间（秒）"}),
                 "meida_out":("MEIDA",),
             },
             "optional": {
-                "meida_in":("MEIDA",),
                 "meida_group":("MEIDA_GROUP",)
             }
         }
 
-    RETURN_TYPES = ("TRANSITION","MEIDA_GROUP",)
-    RETURN_NAMES = ("转场","图片/视频组",)
+    RETURN_TYPES = ("MEIDA","MEIDA_GROUP",)
+    RETURN_NAMES = ("图片/视频","图片/视频组",)
     OUTPUT_NODE = False
     FUNCTION = "jy_transition"
 
     CATEGORY = "lam"
 
-    def jy_transition(self, transition, duration,meida_out,meida_in=None,meida_group=[]):
+    def jy_transition(self, transition, duration,meida_out,meida_group=[]):
         meida_group=[*meida_group]
         #添加转场
-        transition_data: TransitionData = tools.generate_transition_data(
-            name_or_resource_id=transition,  # 转场名称（可以是内置的转场名称，也可以是剪映本身的转场资源id）
-            duration=int(duration*1000000),  # 转场持续时间 
-        )
+        transition_data = {
+            "transition":transition,  # 转场名称（可以是内置的转场名称，也可以是剪映本身的转场资源id）
+            "duration":int(duration*1000000),  # 转场持续时间 
+        }
         meida_out['transition_data']=transition_data
         meida_group.append(meida_out)
-        transition=[meida_out]
-        if meida_in:
-            meida_group.append(meida_in)
-            transition.append(meida_in)
-        return (transition,meida_group,)
+        return (meida_out,meida_group,)
     
 class JyAnimationIn:
     """
@@ -260,8 +359,7 @@ class JyAnimationIn:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "animation": (list(animationInDict.keys()),),
-                "start": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "入场动画的起始时间永远为0（即便设置了其他起始时间，也会被忽略）(秒)"}),
+                "animation": (list(Intro_type.get_all_names()),),
                 "duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 9999999, "step": 0.01,"tooltip": "持续时间（秒）"}),
             }
         }
@@ -273,17 +371,16 @@ class JyAnimationIn:
 
     CATEGORY = "lam"
 
-    def jy_animation_in(self, animation, start, duration):
-        return (tools.generate_animation_data(
-            name_or_resource_id=animation,  # 动画名称（可以是内置的动画名称，也可以是剪映本身的动画资源id）
-            start=int(start*1000000),  # 入场动画的起始时间永远为0（即便设置了其他起始时间，也会被忽略）。（这是一个相对素材片段的时间，不是时间轴上的绝对时间）
-            duration=int(duration*1000000),  # 动画持续时间
-            animation_type="in",  # 动画类型
-        ),)
+    def jy_animation_in(self, animation, duration):
+        return ({
+            "animation":animation,  # 动画名称（可以是内置的动画名称，也可以是剪映本身的动画资源id）
+            "duration":int(duration*1000000),  # 动画持续时间
+            "animation_type":"in",  # 动画类型
+        },)
 
 class JyAnimationGroup:
     """
-    入场动画
+    中间动画
     """
     def __init__(self):
         pass
@@ -292,26 +389,24 @@ class JyAnimationGroup:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "animation": (list(animationGroupDict.keys()),),
-                "start": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "动画开始时间(秒)"}),
+                "animation": (list(Group_animation_type.get_all_names()),),
                 "duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 9999999, "step": 0.01,"tooltip": "持续时间（秒）"}),
             }
         }
 
     RETURN_TYPES = ("ANIMATION_GROUP",)
-    RETURN_NAMES = ("入场动画",)
+    RETURN_NAMES = ("中间动画",)
     OUTPUT_NODE = False
     FUNCTION = "jy_animation_group"
 
     CATEGORY = "lam"
 
-    def jy_animation_group(self, animation, start, duration):
-        return (tools.generate_animation_data(
-            name_or_resource_id=animation,  # 动画名称（可以是内置的动画名称，也可以是剪映本身的动画资源id）
-            start=int(start*1000000),  # 动画开始时间
-            duration=int(duration*1000000), # 动画持续时间
-            animation_type="group",  # 动画类型
-        ),)
+    def jy_animation_group(self, animation, duration):
+        return ({
+            "animation":animation,  # 动画名称（可以是内置的动画名称，也可以是剪映本身的动画资源id）
+            "duration":int(duration*1000000),  # 动画持续时间
+            "animation_type":"group",  # 动画类型
+        },)
     
 class JyAnimationOut:
     """
@@ -324,8 +419,7 @@ class JyAnimationOut:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "animation": (list(animationOutDict.keys()),),
-                "start": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "出场动画的起始时间永远为0（具体的时间会根据素材片段的长度自动计算)(秒)"}),
+                "animation": (list(Outro_type.get_all_names()),),
                 "duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 9999999, "step": 0.01,"tooltip": "持续时间（秒）"}),
             }
         }
@@ -337,13 +431,12 @@ class JyAnimationOut:
 
     CATEGORY = "lam"
 
-    def jy_animation_out(self, animation, start, duration):
-        return (tools.generate_animation_data(
-            name_or_resource_id=animation,  # 动画名称（可以是内置的动画名称，也可以是剪映本身的动画资源id）
-            start=int(start*1000000),  # 出场动画的起始时间永远为0（具体的时间会根据素材片段的长度自动计算）。（这是一个相对素材片段的时间，不是时间轴上的绝对时间）
-            duration=int(duration*1000000),  # 动画持续时间
-            animation_type="out",  # 动画类型
-        ),)
+    def jy_animation_out(self, animation, duration):
+        return ({
+            "animation":animation,  # 动画名称（可以是内置的动画名称，也可以是剪映本身的动画资源id）
+            "duration":int(duration*1000000),  # 动画持续时间
+            "animation_type":"out",  # 动画类型
+        },)
     
 
 class JyMultiMediaGroup:
@@ -354,10 +447,10 @@ class JyMultiMediaGroup:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "meida0": ("MEIDA,ANIMATION_MEIDA,TRANSITION", ),
+                "meida0": ("MEIDA", ),
             },
             "optional": {
-                "meida1": ("MEIDA,ANIMATION_MEIDA,TRANSITION", ),
+                "meida1": ("MEIDA", ),
             }
         }
 
@@ -475,24 +568,33 @@ class JyAudio2CaptionsGroup:
                 "model":(["tiny","base","small","medium","large-v1","large-v2","large-v3"],{"default": "medium"}),
                 "file_path": ("STRING",{"default": "","tooltip": "音频地址"}),
                 "start_at_track": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "草稿添加时间（秒）"}),
+                "font":(draft.Font_type.get_all_names(),{"default": "宋体","tooltip": "字体"}),
                 "color": ("STRING",{"default": "#FFFFFF","tooltip": "字幕颜色"}),
                 "size": ("FLOAT", {"default": 8.0, "min": 0.0, "max":300, "step": 1.0,"tooltip": "字幕大小"}),
                 "transform_x": ("FLOAT", {"default": 0.0, "min": -1.0, "max":1.0, "step": 0.1,"tooltip": "水平位移, 单位为半个画布宽"}),
                 "transform_y": ("FLOAT", {"default": -0.8, "min": -1.0, "max":1.0, "step": 0.1,"tooltip": "垂直位移, 单位为半个画布高"}),
+                "row_max_size": ("INT", {"default": 16, "min": 1, "max": 1000, "step": 1,"tooltip": "行最大字符数, 单句超过将自动换行"}),
             },
             "optional": {
                 "captions_group":("CAPTIONS_GROUP",)
             }
         }
 
-    RETURN_TYPES = ("CAPTIONS_GROUP","STRING",)
-    RETURN_NAMES = ("字幕组","文字内容",)
+    RETURN_TYPES = ("CAPTIONS_GROUP","STRING","FLOAT",)
+    RETURN_NAMES = ("字幕组","文字内容","结束时间",)
     OUTPUT_NODE = False
     FUNCTION = "jy_audio2captions_group"
 
     CATEGORY = "lam"
 
-    def jy_audio2captions_group(self,model, file_path,start_at_track,color,size,transform_x,transform_y,captions_group=[]):
+    def add_newlines(self,text, max_length):
+        """在指定长度处添加换行符"""
+        result = []
+        for i in range(0, len(text), max_length):
+            result.append(text[i:i + max_length])
+        return '\n'.join(result)
+
+    def jy_audio2captions_group(self,model, file_path,start_at_track,font,color,size,transform_x,transform_y,row_max_size=16,captions_group=[]):
         import whisper
         if not os.path.exists(file_path):
             raise Exception('对应文件不存在')
@@ -501,15 +603,17 @@ class JyAudio2CaptionsGroup:
         segments = result["segments"]
         resultText = result["text"]
         captions_group=[*captions_group]
+        end_time=0
         for i in range(len(segments)):
-            text = segments[i]["text"]
-            start=start_at_track+segments[i]["start"]
-            end=segments[i]["end"]
-            duration=end-start
-            captions={"subtitle": text,"color":color,"size":size, "start_at_track": int(start*1000000), "duration": int(duration*1000000)}
-            captions['clip_settings']=Clip_settings(transform_y=transform_y,transform_x=transform_x)
+            text = self.add_newlines(segments[i]["text"],row_max_size)
+            start=round(start_at_track+segments[i]["start"], 2)
+            end=round(segments[i]["end"], 2)
+            duration=round(end-segments[i]["start"], 2)
+            captions={"subtitle": text,"font":font,"color":color,"size":size, "start_at_track": int(start*1000000), "duration": int(duration*1000000)}
+            captions['clip_settings']=draft.Clip_settings(transform_y=transform_y,transform_x=transform_x)
+            end_time=start+duration
             captions_group.append(captions)
-        return (captions_group,resultText,)
+        return (captions_group,resultText,end_time,)
 
 class JySaveDraft:
     def __init__(self):
@@ -528,6 +632,7 @@ class JySaveDraft:
                 "audios": ("AUDIO_GROUP", ),
                 "effects": ("EFFECT_GROUP", ),
                 "captions": ("CAPTIONS_GROUP", ),
+                "track0": ("TRACK", ),
             }
         }
 
@@ -538,26 +643,145 @@ class JySaveDraft:
     OUTPUT_NODE = True
     CATEGORY = "lam"
 
-    def save_draft(self,medias,draft_name,width,height,audios=None,effects=None,captions=None):
-        draft = Draft(draft_name,width,height)
-        mediaList = [m for m in medias]
-        if audios:
-            mediaList.extend([a for a in audios])
-        for m in mediaList:
-            draft.add_media(**m)
-        
-        if effects:
-            for e in effects:
-                draft.add_effect(**e)
-        
-        if captions:
-            for c in captions:
-                draft.add_subtitle(**c)
+    def save_draft(self,medias,draft_name,width,height,audios=[],effects=[],captions=[],**kwargs):
+        tracks=[]
+        for arg in kwargs:
+            if arg.startswith('track'):
+                tracks.append(kwargs[arg])
+        maxTime,_=self.save_draft_fun(medias,draft_name,width,height,audios,effects,captions,tracks)
+        return (maxTime,)
+    
+    def add_track_medias(self,script,medias,track_name,maxTime,fileList):
+        after_segment=None
+        for media in medias:
+            #meida={"media_file_full_name": file_path, "start_in_media": int(start_in_media*1000000), "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000),"volume":volume, "animation_datas": animation_datas}
+            v_material= None
+            if media["duration"]==0:
+                v_material=draft.Video_material(media["media_file_full_name"])
 
-        draft.save()
+            target_timerange=trange(media["start_at_track"],v_material.duration if v_material else media["duration"])
+            if media["start_at_track"]<=0:
+                if after_segment:
+                    target_timerange=trange(after_segment.end,v_material.duration if v_material else media["duration"])
+                    
+            video_segment = draft.Video_segment(media['media_file_full_name'], target_timerange,volume=media["volume"])
+            fileList.append(media['media_file_full_name'])
+            #     {
+            #     "animation":animation,  # 动画名称（可以是内置的动画名称，也可以是剪映本身的动画资源id）
+            #     "duration":int(duration*1000000),  # 动画持续时间
+            #     "animation_type":"in",  # 动画类型
+            # }
+            if "animation_datas" in media:
+                for animation in media["animation_datas"]:
+                    if animation["animation_type"] == "in":
+                        video_segment.add_animation(Intro_type.from_name(animation["animation"]),animation['duration'] if animation['duration']>0 else None)
+                    elif animation["animation_type"] == "group":
+                        video_segment.add_animation(Group_animation_type.from_name(animation["animation"]),animation['duration'] if animation['duration']>0 else None)
+                    elif animation["animation_type"] == "out":
+                        video_segment.add_animation(Outro_type.from_name(animation["animation"]),animation['duration'] if animation['duration']>0 else None)
+            # transition_data = {
+            #     "transition":transition,  # 转场名称（可以是内置的转场名称，也可以是剪映本身的转场资源id）
+            #     "duration":int(duration*1000000),  # 转场持续时间 
+            # }
+            if "transition_data" in media:
+                video_segment.add_transition(Transition_type.from_name(media["transition_data"]['transition']),duration=media["transition_data"]['duration'] if media["transition_data"]['duration']>0 else None)
+            script.add_segment(video_segment,track_name)
+            after_segment=video_segment
+            if maxTime<video_segment.end:
+                maxTime=video_segment.end
+        return maxTime
+
+    def add_track_audios(self,script,audios,track_name,maxTime,fileList):
+        after_audio=None
+        for audio in audios:
+            a_material=None
+            if audio["duration"]==0:
+                a_material=draft.Audio_material(audio['media_file_full_name'])
+            target_timerange=trange(audio["start_at_track"],a_material.duration if a_material else audio["duration"])
+            if audio["start_at_track"]<=0:
+                if after_audio:
+                    target_timerange=trange(after_audio.end,a_material.duration if a_material else audio["duration"])
+            
+            audio_segment = draft.Audio_segment(audio['media_file_full_name'],
+                                target_timerange,  # 片段将位于轨道上的0s-5s（注意5s表示持续时长而非结束时间）
+                                volume=audio["volume"])          # 音量设置为60%(-4.4dB)
+            fileList.append(audio['media_file_full_name'])
+            script.add_segment(audio_segment,track_name)
+            after_audio=audio_segment
+            if maxTime<audio_segment.end:
+                maxTime=audio_segment.end
+        return maxTime
+    def add_track_captions(self,script,captions,track_name,maxTime):
+        # captions={"subtitle": text,"color":color,"size":size, "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000)}
+        # captions['clip_settings']=draft.Clip_settings(transform_y=transform_y,transform_x=transform_x)
+        after_caption=None
+        for caption in captions:
+            target_timerange=trange(caption["start_at_track"],caption["duration"])
+            if caption["start_at_track"]<=0:
+                if after_caption:
+                    target_timerange=trange(after_caption.end,caption["duration"])
+            r = round(int(caption['color'][1:3], 16)/ 255, 6)
+            g = round(int(caption['color'][3:5], 16)/ 255, 6)
+            b = round(int(caption['color'][5:7], 16)/ 255, 6)
+            text_segment = draft.Text_segment(
+                caption["subtitle"], target_timerange,  # 文本片段的首尾与上方视频片段一致
+                font=draft.Font_type.from_name(caption['font']),                                      # 设置字体
+                style=draft.Text_style(size=float(caption['size']),color=(r,g,b)),                    
+                border=draft.Text_border(color=(0, 0, 0.0)),                      # 设置边框颜色为黑色
+                clip_settings=caption['clip_settings']               # 位置在屏幕下方
+            )
+            script.add_segment(text_segment,track_name)
+            after_caption=text_segment
+            if maxTime<text_segment.end:
+                maxTime=text_segment.end
+        return maxTime
+    def add_track_effects(self,script,effects,track_name,maxTime):
+        #effect={"effect_name_or_resource_id": effect, "start": int(start_at_track*1000000), "duration": int(duration*1000000)}
+        after_effect=None
+        for e in effects:
+            target_timerange=trange(e["start"],e["duration"])
+            if e["start"]<=0:
+                if after_effect:
+                    target_timerange=trange(after_effect.end,e["duration"])
+                    
+            script.add_effect(draft.Video_scene_effect_type.from_name(e['effect_name_or_resource_id']),target_timerange,track_name)
+            after_effect=target_timerange
+            if maxTime<target_timerange.end:
+                maxTime=target_timerange.end
+        return maxTime
+    def save_draft_fun(self,medias,draft_name,width,height,audios=[],effects=[],captions=[],tracks=[],draft_root=r"C:\Users\Administrator\AppData\Local\JianyingPro\User Data\Projects\com.lveditor.draft"):
+        script = draft.Script_file(draft_name,width,height,draft_root=draft_root)
+        maxTime = 0
+        fileList=[]
+        script.add_track(draft.Track_type.video)
+        maxTime=self.add_track_medias(script,medias,draft.Track_type.video.name,maxTime,fileList)
+        if len(audios)>0:
+            script.add_track(draft.Track_type.audio)
+            maxTime=self.add_track_audios(script,audios,draft.Track_type.audio.name,maxTime,fileList)
+        if len(captions)>0:
+            script.add_track(draft.Track_type.text)
+            maxTime=self.add_track_captions(script,captions,draft.Track_type.text.name,maxTime)
+        if len(effects)>0:    
+            script.add_track(draft.Track_type.effect)
+            maxTime=self.add_track_effects(script,effects,draft.Track_type.effect.name,maxTime)
         
-        timeSize=draft.calc_draft_duration()
-        return (timeSize/1000000,)
+        #track={"track_type": draft.Track_type.audio,"track_name":track_name,"group":audio_group}
+        for track in tracks:
+            script.add_track(track["track_type"],track["track_name"])
+            if track["track_type"]==draft.Track_type.video:
+                maxTime=self.add_track_medias(script,track["group"],track["track_name"],maxTime,fileList)
+            if track["track_type"]==draft.Track_type.audio:
+                maxTime=self.add_track_audios(script,track["group"],track["track_name"],maxTime,fileList)
+            if track["track_type"]==draft.Track_type.text:
+                maxTime=self.add_track_captions(script,track["group"],track["track_name"],maxTime)
+            if track["track_type"]==draft.Track_type.effect:
+                maxTime=self.add_track_effects(script,track["group"],track["track_name"],maxTime)
+
+        script.save()
+        return (maxTime/1000000,fileList)
+    
+class JySaveNotOutDraft(JySaveDraft):
+    OUTPUT_NODE = False
 
 importStr=r"""# -*- coding: utf-8 -*-
 import json
@@ -605,7 +829,7 @@ shutil.copyfile("draft_meta_info.json",os.path.join(newDraftsPath,"draft_meta_in
 importBat='''python importDraft.py
 pause
 '''
-class JySaveOutDraft:
+class JySaveOutDraft(JySaveDraft):
     def __init__(self):
         self.output_dir = folder_paths.get_temp_directory()
         self.type = "temp"
@@ -622,6 +846,7 @@ class JySaveOutDraft:
                 "audios": ("AUDIO_GROUP", ),
                 "effects": ("EFFECT_GROUP", ),
                 "captions": ("CAPTIONS_GROUP", ),
+                "track0": ("TRACK", ),
             }
         }
 
@@ -632,26 +857,13 @@ class JySaveOutDraft:
     OUTPUT_NODE = True
     CATEGORY = "lam"
 
-    def save_draft(self,medias,draft_name,width,height,audios=None,effects=None,captions=None):
-        draft = Draft(draft_name,width,height,draft_root=self.output_dir)
-        mediaList = [m for m in medias]
-        if audios:
-            mediaList.extend([a for a in audios])
-
-        fileList=[]
+    def save_draft(self,medias,draft_name,width,height,audios=[],effects=[],captions=[],**kwargs):
+        tracks=[]
+        for arg in kwargs:
+            if arg.startswith('track'):
+                tracks.append(kwargs[arg])
+        maxTime,fileList=self.save_draft_fun(medias,draft_name,width,height,audios,effects,captions,tracks,draft_root=self.output_dir)
         fileCounter=[]
-        for m in mediaList:
-            draft.add_media(**m)
-            fileList.append(m['media_file_full_name'])
-        
-        if effects:
-            for e in effects:
-                draft.add_effect(**e)
-        
-        if captions:
-            for c in captions:
-                draft.add_subtitle(**c)
-        draft.save()
         folder_to_zip=os.path.join(self.output_dir, draft_name)
         filePath=os.path.join(folder_to_zip, "files")
         if not os.path.exists(filePath):
@@ -687,16 +899,23 @@ class JySaveOutDraft:
                     zipf.write(file_path, arcname=arcname)
         #删除临时文件夹
         shutil.rmtree(folder_to_zip)
-        timeSize=draft.calc_draft_duration()
         results=[]
         results.append({
             "filename": draft_name+".zip",
             "subfolder": '',
             "type": self.type
         })
-        return {"ui": {"down": results}, "result": (timeSize/1000000,)} 
+        return {"ui": {"down": results}, "result": (maxTime,)} 
+    
+class JySaveNoOutDraft(JySaveOutDraft):
+    OUTPUT_NODE = False
+   
 
 NODE_CLASS_MAPPINGS = {
+    "JyAudioTrack":JyAudioTrack,
+    "JyMediaTrack":JyMediaTrack,
+    "JyCaptionsTrack":JyCaptionsTrack,
+    "JyEffectTrack":JyEffectTrack,
     "JyMediaAnimation": JyMediaAnimation,
     "JyMediaNative":JyMediaNative,
     "JyAudioNative":JyAudioNative,
@@ -713,9 +932,15 @@ NODE_CLASS_MAPPINGS = {
     "JyAudio2CaptionsGroup":JyAudio2CaptionsGroup,
     "JySaveDraft":JySaveDraft,
     "JySaveOutDraft":JySaveOutDraft,
+    "JySaveNotOutDraft":JySaveNotOutDraft,
+    "JySaveNoOutDraft":JySaveNoOutDraft,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
+    "JyAudioTrack": "剪映音频轨道",
+    "JyMediaTrack": "剪映图片/视频轨道",
+    "JyCaptionsTrack": "剪映字幕轨道",
+    "JyEffectTrack": "剪映特效轨道",
     "JyMediaAnimation": "剪映带动画图片/视频",
     "JyMediaNative": "剪映图片/视频",
     "JyAudioNative": "剪映音频",
@@ -732,4 +957,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "JyAudio2CaptionsGroup": "音频转字幕组",
     "JySaveDraft": "保存草稿",
     "JySaveOutDraft": "临时保存下载",
+    "JySaveNotOutDraft":"保存草稿非输出",
+    "JySaveNoOutDraft":"临时保存下载非输出",
 }

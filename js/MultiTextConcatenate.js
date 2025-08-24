@@ -56,7 +56,9 @@ app.registerExtension({
 
             };
         }
-        var names=["MultiTextConcatenate","JyMultiMediaGroup","JyMultiAudioGroup","JyMultiCaptionsGroup","JyMultiEffectGroup",'MultiTextSelelct',"MultiIntFormula","MultiParamFormula","LamSwitcherCase"]
+        var names=["MultiTextConcatenate","JyMultiMediaGroup","JyMultiAudioGroup","JyMultiCaptionsGroup","JyMultiEffectGroup"
+        ,'JySaveDraft','JySaveOutDraft','JySaveNotOutDraft','JySaveNoOutDraft'
+        ,'MultiTextSelelct',"MultiIntFormula","MultiParamFormula","LamSwitcherCase"]
         if (names.indexOf(nodeData.name)>=0) {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
 			nodeType.prototype.onNodeCreated = function () {
@@ -97,6 +99,11 @@ app.registerExtension({
                     this.originalsize=1
                     this.inputType="*"
                     this.inputPrefix="case"
+                }
+                if(["JySaveNotOutDraft","JySaveDraft","JySaveOutDraft","JySaveNoOutDraft"].indexOf(nodeData.name)>=0){
+                    this.originalsize=4
+                    this.inputType="TRACK"
+                    this.inputPrefix="track"
                 }
                 function changCustomtext(){
                     //this.setSize( this.computeSize() );
