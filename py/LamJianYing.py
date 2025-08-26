@@ -797,6 +797,8 @@ def replace_text(contentText, data):
         newfile=newfile.replace("\\","/")
         #替换
         contentText=contentText.replace(primary,newfile)
+        primary=primary.replace("\\","\\\\")
+        contentText=contentText.replace(primary,newfile)
     return contentText
 
 inputPath=input("请输入剪映草稿目录:")

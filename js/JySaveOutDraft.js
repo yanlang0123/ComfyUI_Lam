@@ -27,7 +27,7 @@ function download_file(url, filename) {
 app.registerExtension({
     name: "JySaveOutDraft",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-		var names=["JySaveOutDraft"]
+		var names=["JySaveOutDraft","JySaveNoOutDraft"]
         if (names.indexOf(nodeData.name)>=0) {
             // When the node is created we want to add a readonly text widget to display the text
             const onNodeCreated = nodeType.prototype.onNodeCreated;
