@@ -608,7 +608,6 @@ class JyAudio2CaptionsGroup:
             text = self.add_newlines(segments[i]["text"],row_max_size)
             start=start_at_track+segments[i]["start"]
             duration=segments[i]["end"]-segments[i]["start"]
-            print("添加字幕: %s, %s, %s" % (str(i), start, duration))
             captions={"subtitle": text,"font":font,"color":color,"size":size, "start_at_track": int(round(start * 100)) * 100, "duration": int(round(duration * 100)) * 100}
             captions['clip_settings']=draft.Clip_settings(transform_y=transform_y,transform_x=transform_x)
             end_time=start+duration
