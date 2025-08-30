@@ -6,7 +6,12 @@ import uuid
 import json
 from . import pyJianYingDraft as draft
 from .pyJianYingDraft import Intro_type,Outro_type,Group_animation_type, Transition_type, trange, tim
-
+def add_newlines(text, max_length):
+    """在指定长度处添加换行符"""
+    result = []
+    for i in range(0, len(text), max_length):
+        result.append(text[i:i + max_length])
+    return '\n'.join(result)
 class JyAudioTrack:
     """
     音频轨道
@@ -254,6 +259,7 @@ class JyCaptionsNative:
                 "transform_y": ("FLOAT", {"default": -0.8, "min": -1.0, "max":1.0, "step": 0.1,"tooltip": "垂直位移, 单位为半个画布高"}),
                 "start_at_track": ("FLOAT", {"default": 0.0, "min": 0.0, "max":9999999, "step": 0.01,"tooltip": "草稿添加时间（秒）"}),
                 "duration": ("FLOAT", {"default": 0.1, "min": 0.0, "max": 9999999, "step": 0.01,"tooltip": "持续时间（秒）"}),
+                "row_max_size": ("INT", {"default": 16, "min": 1, "max": 1000, "step": 1,"tooltip": "行最大字符数, 单句超过将自动换行"}),
             },
             "optional": {
                 "captions_group":("CAPTIONS_GROUP",)
@@ -268,9 +274,9 @@ class JyCaptionsNative:
 
     CATEGORY = "lam"
 
-    def jy_captions(self, text,font, color,size,transform_x,transform_y, start_at_track, duration,captions_group=[]):
+    def jy_captions(self, text,font, color,size,transform_x,transform_y, start_at_track, duration,row_max_size,captions_group=[]):
         captions_group=[*captions_group]
-        captions={"subtitle": text,"font":font,"color":color,"size":size, "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000)}
+        captions={"subtitle": add_newlines(text,row_max_size),"font":font,"color":color,"size":size, "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000)}
         captions['clip_settings']=draft.Clip_settings(transform_y=transform_y,transform_x=transform_x)
         captions_group.append(captions)
         return (captions,captions_group,)
@@ -587,12 +593,6 @@ class JyAudio2CaptionsGroup:
 
     CATEGORY = "lam"
 
-    def add_newlines(self,text, max_length):
-        """在指定长度处添加换行符"""
-        result = []
-        for i in range(0, len(text), max_length):
-            result.append(text[i:i + max_length])
-        return '\n'.join(result)
 
     def jy_audio2captions_group(self,model, file_path,start_at_track,font,color,size,transform_x,transform_y,row_max_size=16,captions_group=[]):
         import whisper
@@ -605,7 +605,7 @@ class JyAudio2CaptionsGroup:
         captions_group=[*captions_group]
         end_time=0
         for i in range(len(segments)):
-            text = self.add_newlines(segments[i]["text"],row_max_size)
+            text = add_newlines(segments[i]["text"],row_max_size)
             start=start_at_track+segments[i]["start"]
             duration=segments[i]["end"]-segments[i]["start"]
             captions={"subtitle": text,"font":font,"color":color,"size":size, "start_at_track": int(round(start * 100)) * 10000, "duration": int(round(duration * 100)) * 10000}
