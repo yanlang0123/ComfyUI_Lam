@@ -38,26 +38,31 @@ class OutDoWhileEnd:
         pdata['extra_data']={'extra_pnginfo':deepcopy(extra_pnginfo)}
         pdata['prompt']=deepcopy(prompt)
         start_id=start[0]
-        StatusInfo=pdata['extra_data']['extra_pnginfo']['StatusInfo'] if 'StatusInfo' in pdata['extra_data']['extra_pnginfo'] else ''
-        index=pdata['extra_data']['extra_pnginfo']['index'] if 'index' in pdata['extra_data']['extra_pnginfo'] else 0
-        if index==0:
-            StatusInfo=''
+        result=''
+        if 'extra_pnginfo' in pdata['extra_data'] and pdata['extra_data']['extra_pnginfo'] :
+            StatusInfo=pdata['extra_data']['extra_pnginfo']['StatusInfo'] if 'StatusInfo' in pdata['extra_data']['extra_pnginfo'] else ''
+            index=pdata['extra_data']['extra_pnginfo']['index'] if 'index' in pdata['extra_data']['extra_pnginfo'] else 0
+            if index==0:
+                StatusInfo=''
+            
+            pdata['extra_data']['extra_pnginfo']['index']=index+1
+
+            result = "第"+str(index+1)+"论结束........."
+
+            if StatusInfo.endswith('循环结束')==False and len(StatusInfo)>0:
+                result=StatusInfo+'\n'+result
+
+            pdata['extra_data']['extra_pnginfo']['StatusInfo']=result
 
         i=pdata['prompt'][start_id]['inputs']['i'] if 'i' in pdata['prompt'][start_id]['inputs'] else 0
         pdata['prompt'][start_id]['inputs']['i']=i+1
-        pdata['extra_data']['extra_pnginfo']['index']=index+1
         
-        result = "第"+str(index+1)+"论结束........."
-
         if not ANY:
             result = result+ '\n整个循环结束'
         else:
             r = promptFun(PromptServer.instance,pdata)
-
-        if StatusInfo.endswith('循环结束')==False and len(StatusInfo)>0:
-            result=StatusInfo+'\n'+result
-
-        pdata['extra_data']['extra_pnginfo']['StatusInfo']=result
+        
+        
 
         return { "ui": { "text":result} }
 

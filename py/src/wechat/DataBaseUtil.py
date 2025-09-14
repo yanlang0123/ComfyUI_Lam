@@ -41,6 +41,7 @@ class DataBaseUtil():
                                 CREATE TABLE IF NOT EXISTS users (
                                     id INTEGER PRIMARY KEY,              
                                     openId TEXT  NOT NULL,
+                                    type TEXT  NOT NULL,
                                     command TEXT NOT NULL,              
                                     prompt_id TEXT NOT NULL,
                                     status TEXT NOT NULL,
@@ -213,9 +214,9 @@ class DataBaseUtil():
             return r
         except Exception as e:
             print("[select many records error]", e)
-    def insert_data(self, openId, command, prompt_id,status,start_time, end_time, outputs):
-        self.operate_one("INSERT INTO users (openId, command,prompt_id,status, start_time, end_time, outputs) VALUES (?, ?,?, ?, ?, ?,?)", (
-            openId, command, prompt_id,status,start_time, end_time, outputs))
+    def insert_data(self, openId,type_name, command, prompt_id,status,start_time, end_time, outputs):
+        self.operate_one("INSERT INTO users (openId,type,command,prompt_id,status, start_time, end_time, outputs) VALUES (?, ?, ?,?, ?, ?, ?,?)", (
+            openId,type_name, command, prompt_id,status,start_time, end_time, outputs))
 
     def get_data(self, openId,prompt_id):
         return self.query_one("SELECT * FROM users WHERE openId = ? and prompt_id=? ", (openId,prompt_id))
@@ -228,9 +229,9 @@ class DataBaseUtil():
         self.operate_one("DELETE FROM users WHERE prompt_id = ?",
                           (prompt_id,))
     
-    def get_many_data(self, openId,page_number = 1,page_size = 10):
+    def get_many_data(self, openId,type_name,page_number = 1,page_size = 10):
         offset = (page_number - 1) * page_size
-        return self.query_many("SELECT * FROM users WHERE openId=? ORDER BY start_time DESC LIMIT ? OFFSET ?", (openId,page_size,offset))
+        return self.query_many("SELECT * FROM users WHERE openId=? and type=? ORDER BY start_time DESC LIMIT ? OFFSET ?", (openId,type_name,page_size,offset))
 
     def user_recharge(self,openId,frequency):
         now = time.localtime()

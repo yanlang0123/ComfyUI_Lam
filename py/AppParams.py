@@ -90,7 +90,7 @@ class AppParams:
         return {
             "required": {
                "appName": ("STRING", {"default":""}),
-               "appType": (["default","paint-board"],),
+               "appType": (["default","paint-board","picture-book"],),
                "appDesc": ("STRING", {"default":""}),
             }
         }

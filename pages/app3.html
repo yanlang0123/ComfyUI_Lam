@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>简单画板</title>
+    <!--<link rel="stylesheet" href="https://unpkg.com/element-plus@2.4.4/dist/index.css"/>-->
+    <link rel="stylesheet" href="static/assets/index.css"/>
+    <!--<script src="https://unpkg.com/vue@3.3.12/dist/vue.global.js"></script>-->
+    <script src="static/assets/vue.global.js"></script>
+    <!--<script src="https://unpkg.com/vue-i18n@9.8.0/dist/vue-i18n.global.js"></script>-->
+    <script src="static/assets/vue-i18n.global.js"></script>
+    <!--<script src="https://unpkg.com/element-plus@2.4.4/dist/index.full.min.js"></script>-->
+    <script src="static/assets/index.full.min.js"></script>
+    <!--<script src="https://unpkg.com/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>-->
+    <script src="static/assets/index.iife.min.js"></script>
+    <!--<script src="https://unpkg.com/clipboard@2.0.11/dist/clipboard.min.js"></script>-->
+    <script src="static/assets/clipboard.min.js"></script>
+    <!--<script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>-->
+    <script src="static/assets/axios.min.js"></script>
+    <script src="static/assets/fabric.min.js"></script>
+
+</head>
+<body>
+    <div id="app" style="display: none;">
+        <el-main id="app" class="aigc-layout">
+            <canvas id="canvas" width="400" height="400"></canvas>
+            <div>
+                <button id="clear-canvas">Clear Canvas</button>
+            </div>
+             <input type="color" id="colorPicker" value="#000000" />
+             <input type="range" id="brushSize" min="1" max="50" value="5" />
+        </el-main>
+    </div>
+</body>
+<script>
+        
+function formatTime(seconds) {
+    const days = Math.floor(seconds / (3600 * 24));
+    seconds -= days * 3600 * 24;
+    const hours = Math.floor(seconds / 3600);
+    seconds -= hours * 3600;
+    const minutes = Math.floor(seconds / 60);
+    seconds -= minutes * 60;
+
+    const formattedDays = days > 0 ? days + ':' : '';
+    const formattedHours = hours.toString().padStart(2, '0') + ':';
+    const formattedMinutes = minutes.toString().padStart(2, '0') + ':';
+    const formattedSeconds = seconds.toString().padStart(2, '0') + '';
+
+    let result = formattedDays + formattedHours + formattedMinutes + formattedSeconds;
+    return result;
+}
+
+
+function getParams(url) {
+  const regex = /[?&]([^=#]+)=([^&#]*)/g;
+  const params = {};
+  let match;
+  while (match = regex.exec(url)) {
+    params[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
+  }
+  return params;
+}
+
+const app = Vue.createApp({
+    data() {
+        return {
+            activeIndex:1,
+            form: {
+                name: '',
+                region: '',
+                date1: '',
+                date2: '',
+                delivery: false,
+                type: [],
+                resource: '',
+                desc: '',
+                value1:0
+            }
+        }
+    },
+    mounted: function() {
+        document.getElementById("app").style.display = "block";
+        const canvas = new fabric.Canvas("canvas", {
+        width: 800,
+        height: 600,
+        backgroundColor: "#f0f0f0",
+        isDrawingMode: true,
+        });
+        let freeDrawingBrush = new fabric.PencilBrush(canvas);
+ 
+        // Set initial brush settings
+        freeDrawingBrush.width = 5;
+        freeDrawingBrush.color = 'black';
+ 
+        // Enable free drawing mode on canvas
+        canvas.isDrawingMode = true;
+        canvas.freeDrawingBrush = freeDrawingBrush;
+ 
+        // Clear canvas on button click
+        document.getElementById('clear-canvas').addEventListener('click', function() {
+            canvas.clear();
+        });
+ 
+        // Color picker event
+        // Add event listeners for color change
+        const colorPicker = document.getElementById('colorPicker');
+        colorPicker.addEventListener('input', function() {
+            freeDrawingBrush.color = colorPicker.value;
+        });
+ 
+        // Brush size change event
+        // Add event listeners for brush size change
+        const brushSize = document.getElementById('brushSize');
+        brushSize.addEventListener('input', function() {
+            freeDrawingBrush.width = parseInt(brushSize.value, 10);
+        });
+    },
+    created() {
+    },
+    methods: {
+        onSubmit() {
+            console.log('submit!');
+        },
+        initCanvas() {
+            
+        }
+
+    },
+    setup() {
+    }
+})
+
+// use ElementPlus and ElementPlusIconsVue
+app.use(ElementPlus)
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component)
+}
+
+// use VueI18n
+const browserLanguage = navigator.language || navigator.userLanguage; // zh-CN en-US
+const languageTag = browserLanguage.split('-')[0]; // zh en
+const i18n = VueI18n.createI18n({
+    legacy: false, // you must set `false`, to use Composition API
+    locale: languageTag, // set locale
+    fallbackLocale: 'en', // set fallback locale
+    messages: {},
+})
+app.use(i18n)
+function loadLocaleMessages(locale) {
+    return axios.get(`static/locales/${locale}.json`).then(response => {
+        return response.data;
+    });
+}
+async function loadLocales() {
+    const locales = ['en', 'zh'];
+    await Promise.all(
+        locales.map(async (locale) => {
+            const messages = await loadLocaleMessages(locale);
+            i18n.global.setLocaleMessage(locale, messages);
+        })
+    );
+}
+loadLocales().then(() => {
+    app.mount('#app');
+});
+</script>
+<style scoped>
+.el-menu--horizontal {
+  --el-menu-horizontal-height: 100px;
+}
+.el-form-item__label,.el-checkbox__label,.el-radio__label,.el-input__inner{
+    color: rgba(255, 255, 255, .8);
+}
+.el-input__wrapper{
+    font-weight: lighter;
+    position: relative;
+    background-color: rgba(255, 255, 255, .05);
+    color: rgba(255, 255, 255, .8);
+    border-radius: 9px;
+    font-size: 13px;
+    border: 1px solid transparent;
+}
+.el-textarea__inner{
+    font-weight: lighter;
+    position: relative;
+    background-color: rgba(255, 255, 255, .05);
+    color: rgba(255, 255, 255, .8);
+    border-radius: 9px;
+    font-size: 13px;
+    border: 1px solid transparent;
+}
+.el-switch__core{
+    background-color: rgba(255, 255, 255, .05);
+}
+.el-input-number__decrease,.el-input-number__increase{
+    background-color: rgba(255, 255, 255, .05);
+}
+.el-icon{
+    color: rgba(255, 255, 255, .8);
+}
+.el-popper.is-pure{
+    padding: 13px 0;
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 40px rgba(2, 10, 29, .4);
+    border-radius: 9px;
+}
+.el-select-dropdown__item{
+    padding: 5px 20px 5px 12px;
+    position: relative;
+    background: transparent;
+    color: #fff;
+    display: block;
+    min-height: 32px;
+    padding: 5px 12px;
+    color: rgba(250, 250, 250, 0.88);
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 1.5714285714285714;
+    box-sizing: border-box;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.el-select-dropdown__item.hover, .el-select-dropdown__item:hover{
+    background: rgba(255, 255, 255, .05);
+}
+.el-select-dropdown__item.selected{
+    color: #fff;
+}
+.el-select-dropdown__item.selected:after {
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    content: "";
+    background: url(https://staticsns.cdn.bcebos.com/amis/2024-1/1704594047813/selected.png);
+    background-size: 100% 100%;
+    right: 8px;
+    top: 8px;
+}
+</style>
+</html>

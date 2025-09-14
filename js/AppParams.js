@@ -279,7 +279,7 @@ async function openAppPage(type) {
         if (resp.status === 200) {
             let data = await resp.json();
             //打开新标签页面
-            window.open('/wechatauth/app'+(type=='default'?'':'2')+'?openId='+data.data);
+            window.open('/wechatauth/'+(type=='default'?'app':'index')+'?openId='+data.data);
             return true;
         }
         throw new Error(resp.data.msg);

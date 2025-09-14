@@ -147,6 +147,8 @@ def generate_image(prompt,userId,batch_size=1,command='文生图'):
     userData={'openId':userId,'command':command,'status':'prepare','isAi':True}
     if 'type' in Config().commands[command]:
         userData['type']=Config().commands[command]['type']
+    else:
+        userData['type']='default'
     
     for key in params:
         if params[key]['zhName']=='正向提示词':
@@ -533,7 +535,7 @@ def setPost(self,FromUserName):
         if data:
             db=DataBaseUtil()
             if db.isUsable:
-                db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
+                db.insert_data( params['openId'],params['type'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
                 
             return data,nodeIds
                     
@@ -550,7 +552,11 @@ def setPost(self,FromUserName):
 
     if "prompt" in json_data:
         prompt = json_data["prompt"]
-        valid = execution.validate_prompt(prompt)
+        partial_execution_targets = None
+        if "partial_execution_targets" in json_data:
+            partial_execution_targets = json_data["partial_execution_targets"]
+
+        valid = run_async_in_thread(execution.validate_prompt(prompt_id, prompt, partial_execution_targets))
         extra_data = {}
         if "extra_data" in json_data:
             extra_data = json_data["extra_data"]
@@ -563,7 +569,7 @@ def setPost(self,FromUserName):
             self.user_command[FromUserName]['prompt_id']=prompt_id 
             db=DataBaseUtil()
             if db.isUsable:
-                db.insert_data( params['openId'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
+                db.insert_data( params['openId'],params['type'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
                 
             return prompt_id,nodeIds
         else:
@@ -750,25 +756,22 @@ def getTaskRanking(self,FromUserName):
 async def getHistorys(request):
     if "openId" in request.rel_url.query:
         openId=request.rel_url.query['openId']
+        typeName='default'
         page_number=1
         if 'page_number' in request.rel_url.query:
             page_number=int(request.rel_url.query['page_number'])
 
+        if "typeName" in request.rel_url.query:
+            typeName=request.rel_url.query['typeName']
+
         db=DataBaseUtil()
         if db.isUsable:
-            datas=db.get_many_data(openId,page_number=page_number)
+            datas=db.get_many_data(openId,typeName,page_number=page_number)
             
         else:
             datas=[]
-        rdataList=[]
-        if "type" in request.rel_url.query:
-            for data in datas:
-                jd=json.loads(data[2])
-                if 'type' in jd and request.rel_url.query['type']==jd['type']:
-                    rdataList.append(data)
-        else:
-            rdataList=datas
-        return web.Response(text=json.dumps(rdataList), content_type='application/json')
+            
+        return web.Response(text=json.dumps(datas), content_type='application/json')
     else:
         data={'msg':'openId 不能为空！','success':False}
         return web.Response(text=json.dumps(data), content_type='application/json')
@@ -854,6 +857,8 @@ async def addTask(request):
         userData={'openId':openId,'command':command,'status':'prepare','isWeb':True}
         if 'type' in Config().commands[command]:
             userData['type']=Config().commands[command]['type']
+        else:
+            userData['type']='default'
         
         for param in params:
             val=post.get(param)
@@ -905,8 +910,9 @@ async def getCommands(request):
     #type: paint-board
     return web.Response(text=json.dumps(comms), content_type='application/json')
 
-@PromptServer.instance.routes.get("/wechatauth/app")
+@PromptServer.instance.routes.get("/wechatauth/{page}")
 async def app(request):
+    page = request.match_info.get("page", None)
     if "openId" in request.rel_url.query:
         openId=request.rel_url.query['openId']
         nopenId=base64_decode(openId)
@@ -919,7 +925,7 @@ async def app(request):
     else:
         openId=''
     basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
-    htmlPtah = os.path.join(basePath, 'ComfyUI_Lam', 'pages','app.html')
+    htmlPtah = os.path.join(basePath, 'ComfyUI_Lam', 'pages',page+'.html')
     # 打开文件
     with open(htmlPtah, 'r', encoding='utf-8') as file:
         # 读取文件内容
@@ -953,28 +959,6 @@ async def getUserOpenId(request):
         logging.error('获取用户openId异常:'+str(e))
         data={'msg':'获取用户openId异常','success':False}
         return web.Response(text=json.dumps(data), content_type='application/json')
-    
-@PromptServer.instance.routes.get("/wechatauth/app2")
-async def app(request):
-    if "openId" in request.rel_url.query:
-        openId=request.rel_url.query['openId']
-        nopenId=base64_decode(openId)
-        if nopenId != '':
-            openId=nopenId
-        elif openId not in Config().base['authorIds']:
-            return web.Response(text='您没有权限访问！', content_type='text/html')
-        if openId in PromptServer.instance.sockets:
-            return web.Response(text='openId已在使用！', content_type='text/html')
-    else:
-        openId=''
-    basePath = folder_paths.folder_names_and_paths['custom_nodes'][0][0]
-    htmlPtah = os.path.join(basePath, 'ComfyUI_Lam', 'pages','index.html')
-    # 打开文件
-    with open(htmlPtah, 'r', encoding='utf-8') as file:
-        # 读取文件内容
-        html_content = file.read()
-    return web.Response(text=html_content, content_type='text/html')
-
 @PromptServer.instance.routes.get("/wechatauth/getQrCodeUrl")
 async def getQrUrl(request):
     qrcodeUrl=getQrCodeUrl()
@@ -1049,9 +1033,9 @@ async def handleMessagePost(request):
                 if isAdopt:
                     #添加指令的代码
                     if FromUserName in PromptServer.instance.user_command:
-                        PromptServer.instance.user_command[FromUserName].update({'openId':FromUserName,'status':'prepare','command':otherName,'waitKey':'','prompt':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
+                        PromptServer.instance.user_command[FromUserName].update({'openId':FromUserName,'type':'default','status':'prepare','command':otherName,'waitKey':'','prompt':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
                     else:
-                        PromptServer.instance.user_command[FromUserName]={'openId':FromUserName,'status':'prepare','command':otherName,'waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))}
+                        PromptServer.instance.user_command[FromUserName]={'openId':FromUserName,'type':'default','status':'prepare','command':otherName,'waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))}
 
                     msg,comlist=getCommandMsg(Config().commands[otherName],Config().wechat['isEnterprise'])
                     if comlist:

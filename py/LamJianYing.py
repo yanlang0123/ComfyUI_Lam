@@ -6,6 +6,35 @@ import uuid
 import json
 from . import pyJianYingDraft as draft
 from .pyJianYingDraft import Intro_type,Outro_type,Group_animation_type, Transition_type, trange, tim
+import difflib
+
+def correct_string(a, b):
+    # 使用SequenceMatcher找到最佳匹配
+    matcher = difflib.SequenceMatcher(None, a, b)
+    
+    # 获取匹配块
+    matches = matcher.get_matching_blocks()
+    
+    # 构建纠正后的字符串
+    corrected = ""
+    prev_start=0
+    prev_end = 0
+    for match in matches:
+        # 添加不匹配的部分（从A中取）
+        if prev_end<=0 :
+            prev_start=match.a - match.b
+            prev_end=match.a - match.b
+        if match.a > prev_start+len(b):
+            continue
+        if match.a > prev_end:
+            corrected += a[prev_end:match.a]
+        
+        # 添加匹配的部分
+        corrected += a[match.a:match.a + match.size]
+        prev_end = match.a + match.size
+    
+    return corrected
+
 def add_newlines(text, max_length):
     """在指定长度处添加换行符"""
     result = []
@@ -87,7 +116,7 @@ class JyCaptionsTrack:
     CATEGORY = "lam"
 
     def get_track(self, captions_group, track_name):
-        track={"track_type": draft.Track_type.audio,"track_name":track_name,"group":captions_group}
+        track={"track_type": draft.Track_type.text,"track_name":track_name,"group":captions_group}
         return (track,)
     
 class JyEffectTrack:
@@ -277,7 +306,7 @@ class JyCaptionsNative:
     def jy_captions(self, text,font, color,size,transform_x,transform_y, start_at_track, duration,row_max_size,captions_group=[]):
         captions_group=[*captions_group]
         captions={"subtitle": add_newlines(text,row_max_size),"font":font,"color":color,"size":size, "start_at_track": int(start_at_track*1000000), "duration": int(duration*1000000)}
-        captions['clip_settings']=draft.Clip_settings(transform_y=transform_y,transform_x=transform_x)
+        captions['clip_settings']={"transform_y":transform_y,"transform_x":transform_x} #draft.Clip_settings()
         captions_group.append(captions)
         return (captions,captions_group,)
 
@@ -582,7 +611,8 @@ class JyAudio2CaptionsGroup:
                 "row_max_size": ("INT", {"default": 16, "min": 1, "max": 1000, "step": 1,"tooltip": "行最大字符数, 单句超过将自动换行"}),
             },
             "optional": {
-                "captions_group":("CAPTIONS_GROUP",)
+                "captions_group":("CAPTIONS_GROUP",),
+                "all_subtitles":("STRING",{"forceInput": False})
             }
         }
 
@@ -594,7 +624,7 @@ class JyAudio2CaptionsGroup:
     CATEGORY = "lam"
 
 
-    def jy_audio2captions_group(self,model, file_path,start_at_track,font,color,size,transform_x,transform_y,row_max_size=16,captions_group=[]):
+    def jy_audio2captions_group(self,model, file_path,start_at_track,font,color,size,transform_x,transform_y,row_max_size=16,captions_group=[],all_subtitles=""):
         import whisper
         if not os.path.exists(file_path):
             raise Exception('对应文件不存在')
@@ -605,11 +635,16 @@ class JyAudio2CaptionsGroup:
         captions_group=[*captions_group]
         end_time=0
         for i in range(len(segments)):
+            text = segments[i]["text"]
+            # 字幕自动修正
+            text = correct_string(all_subtitles,text) if len(all_subtitles)>0 else text
+            # 自动换行
             text = add_newlines(segments[i]["text"],row_max_size)
+            
             start=start_at_track+segments[i]["start"]
             duration=segments[i]["end"]-segments[i]["start"]
             captions={"subtitle": text,"font":font,"color":color,"size":size, "start_at_track": int(round(start * 100)) * 10000, "duration": int(round(duration * 100)) * 10000}
-            captions['clip_settings']=draft.Clip_settings(transform_y=transform_y,transform_x=transform_x)
+            captions['clip_settings']= {"transform_y":transform_y,"transform_x":transform_x} #draft.Clip_settings()
             end_time=start+duration
             captions_group.append(captions)
         return (captions_group,resultText,end_time,)
@@ -727,7 +762,7 @@ class JySaveDraft:
                 font=draft.Font_type.from_name(caption['font']),                                      # 设置字体
                 style=draft.Text_style(size=float(caption['size']),color=(r,g,b)),                    
                 border=draft.Text_border(color=(0, 0, 0.0)),                      # 设置边框颜色为黑色
-                clip_settings=caption['clip_settings']               # 位置在屏幕下方
+                clip_settings=draft.Clip_settings(**caption['clip_settings'])     # 位置在屏幕下方
             )
             script.add_segment(text_segment,track_name)
             after_caption=text_segment

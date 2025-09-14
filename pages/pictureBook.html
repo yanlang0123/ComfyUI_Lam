@@ -499,7 +499,7 @@ const app = Vue.createApp({
         },
         loadData() {
             var that = this;
-            axios.get('../wechatauth/getCommands')
+            axios.get('../wechatauth/getCommands?type=picture-book')
                 .then(function(response) {
                     console.log(response);
                     if(response.status == 200){
@@ -787,7 +787,7 @@ const app = Vue.createApp({
         getHistorys(){
             let that=this;
             that.loading=true;
-            axios.get('../wechatauth/getHistorys?openId='+openId+'&page_number='+that.page_number)
+            axios.get('../wechatauth/getHistorys?typeName=picture-book&openId='+openId+'&page_number='+that.page_number)
                 .then(function(response) {
                     console.log(response);
                     if(that.page_number==1){
