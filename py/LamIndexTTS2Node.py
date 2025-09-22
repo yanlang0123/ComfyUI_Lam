@@ -258,6 +258,7 @@ class LamIndexTTS2Node0(SaveAudioMP3):
             },
             "optional": {
                 "params": ("ADVANCED_PARAMS", ),
+                "audio_dir": ("STRING", {"default": "", "forceInput": True, "tooltip": "文件夹"}),
             }
         }
 
@@ -270,7 +271,7 @@ class LamIndexTTS2Node0(SaveAudioMP3):
 
     CATEGORY = "lam"
 
-    def process(self,server:str,audio,text:str,params={}):
+    def process(self,server:str,audio,text:str,params={},audio_dir=""):
         if isinstance(audio, str):
             audio_path = audio
         else:
@@ -287,7 +288,11 @@ class LamIndexTTS2Node0(SaveAudioMP3):
                 paths.append(path)
             audio_path = paths[0]
 
-        client = IndexTTSClient(server,self.audio_dir)
+        if audio_dir !="":
+            audio_dir=os.path.join(self.audio_dir,audio_dir)
+        else:
+            audio_dir=self.audio_dir
+        client = IndexTTSClient(server,audio_dir)
         is_ok = client.is_model_loaded()
         if not is_ok:
             client.initialize_tts()
@@ -333,6 +338,7 @@ class LamIndexTTS2Node1(SaveAudioMP3):
             },
             "optional": {
                 "params": ("ADVANCED_PARAMS", ),
+                "audio_dir": ("STRING", {"default": "", "forceInput": True, "tooltip": "文件夹"}),
             }
         }
 
@@ -344,7 +350,7 @@ class LamIndexTTS2Node1(SaveAudioMP3):
 
     CATEGORY = "lam"
 
-    def process(self,server:str,audio,ref_audio,text:str,params={}):
+    def process(self,server:str,audio,ref_audio,text:str,params={},audio_dir=""):
         if isinstance(audio, str):
             audio_path = audio
         else:
@@ -375,7 +381,11 @@ class LamIndexTTS2Node1(SaveAudioMP3):
                 paths.append(path)
             ref_audio_path = paths[0]
 
-        client = IndexTTSClient(server,self.audio_dir)
+        if audio_dir !="":
+            audio_dir=os.path.join(self.audio_dir,audio_dir)
+        else:
+            audio_dir=self.audio_dir
+        client = IndexTTSClient(server,audio_dir)
         is_ok = client.is_model_loaded()
         if not is_ok:
             client.initialize_tts()
@@ -428,6 +438,7 @@ class LamIndexTTS2Node2(SaveAudioMP3):
             },
             "optional": {
                 "params": ("ADVANCED_PARAMS", ),
+                "audio_dir": ("STRING", {"default": "", "forceInput": True, "tooltip": "文件夹"}),
             }
         }
 
@@ -439,7 +450,7 @@ class LamIndexTTS2Node2(SaveAudioMP3):
 
     CATEGORY = "lam"
 
-    def process(self,server:str,audio,vec1:float,vec2:float,vec3:float,vec4:float,vec5:float,vec6:float,vec7:float,vec8:float,text:str,params={}):
+    def process(self,server:str,audio,vec1:float,vec2:float,vec3:float,vec4:float,vec5:float,vec6:float,vec7:float,vec8:float,text:str,params={},audio_dir=""):
         task_id = str(uuid.uuid4())
         if isinstance(audio, str):
             audio_path = audio
@@ -456,7 +467,11 @@ class LamIndexTTS2Node2(SaveAudioMP3):
                 paths.append(path)
             audio_path = paths[0]
 
-        client = IndexTTSClient(server,self.audio_dir)
+        if audio_dir !="":
+            audio_dir=os.path.join(self.audio_dir,audio_dir)
+        else:
+            audio_dir=self.audio_dir
+        client = IndexTTSClient(server,audio_dir)
         emotion_vectors=[vec1,vec2,vec3,vec4,vec5,vec6,vec7,vec8]
         is_ok = client.is_model_loaded()
         if not is_ok:
@@ -497,12 +512,13 @@ class LamIndexTTS2Node3(SaveAudioMP3):
         return {
             "required": {
                 "server": ("STRING", {"default": "http://localhost:5000", "tooltip": "请勿修改"}),
-                "audio_path": ("AUDIO,STRING", {"default": "", "forceInput": True, "tooltip": "参考音频地址"}),
+                "audio": ("AUDIO,STRING", {"default": "", "forceInput": True, "tooltip": "参考音频地址"}),
                 "text": ("STRING",{"default": "","multiline": True,"tooltip": "合成内容"}),
                 "emo_text": ("STRING", {"default": "", "tooltip": "情感描述文本"}),
             },
             "optional": {
                 "params": ("ADVANCED_PARAMS", ),
+                "audio_dir": ("STRING", {"default": "", "forceInput": True, "tooltip": "文件夹"}),
             }
         }
 
@@ -514,7 +530,7 @@ class LamIndexTTS2Node3(SaveAudioMP3):
 
     CATEGORY = "lam"
 
-    def process(self,server:str,audio,text:str,emo_text:str,params={}):
+    def process(self,server:str,audio,text:str,emo_text:str,params={},audio_dir=""):
         task_id = str(uuid.uuid4())
         if isinstance(audio, str):
             audio_path = audio
@@ -531,7 +547,11 @@ class LamIndexTTS2Node3(SaveAudioMP3):
                 paths.append(path)
             audio_path = paths[0]
 
-        client = IndexTTSClient(server,self.audio_dir)
+        if audio_dir !="":
+            audio_dir=os.path.join(self.audio_dir,audio_dir)
+        else:
+            audio_dir=self.audio_dir
+        client = IndexTTSClient(server,audio_dir)
         is_ok = client.is_model_loaded()
         if not is_ok:
             client.initialize_tts()

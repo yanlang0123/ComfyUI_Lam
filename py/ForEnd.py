@@ -4,7 +4,7 @@ import requests
 import json
 from .src.utils.uitls import AlwaysEqualProxy
 from server import PromptServer
-from .WeChatAuth import prompt as promptFun
+from .src.LamCustomPrompt import prompt as promptFun
 from copy import deepcopy
 
 class ForEnd:
@@ -46,12 +46,15 @@ class ForEnd:
         i=i+pdata['prompt'][start_id]['inputs']['stop']
         pdata['prompt'][start_id]['inputs']['i']=i
         pdata['extra_data']['extra_pnginfo']['index']=index+1
-        
-        result = "第"+str(index+1)+"论结束........."
 
+        result = "第"+str(index+1)+"论结束........."
+        isDone=False
         if i>=total:
             result = result+ '\n整个循环结束'
+            isDone = True
         else:
+            queue_data=PromptServer.instance.prompt_queue.get_current_queue()
+            pdata['prompt_id']=queue_data[0][0][1]
             r = promptFun(PromptServer.instance,pdata)
 
         if StatusInfo.endswith('循环结束')==False and len(StatusInfo)>0:
@@ -59,7 +62,7 @@ class ForEnd:
 
         pdata['extra_data']['extra_pnginfo']['StatusInfo']=result
 
-        return { "ui": { "text":result} }
+        return { "ui": { "text":[result],"isDone":[isDone]} }
 
 NODE_CLASS_MAPPINGS = {
     "ForEnd": ForEnd

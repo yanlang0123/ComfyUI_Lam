@@ -25,6 +25,8 @@ import copy
 import asyncio
 import websocket
 from .src.utils.chooser import ChooserMessage
+from .src.LamCustomPrompt import prompt as promptFun,CustomPromptQueue,section_handle
+
 
 ZhipuAI_IS_INIT=True
 try:
@@ -37,6 +39,18 @@ try:
     from openai import OpenAI
 except:
     OpenAI_IS_INIT=False
+
+def read_txt(file_path):
+    if not os.path.exists(file_path):
+        return None
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content = file.read()
+    return content
+def write_txt(file_path, content):
+    if not os.path.exists(os.path.dirname(file_path)):
+        os.makedirs(os.path.dirname(file_path))
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(content)
 
 # 创建一个指定长度的队列
 maxsize = 10  # 队列的最大长度
@@ -147,8 +161,6 @@ def generate_image(prompt,userId,batch_size=1,command='文生图'):
     userData={'openId':userId,'command':command,'status':'prepare','isAi':True}
     if 'type' in Config().commands[command]:
         userData['type']=Config().commands[command]['type']
-    else:
-        userData['type']='default'
     
     for key in params:
         if params[key]['zhName']=='正向提示词':
@@ -204,7 +216,7 @@ def subscribe(rc,msg):
         if message['event']=='addTask':
             if Config().cluster["isSection"]==False:
                 ckptSetCount(rc,message)
-            prompt(PromptServer.instance,message['data'])
+            promptFun(PromptServer.instance,message['data'])
         elif message['event']=='taskDone':
             task_done(PromptServer.instance.prompt_queue,message['item_id'],message['data'])
         elif message['event']=='sendImage':
@@ -251,7 +263,7 @@ def sendPublish(channel,data):
         jsondata=json.loads(data)
         if jsondata['event']=='addTask':
             ckptSetCount(jsondata)
-            rdata=prompt(PromptServer.instance,jsondata['data'])
+            rdata=promptFun(PromptServer.instance,jsondata['data'])
             if "error" in rdata:
                 unique_id=""
                 class_type=""
@@ -528,55 +540,32 @@ def setPost(self,FromUserName):
     nodeIds=list(original_data.keys())
     now = time.localtime()
     start_time = time.strftime("%Y-%m-%d %H:%M:%S", now)
-    prompt_id=str(uuid.uuid4())
+    
+    prompt_id=str(uuid.uuid4()) if 'prompt_id' not in self.user_command[FromUserName] else self.user_command[FromUserName]['prompt_id']
+    json_data['prompt_id']=prompt_id
+    if 'prompt_id' not in self.user_command[FromUserName]:
+        self.user_command[FromUserName]['prompt_id']=prompt_id
+
     if Config().cluster and Config().cluster["isMain"]:
-        self.user_command[FromUserName]['prompt_id']=prompt_id 
         data=selServer(json_data,prompt_id)
         if data:
             db=DataBaseUtil()
             if db.isUsable:
                 db.insert_data( params['openId'],params['type'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
-                
             return data,nodeIds
-                    
-    json_data = self.trigger_on_prompt(json_data)
-    if "number" in json_data:
-        number = float(json_data['number'])
-    else:
-        number = self.number
-        if "front" in json_data:
-            if json_data['front']:
-                number = -number
-
-        self.number += 1
-
-    if "prompt" in json_data:
-        prompt = json_data["prompt"]
-        partial_execution_targets = None
-        if "partial_execution_targets" in json_data:
-            partial_execution_targets = json_data["partial_execution_targets"]
-
-        valid = run_async_in_thread(execution.validate_prompt(prompt_id, prompt, partial_execution_targets))
-        extra_data = {}
-        if "extra_data" in json_data:
-            extra_data = json_data["extra_data"]
-
-        if "client_id" in json_data:
-            extra_data["client_id"] = json_data["client_id"]
-        if valid[0]:
-            outputs_to_execute = valid[2]
-            self.prompt_queue.put((number, prompt_id, prompt, extra_data, outputs_to_execute))
-            self.user_command[FromUserName]['prompt_id']=prompt_id 
-            db=DataBaseUtil()
-            if db.isUsable:
-                db.insert_data( params['openId'],params['type'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
-                
-            return prompt_id,nodeIds
-        else:
-            self.user_command[FromUserName]['status']='prepare' # prepare:准备 waiting:待执行  wcomplete完成
-            logging.warning("invalid prompt: {}".format(valid[1]))
-            return None,None
         
+    data=promptFun(PromptServer.instance,json_data)
+    if 'error' in data:
+        self.user_command[FromUserName]['status']='prepare' # prepare:准备 waiting:待执行  wcomplete完成
+        logging.warning("invalid prompt: {}".format(data['error']))
+        return None,None
+    else:
+        db=DataBaseUtil()
+        if db.isUsable:
+            db.insert_data( params['openId'],params['type'], json.dumps(params), prompt_id,'waiting',start_time, '', '')
+            
+        return prompt_id,nodeIds
+
 @run_with_reconnect
 def selServer(json_data,prompt_id):
     json_data['prompt_id']=prompt_id
@@ -636,109 +625,17 @@ def get_route_keys(endKey, prompt,uniqueIds):
             keys.extend(get_route_keys(v1[0],prompt,uniqueIds))
     return keys
 
-def section_handle(json_data):
-    prompt=json_data['prompt']
-    sectionNodeKeys=[x for x in prompt.keys() if 'class_type' in prompt[x] and prompt[x]['class_type']=='SectionEnd']
-    for endNum in sectionNodeKeys:
-        startNum=prompt[endNum]['inputs']['section'][0]
-        server=prompt[startNum]['inputs']['server']
-        if server=='default':
-            continue
-        if 'sectype' in prompt[startNum]['inputs'] and prompt[startNum]['inputs']['sectype']==1:
-            continue
 
-        childPrompt={}
-        selAllNum=get_route_keys(endNum,prompt,startNum)
-        if len(selAllNum)==0:
-            prompt[startNum]['inputs']['server']='default'
-            continue
-        selAllNum=list(set(selAllNum))
-        for selNum in selAllNum:
-            childPrompt[selNum]=prompt[selNum]
-            prompt.pop(selNum, None)
-        childPrompt[startNum]=copy.deepcopy(prompt[startNum])
-        childPrompt[endNum]=copy.deepcopy(prompt[endNum])
-        prompt[startNum]['inputs']['data']=json.dumps({'prompt':childPrompt,'client_id':json_data['client_id']})
-        prompt[endNum]['inputs']['images']=[startNum,1]
-    return json_data
-def trigger_on_prompt(self,json_data,isRun=True):
-    if isRun and Config().cluster and Config().cluster["isMain"]:
+def custom_queue_put(data):
+    _, prompt_id, prompt, _,_=data
+    json_data={"prompt":prompt,"prompt":prompt}
+    if Config().cluster and Config().cluster["isMain"]:
         prompt_id=str(uuid.uuid4())
         data=selServer(json_data,prompt_id)
         if data:
             return data
-    json_data=section_handle(json_data)
-    return self.old_trigger_on_prompt(json_data)
+    return None
 
-def run_async_in_thread(coro):
-    """在新线程中运行异步代码"""
-    result = None
-    event = threading.Event()
-
-    def run():
-        nonlocal result
-        try:
-            result = asyncio.run(coro)
-        except Exception as e:
-            result = {"error": str(e)}
-        finally:
-            event.set()
-
-    thread = threading.Thread(target=run)
-    thread.start()
-    event.wait()
-    return result
-def prompt(self,json_data):
-    json_data=section_handle(json_data)
-    json_data = self.old_trigger_on_prompt(json_data)
-    if 'prompt_id' in json_data:
-        prompt_id=json_data['prompt_id']
-    else:
-        prompt_id = str(uuid.uuid4())
-    try:
-        if "number" in json_data:
-            number = float(json_data['number'])
-        else:
-            number = self.number
-            if "front" in json_data:
-                if json_data['front']:
-                    number = -number
-
-            self.number += 1
-
-        if "prompt" in json_data:
-            prompt = json_data["prompt"]
-            partial_execution_targets = None
-            if "partial_execution_targets" in json_data:
-                partial_execution_targets = json_data["partial_execution_targets"]
-
-            valid = run_async_in_thread(execution.validate_prompt(prompt_id, prompt, partial_execution_targets))
-            extra_data = {}
-            if "extra_data" in json_data:
-                extra_data = json_data["extra_data"]
-
-            if "client_id" in json_data:
-                extra_data["client_id"] = json_data["client_id"]
-            if valid[0]:
-                if 'prompt_id' in json_data:
-                    prompt_id=json_data['prompt_id']
-                else:
-                    prompt_id = str(uuid.uuid4())
-                outputs_to_execute = valid[2]
-                self.prompt_queue.put((number, prompt_id, prompt, extra_data, outputs_to_execute))
-                response = {"prompt_id": prompt_id, "number": number, "node_errors": valid[3]}
-                return response
-            else:
-                logging.warning("invalid prompt: {}".format(valid[1]))
-                return {"error": valid[1], "node_errors": valid[3]}
-
-        else:
-            return {"error": "no prompt", "node_errors": []}
-    except Exception as e:
-        print('prompt处理异常',e)
-        return {"error": "prompt处理异常",'node_errors':[]}
-    
-        
 def getTaskRanking(self,FromUserName):
     if 'prompt_id' not in self.user_command[FromUserName]:
         return '您还没有排队，请先发送您的指令'
@@ -831,6 +728,9 @@ async def addTask(request):
         msg = '用户编码不能为空！'
         data={'msg':msg,'success':False}
         return web.Response(text=json.dumps(data), content_type='application/json')
+
+    if hasattr(PromptServer.instance,"user_command")==False:
+        setattr(PromptServer.instance,"user_command",{})
     
     if hasattr(PromptServer.instance,'user_command') and openId in PromptServer.instance.user_command and PromptServer.instance.user_command[openId]['status']=='waiting':
         msg = '您已经在队列中，请勿重复提交！'
@@ -878,6 +778,13 @@ async def addTask(request):
         if hasattr(PromptServer.instance,"user_command")==False:
             setattr(PromptServer.instance,"user_command",{})
 
+        prompt_id = post.get("prompt_id")
+        if prompt_id:
+            userData['prompt_id']=prompt_id
+            db=DataBaseUtil()
+            if db.isUsable:
+                data=db.delete_data(prompt_id)
+        
         PromptServer.instance.user_command[openId]=userData
         resp,nodeIds=setPost(PromptServer.instance,openId)
         if resp!=None:
@@ -909,6 +816,87 @@ async def getCommands(request):
                     comms[key] = commands[key]
     #type: paint-board
     return web.Response(text=json.dumps(comms), content_type='application/json')
+
+def remove_files(outDir,dataIndexs):
+    for dataIndex in dataIndexs:
+        subDir=os.path.join(outDir,str(dataIndex)+".txt")
+        newSubDir=os.path.join(outDir,str(dataIndex)+"_old.txt")
+        if os.path.exists(subDir):
+            os.remove(subDir)
+        if os.path.exists(newSubDir):
+            os.remove(newSubDir)
+
+@PromptServer.instance.routes.post("/wechatauth/updateBook")
+async def updateBook(request):
+    post = await request.post()
+    bookTitle=post.get("bookTitle")
+    if bookTitle==None:
+        data={'msg':'故事标题不能为空','success':False}
+        return web.Response(text=json.dumps(data), content_type='application/json')
+    outDir=os.path.join(folder_paths.get_output_directory(),bookTitle)
+    if os.path.exists(outDir)==False:
+        data={'msg':'任务目录不存在','success':False}
+        return web.Response(text=json.dumps(data), content_type='application/json')
+    dataIndex=post.get("dataIndex",None) #操作数据索引
+    subIndex=post.get("subIndex",None) #操作子索引
+    subContent=post.get("subContent",None) #操作子内容
+    if dataIndex==None:
+        #删除目录下全部文件
+        for root, dirs, files in os.walk(outDir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                os.remove(file_path)
+    else:
+        if subIndex==None:
+            subDir=os.path.join(outDir,str(dataIndex)+".txt")
+            if subContent!=None:
+                write_txt(subDir,subContent)
+            else:
+                if str(dataIndex)=='3':
+                    remove_files(outDir,[dataIndex,'3','5','6','7'])
+                else:
+                    remove_files(outDir,[dataIndex])
+        else:
+            subDir=os.path.join(outDir,str(dataIndex)+".txt")
+            newSubDir=os.path.join(outDir,str(dataIndex)+"_old.txt")
+            if os.path.exists(subDir):
+                content=read_txt(subDir)
+                if content!=None:
+                    data=eval(content)
+                    data[int(subIndex)]=subContent if subContent!=None else {}
+                    write_txt(newSubDir,json.dumps(data,indent=4,ensure_ascii=False))
+                    os.remove(subDir)
+            elif os.path.exists(newSubDir):
+                content=read_txt(newSubDir)
+                if content!=None:
+                    data=eval(content)
+                    data[int(subIndex)]=subContent
+                    write_txt(newSubDir,json.dumps(data,indent=4,ensure_ascii=False))
+
+    
+    data={'msg':'操作成功','success':True}
+    return web.Response(text=json.dumps(data), content_type='application/json')
+
+
+@PromptServer.instance.routes.get("/wechatauth/getPictureBook/{bookTitle}")
+async def getPictureBook(request):
+    bookTitle = request.match_info.get("bookTitle", None)
+    if bookTitle==None:
+        data={'msg':'故事标题不能为空','success':False}
+        return web.Response(text=json.dumps(data), content_type='application/json')
+    outDir=os.path.join(folder_paths.get_output_directory(),bookTitle)
+    result={}
+    if os.path.exists(outDir):
+        for i in range(1, 9):
+            file=os.path.join(outDir, str(i)+'.txt')
+            content=read_txt(file)
+            if content==None:
+                file=os.path.join(outDir, str(i)+'_old.txt')
+                content=read_txt(file)
+            result[str(i)]=content
+
+    data={'data':result,'success':True}
+    return web.Response(text=json.dumps(data), content_type='application/json')            
 
 @PromptServer.instance.routes.get("/wechatauth/{page}")
 async def app(request):
@@ -959,6 +947,7 @@ async def getUserOpenId(request):
         logging.error('获取用户openId异常:'+str(e))
         data={'msg':'获取用户openId异常','success':False}
         return web.Response(text=json.dumps(data), content_type='application/json')
+
 @PromptServer.instance.routes.get("/wechatauth/getQrCodeUrl")
 async def getQrUrl(request):
     qrcodeUrl=getQrCodeUrl()
@@ -1033,9 +1022,9 @@ async def handleMessagePost(request):
                 if isAdopt:
                     #添加指令的代码
                     if FromUserName in PromptServer.instance.user_command:
-                        PromptServer.instance.user_command[FromUserName].update({'openId':FromUserName,'type':'default','status':'prepare','command':otherName,'waitKey':'','prompt':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
+                        PromptServer.instance.user_command[FromUserName].update({'openId':FromUserName,'status':'prepare','command':otherName,'waitKey':'','prompt':'','seed':''.join(random.sample('123456789012345678901234567890',14))})
                     else:
-                        PromptServer.instance.user_command[FromUserName]={'openId':FromUserName,'type':'default','status':'prepare','command':otherName,'waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))}
+                        PromptServer.instance.user_command[FromUserName]={'openId':FromUserName,'status':'prepare','command':otherName,'waitKey':'','seed':''.join(random.sample('123456789012345678901234567890',14))}
 
                     msg,comlist=getCommandMsg(Config().commands[otherName],Config().wechat['isEnterprise'])
                     if comlist:
@@ -1180,8 +1169,10 @@ async def handleMessagePost(request):
 
 # custom_nodes_path=folder_paths.get_folder_paths('custom_nodes')[0]
 PromptServer.instance.send_sync=types.MethodType(send_sync,PromptServer.instance)
-PromptServer.instance.old_trigger_on_prompt=PromptServer.instance.trigger_on_prompt
-PromptServer.instance.trigger_on_prompt=types.MethodType(trigger_on_prompt,PromptServer.instance)
+PromptServer.instance.add_on_prompt_handler(section_handle)
+PromptServer.instance.prompt_queue=CustomPromptQueue(PromptServer.instance)
+PromptServer.instance.prompt_queue.add_put_handler(custom_queue_put)
+
 
 if  Config().cluster:
     if'redis'==Config().cluster["clusterType"] and r: #添加订阅消息

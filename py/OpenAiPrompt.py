@@ -24,7 +24,7 @@ class OpenAiPrompt:
         }
 
     RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("提示词",)
+    RETURN_NAMES = ("结果",)
 
     FUNCTION = "translate"
 
@@ -32,15 +32,17 @@ class OpenAiPrompt:
 
     CATEGORY = "lam"
 
-    def translate(self, server_url,api_key,model_name,system_prompt,text,messages=[]):
+    def translate(self, server_url,api_key,model_name,system_prompt,text,messages=None):
         client = OpenAI(api_key=api_key,base_url=server_url)
-        if len(messages)==0:
+        if messages is None:
+            messages = []
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": text})
         completion = client.chat.completions.create(model=model_name,messages=messages,
                                                     top_p=0.8,
                                                     temperature=0.7)
-        return (completion.choices[0].message.content,)
+        messages.append({"role": "assistant", "content": completion.choices[0].message.content})
+        return (completion.choices[0].message.content,messages,)
 
 NODE_CLASS_MAPPINGS = {
     "OpenAiPrompt": OpenAiPrompt

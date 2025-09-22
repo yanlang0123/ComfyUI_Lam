@@ -65,13 +65,13 @@
                     </div>
                 </div>
             </div>
-            <div  class="aigc-tab">
+            <!-- <div  class="aigc-tab">
                 <template v-for="(value, key, index) in commandList" :key="key">
                 <div :class="'aigc-tab__item'+ (key==activeKey?' active':'')" @click="clickTab(key)">
                     <span>{{key}}</span>
                 </div>
                 </template>
-            </div>
+            </div> -->
             <div class="aigc-main">
                 <div  class="aigc-main__left-content">
                     <div  class="aigc-main__left-content--top-wrap">
@@ -152,6 +152,13 @@
                     <div class="aigc-layright__top" style="overflow-y: scroll;height: 78vh;">
                         <div class="aigc-top">
                             <el-form ref="form" :model="form" label-width="70px" label-position="top" >
+                            <el-form-item label="功能选择">
+                                <el-select style="width: 100%;" v-model="activeKey" @change="clickTab(activeKey)" placeholder="请选择功能" >
+                                    <template v-for="(value, key, index) in commandList" :key="key">
+                                        <el-option :value="key">{{key}}</el-option>
+                                    </template>
+                                </el-select>
+                            </el-form-item>
                             <el-form-item label="总任务数量">
                                 <el-rate v-model="queue_remaining" :max="11"   :icons="['UserFilled','UserFilled','UserFilled']" :void-icon="'User'" disabled-void-icon="User"  disabled />
                             </el-form-item>

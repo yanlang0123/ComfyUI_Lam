@@ -4,7 +4,7 @@ import requests
 import json
 from .src.utils.uitls import AlwaysEqualProxy
 from server import PromptServer
-from .WeChatAuth import prompt as promptFun
+from .src.LamCustomPrompt import prompt as promptFun
 from copy import deepcopy
 
 class OutDoWhileEnd:
@@ -56,15 +56,16 @@ class OutDoWhileEnd:
 
         i=pdata['prompt'][start_id]['inputs']['i'] if 'i' in pdata['prompt'][start_id]['inputs'] else 0
         pdata['prompt'][start_id]['inputs']['i']=i+1
-        
+        isDone=False
         if not ANY:
             result = result+ '\n整个循环结束'
+            isDone=True
         else:
+            queue_data=PromptServer.instance.prompt_queue.get_current_queue()
+            pdata['prompt_id']=queue_data[0][0][1]
             r = promptFun(PromptServer.instance,pdata)
-        
-        
 
-        return { "ui": { "text":result} }
+        return { "ui": { "text":[result],"isDone":[isDone]} }
 
 NODE_CLASS_MAPPINGS = {
     "OutDoWhileEnd": OutDoWhileEnd

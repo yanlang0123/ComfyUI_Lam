@@ -74,77 +74,100 @@
             </div>
             <div class="aigc-main">
                 <div  class="aigc-main__left-content">
-                    <div  class="aigc-main__left-content--top-wrap">
-                        <div  class="aigc-main__left-content--top-right step_5 step_7">
-                            <div  class="aigc-main__left-content--nodata" >
-                                <el-progress v-if="form.status=='waiting'" type="circle" :percentage="form.percentage" :status="percenStatus"  >
-                                    <template #default="{ percentage }">
-                                        <div class="percentage-value">{{ percentage }}%</div>
-                                        <div class="percentage-label">{{percenStatus=='warning'?'等待生成':'生成中'}}</div>
-                                      </template>
-                                </el-progress>
-                                <section v-else-if="form.output.images.length>0" class="aigc-preview"  >
-                                    <el-carousel class="aigc-preview__img" style="display: block;height: 100%;"  :interval="5000" arrow="always" :autoplay="false">
-                                        <el-carousel-item  v-for="(item,index) in form.output.images" :key="index">
-                                            <el-image style="width: 100%;height: 100%;" :preview-src-list="[item]" :preview-teleported="true"  :src="item" fit="contain" ></el-image>
-                                        </el-carousel-item>
-                                    </el-carousel>
-                                    <!-- <el-image class="aigc-preview__img"  src="../view?filename=ComfyUI_03170_.png&type=input&subfolder=" fit="contain" ></el-image> -->
-                                </section>
-                                <p v-else >生成预览区</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div  class="aigc-main__left-content--bottom-wrap step_2_empty">
-                        <div   class="aigc-container">
-                            <div  class="aigc-container__formula">
-                                <div  class="aigc-container__tabs-box">
-                                    <div  class="aigc-container__sub-tab active-sub-tab">历史记录</div>
-                                </div>
-                                <div  class="aigc-container__recomm-fml" v-infinite-scroll="loadHistory" :infinite-scroll-disabled="disabled" >
-                                    <template v-for="(item,index) in historyList">
-                                        <div class="item-box step_2 aigc-container__fml-item" >
-                                            <el-image v-if="item.images&&item.images.length>0" class="cover-img" :src="item.images[0]" :zoom-rate="1.2" :max-scale="7" :min-scale="0.2"
-                                              :preview-src-list="item.images" fit="cover" :preview-teleported="true" >
-                                              <template #error>
-                                                <div class="el-image__error">
-                                                    图片丢失
-                                                </div>
-                                               </template>
-                                            </el-image>
-                                            <el-image v-else-if="item.texts&&item.texts.length>0" class="cover-img" :src="item.images[0]" :zoom-rate="1.2" :max-scale="7" :min-scale="0.2"
-                                                :alt="item.texts[0]" fit="cover" :preview-teleported="true" >
-                                                <template #error>
-                                                <el-popover placement="top-start" title="预览文本" :width="200"
-                                                    trigger="hover" :content="item.texts[0]" >
-                                                    <template #reference>
-                                                        <div class="el-image__error" >
-                                                            {{item.texts[0]}}
-                                                        </div>
-                                                    </template>
-                                                </el-popover>
-                                                </template>
-                                            </el-image>
-                                            <div  class="bottom" style="color: #fff;">
-                                                {{item.command.command}}({{item.images.length}})
-                                                <el-popconfirm title="是否应用此参数?" @confirm="confirmSetParam(item.command)" >
-                                                    <template #reference>
-                                                        <el-icon><Edit /></el-icon>
-                                                    </template>
-                                                </el-popconfirm>
-                                                <el-popconfirm v-if="item.images.length>0" title="是否下载任务图片?" @confirm="handleDownload(item.files,item.prompt_id)" >
-                                                    <template #reference>
-                                                        <el-icon><Download /></el-icon>
-                                                    </template>
-                                                </el-popconfirm>
-                                            </div>
-                                        </div>
+                    <el-menu style="height: 30px;" :default-active="activeName" class="el-menu-demo" mode="horizontal" @select="handleClick">
+                        <template v-for="(book,bookKey, bookIndex) in bookList ">
+                            <el-menu-item :index="bookKey">{{bookKey}}</el-menu-item>
+                        </template>
+                    </el-menu>
+                    <div style="height: 100%;overflow-y: auto;">
+                        <el-form ref="form" :model="bookDetail" label-position="top" label-width="80px">
+                            <el-form-item label="故事内容">
+                                <el-input type="textarea" :rows="4" v-model="bookDetail.param1" ></el-input>
+                                <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'" @click="updateBookData(1)">重新生成故事</el-button>
+                            </el-form-item>
+                            <el-form-item label="角色列表">
+                                <el-table :data="bookDetail.param2"  style="width: 100%">
+                                <el-table-column prop="roleName" label="角色名称" width="100">
+                                </el-table-column>
+                                <el-table-column prop="roleRemark" label="角色说明">
+                                    <template #default="scope">
+                                        <el-input type="textarea" style="background-color: #101a2d;" :rows="2" v-model="scope.row.roleRemark" ></el-input>
                                     </template>
-                                </div><!---->
-                                <p v-if="loading">Loading...</p>
-                                <p v-if="noMore">No more</p>
-                            </div><!----><!----><!----><!---->
-                        </div>
+                                </el-table-column>
+                                </el-table>
+                                <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(2)">重新生成角色</el-button>
+                                <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(2,undefined,bookDetail.param2)">修改角色</el-button>
+                            </el-form-item>
+                            <el-form-item label="分镜头列表" style="z-index: 0;"> 
+                                <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(3)">重新生成全部分镜头音频图片</el-button>
+                                <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(6)">重新生成全部音频</el-button>
+                                <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(5)">重新生成全部图片</el-button>
+                                <el-table :data="bookDetail.param3"  style="width: 100%">
+                                <el-table-column prop="index" label="编号" width="60">
+                                    <template #default="scope">
+                                        {{scope.$index + 1}}
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="narrationAudio" label="旁百音频" width="320">
+                                    <template #default="scope" v-if="bookDetail.param6">
+                                        <template v-if="bookDetail.param6[scope.$index]">
+                                            <audio :id="'audio'+scope.$index"  :src="pathProcess(bookDetail.param6[scope.$index].path)" controls="controls" >
+                                            </audio>
+                                            <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(6,scope.$index)">重新生成音频</el-button>
+                                        </template>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="narration" label="旁白内容" width="300">
+                                    <template #default="scope">
+                                        <el-input type="textarea" style="background-color: #101a2d;" :rows="5" v-model="scope.row.narration" ></el-input>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="promptImage" label="镜头图片" width="100">
+                                    <template #default="scope" v-if="bookDetail.param5">
+                                        <template v-if="bookDetail.param5[scope.$index]"> 
+                                            <el-image style="width: 70px; height: auto;" :hide-on-click-modal="true" :preview-src-list="[pathProcess(bookDetail.param5[scope.$index])]"
+                                        show-progress :preview-teleported="true" :initial-index="0" fit="cover" :src="pathProcess(bookDetail.param5[scope.$index])" :fit="bookDetail.param5[scope.$index]" />
+                                        </template>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="prompt" label="镜头提示词" >
+                                    <template #default="scope">
+                                        <el-input type="textarea" style="background-color: #101a2d;" :rows="5" v-model="scope.row.prompt" ></el-input>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="operation" label="操作" width="150">
+                                    <template #default="scope">
+                                        <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(3,undefined,bookDetail.param3)">修改提示词</el-button><br>
+                                        <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(5,scope.$index)">重新生成图片</el-button>
+                                    </template>
+                                </el-table-column>
+                                </el-table>
+                            </el-form-item>
+                            <el-row>
+                                <el-col :span="6">
+                                    <el-form-item label="音乐提示词"> 
+                                        <el-input type="textarea" :rows="10" v-model="bookDetail.param4" ></el-input>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="6">
+                                    <el-form-item label="操作"> 
+                                        <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(4)">重新生成提示词</el-button>
+                                        <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(4,undefined,bookDetail.param4)">修改提示词</el-button>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="8">
+                                    <el-form-item label="背景音乐">
+                                        <audio id="audio"  :src="pathProcess(bookDetail.param7)" controls="controls" ></audio>
+                                        <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(7)">重新生成音频</el-button>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="4">
+                                    <el-form-item label="操作">
+                                        <el-button type="primary" :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" :disabled="form.status!='prepare'"  @click="updateBookData(8)">生成剪映草稿</el-button>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                        </el-form>
                     </div>
                 </div>
                 <div  class="aigc-main__right-params">
@@ -241,11 +264,11 @@
                         </div>
                     </el-dialog>
                     <div class="aigc-main__btn-box step_4">
-                        <el-button v-if="form.status!='prepare'" :class="'aigc-main__btn-box--merge'" style="height: 100%;background: linear-gradient(to bottom right, rgb(224 224 224), rgb(244 85 85));" 
+                        <!-- <el-button v-if="form.status!='prepare'" :class="'aigc-main__btn-box--merge'" style="height: 100%;background: linear-gradient(to bottom right, rgb(224 224 224), rgb(244 85 85));" 
                             @click="cancelTask" :disabled="!isConnect" >
                             <div class="text"><span class="upper" >取消任务</span></div>
-                        </el-button>
-                        <el-button v-else :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" style="height: 100%;" @click="startTask" :disabled="!isConnect">
+                        </el-button> -->
+                        <el-button :class="'aigc-main__btn-box--merge'+(form.status!='prepare'?' disable':'')" style="height: 100%;" @click="startTask" :disabled="!isConnect&&form.status!='prepare'">
                             <div class="text"><span class="upper" >立即生成</span></div>
                         </el-button>
                     </div>
@@ -306,6 +329,12 @@ const app = Vue.createApp({
             isNotData:false,
             isConnect:false,
             isSuccess:false,
+            isDone:false,
+            activeName:'',
+            bookList:{},
+            bookDetail:{
+
+            },
             form: {
                 openId:'',
                 command:'',
@@ -315,7 +344,7 @@ const app = Vue.createApp({
                 percentage:0,
                 output:{images:[],texts:[]},
                 nodeIds:[],
-                doneNodeIds:[]
+                doneNodeIds:[],
             }
         }
     },
@@ -338,6 +367,11 @@ const app = Vue.createApp({
         
     },
     methods: {
+        handleClick(bookName){ 
+            this.activeName = bookName
+            this.bookDetailFun(bookName)
+            this.confirmSetParam(this.bookList[bookName])
+        },
         initMain(){
             this.loadData();
             document.getElementById("app").style.display = "block";
@@ -426,14 +460,16 @@ const app = Vue.createApp({
                             that.form.doneNodeIds.push(that.form.executing);
                         }
                         if(!messageJson['data']['node']){
-                            that.form.status='prepare';
-                            that.form.percenStatus='warning';
-                            that.form.percentage=0;
-                            that.form.executing='';
-                            that.form.doneNodeIds=[];
-                            that.form.nodeIds=[];
-                            if(that.isSuccess){
+                            if(that.isSuccess&&that.isDone){
+                                that.form.status='prepare';
+                                that.form.percenStatus='warning';
+                                that.form.percentage=0;
+                                that.form.executing='';
+                                that.form.doneNodeIds=[];
+                                that.form.nodeIds=[];
+
                                 that.isSuccess=false
+                                that.isDone=false
                                 setTimeout(() => {
                                     that.page_number=1;
                                     that.getHistorys();
@@ -463,6 +499,9 @@ const app = Vue.createApp({
                         let node_output='output' in messageJson['data']?messageJson['data']['output']:{};
                         let images=[];
                         let texts=[];
+                        if('isDone' in node_output){
+                            that.isDone=node_output.isDone[0];
+                        }
                         if('outputImg' in node_output){
                             for(let img of node_output?.outputImg){
                                 let url='../view?filename='+img.filename+'&type='+img.type+'&subfolder='+img.subfolder+'&rand='+Math.random();
@@ -497,6 +536,44 @@ const app = Vue.createApp({
                 }
             })
         },
+        updateBookData(dataIndex=undefined,subIndex=undefined,subContent=undefined){
+            let that=this;
+            let formData = new FormData();
+            formData.append("bookTitle", that.activeName);
+            if(dataIndex!=undefined){
+                formData.append("dataIndex", dataIndex);
+            }
+            if(subIndex!=undefined){
+                formData.append("subIndex", subIndex);
+            }
+            if(subContent!=undefined){
+                if(dataIndex==2){
+                    let roleData={}
+                    for(let i=0;i<subContent.length;i++){
+                        roleData[subContent[i].roleName]=subContent[i].roleRemark;
+                    }
+                    formData.append("subContent", JSON.stringify(roleData));
+                }else if(dataIndex==3){
+                    formData.append("subContent", JSON.stringify(subContent));
+                }else{
+                    formData.append("subContent", subContent);
+                }
+            }
+            axios.post('../wechatauth/updateBook', formData)
+                .then(function(response) {
+                    if(response.data.success){
+                        if(subContent==undefined){
+                            that.startTask()
+                        }
+                    }else{
+                        that.authUser('授权码校验失败，请先扫码关注获取授权码！');
+                    }
+                })
+                .catch(function(error) {
+                    console.log(error);
+                    that.authUser(error);
+            })
+        },
         loadData() {
             var that = this;
             axios.get('../wechatauth/getCommands?type=picture-book')
@@ -505,6 +582,56 @@ const app = Vue.createApp({
                     if(response.status == 200){
                         that.commandList = response.data;
                         that.clickTab(Object.keys(response.data)[0])
+                    }
+                })
+                .catch(function(error) {
+                    console.log(error);
+                    ElementPlus.ElMessage.error(error);
+            })
+        },
+        pathProcess(path) {
+            if(!path){
+                return '';
+            }
+            let paths=path.split('\\output\\')
+            let dirs=paths[paths.length-1].split('\\')
+            let url='';
+            if(dirs.length>1){
+                url='../view?filename='+dirs[1]+'&type=output&subfolder='+dirs[0]+'&rand='+Math.random();
+            }else{
+                url='../view?filename='+dirs[0]+'&type=output&subfolder=&rand='+Math.random();
+            }
+            return url;
+        },
+        bookDetailFun(activeName) {
+            var that = this;
+            axios.get('../wechatauth/getPictureBook/'+activeName)
+                .then(function(response) {
+                    console.log(response);
+                    if(response.status == 200){
+                        const bookDetail=response.data.data;
+                        const indexs=['2','3','5','6']
+                        for(let bookDetailKey in bookDetail){
+                            console.log(bookDetailKey)
+                            if(indexs.includes(bookDetailKey)){
+                                if("2"===bookDetailKey){
+                                    let roleData=[];
+                                    const roles=JSON.parse(bookDetail[bookDetailKey])
+                                    for(let roleKey in roles){
+                                        roleData.push({
+                                            roleName:roleKey,
+                                            roleRemark:roles[roleKey]
+                                        })
+                                    }
+                                    that.bookDetail['param'+bookDetailKey]=roleData
+                                }else{
+                                    that.bookDetail['param'+bookDetailKey]=JSON.parse(bookDetail[bookDetailKey])
+                                }
+                            }else{
+                                that.bookDetail['param'+bookDetailKey]=bookDetail[bookDetailKey];
+                            }
+                        }
+                        console.log(that.bookDetail)
                     }
                 })
                 .catch(function(error) {
@@ -680,6 +807,9 @@ const app = Vue.createApp({
                     formData.append(paramKey,this.paramList[paramKey]?.value);
                 }
             }
+            if(this.activeName==this.paramList['bookTitle']?.value){
+                formData.append('prompt_id',this.bookList[this.activeName].prompt_id);
+            }
             axios.post('../wechatauth/addTask', formData)
                 .then(function(response) {
                     console.log(response);
@@ -706,6 +836,14 @@ const app = Vue.createApp({
                     }else if(this.paramList[paramKey].type=='slider'
                     || this.paramList[paramKey].type=='number'){
                         this.paramList[paramKey].value=parseFloat(params[paramKey]);
+                    }else if(this.paramList[paramKey].type=='switch'){
+                        if(params[paramKey]=='true'){
+                            this.paramList[paramKey].value=true;
+                        }else if(params[paramKey]=='false'){
+                            this.paramList[paramKey].value=false;
+                        }else{
+                            this.paramList[paramKey].value=params[paramKey];
+                        }
                     }else{
                         if(this.paramList[paramKey].type=='image'){
                             let ps=params[paramKey].split('//');
@@ -804,6 +942,10 @@ const app = Vue.createApp({
                             continue
                         }else if(res[5]=='wcomplete'){
                             command['status']='wcomplete'
+                            if(!command['bookTitle']){
+                                continue
+                            }
+                            that.bookList[command['bookTitle']]=command;
                             let outputs=JSON.parse(res[8])
                             let images=[];
                             let texts=[];
@@ -825,6 +967,9 @@ const app = Vue.createApp({
                             that.historyList.push({'prompt_id':res[4],'command':command,'images':images,'files':files,'status':res[5],'texts':texts})
                         }
                     }
+                    that.activeName=that.historyList[0].command['bookTitle']
+                    that.bookDetailFun(that.activeName)
+
                     if(datas.length<10){
                         that.isNotData=true;
                     }
