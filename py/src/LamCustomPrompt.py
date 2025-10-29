@@ -28,9 +28,9 @@ class CustomPromptQueue(execution.PromptQueue):
             return 
         super().put(item)
     
-    def task_done(self, item_id, history_result,status: Optional['PromptQueue.ExecutionStatus']):
+    def task_done(self, item_id, history_result,status: Optional['PromptQueue.ExecutionStatus'], process_item=None):
         print("结束拦截测试:",item_id)
-        return super().task_done(item_id, history_result,status)
+        return super().task_done(item_id, history_result,status,process_item)
     
 def get_route_keys(endKey, prompt,uniqueIds):
     keys=[]
