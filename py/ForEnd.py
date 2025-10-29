@@ -35,19 +35,26 @@ class ForEnd:
     def for_end_fun(self,total,i,obj,unique_id,prompt,extra_pnginfo):
         pdata=json.loads('{}')
         pdata['client_id']=PromptServer.instance.client_id
-        pdata['extra_data']={'extra_pnginfo':deepcopy(extra_pnginfo)}
         pdata['prompt']=deepcopy(prompt)
         start_id=prompt[unique_id]['inputs']['total'][0]
-        StatusInfo=pdata['extra_data']['extra_pnginfo']['StatusInfo'] if 'StatusInfo' in pdata['extra_data']['extra_pnginfo'] else ''
-        index=pdata['extra_data']['extra_pnginfo']['index'] if 'index' in pdata['extra_data']['extra_pnginfo'] else 0
-        if index==0:
-            StatusInfo=''
+        result=''
+        if extra_pnginfo :
+            pdata['extra_data']={'extra_pnginfo':deepcopy(extra_pnginfo)}
+            StatusInfo=pdata['extra_data']['extra_pnginfo']['StatusInfo'] if 'StatusInfo' in pdata['extra_data']['extra_pnginfo'] else ''
+            index=pdata['extra_data']['extra_pnginfo']['index'] if 'index' in pdata['extra_data']['extra_pnginfo'] else 0
+            if index==0:
+                StatusInfo=''
+                
+            pdata['extra_data']['extra_pnginfo']['index']=index+1
+            result = "第"+str(index+1)+"论结束........."
+            if StatusInfo.endswith('循环结束')==False and len(StatusInfo)>0:
+                result=StatusInfo+'\n'+result
+
+            pdata['extra_data']['extra_pnginfo']['StatusInfo']=result
 
         i=i+pdata['prompt'][start_id]['inputs']['stop']
         pdata['prompt'][start_id]['inputs']['i']=i
-        pdata['extra_data']['extra_pnginfo']['index']=index+1
-
-        result = "第"+str(index+1)+"论结束........."
+        
         isDone=False
         if i>=total:
             result = result+ '\n整个循环结束'
@@ -56,11 +63,6 @@ class ForEnd:
             queue_data=PromptServer.instance.prompt_queue.get_current_queue()
             pdata['prompt_id']=queue_data[0][0][1]
             r = promptFun(PromptServer.instance,pdata)
-
-        if StatusInfo.endswith('循环结束')==False and len(StatusInfo)>0:
-            result=StatusInfo+'\n'+result
-
-        pdata['extra_data']['extra_pnginfo']['StatusInfo']=result
 
         return { "ui": { "text":[result],"isDone":[isDone]} }
 

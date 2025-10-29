@@ -35,11 +35,11 @@ class OutDoWhileEnd:
     def for_end_fun(self,start,ANY,obj,unique_id,prompt,extra_pnginfo):
         pdata=json.loads('{}')
         pdata['client_id']=PromptServer.instance.client_id
-        pdata['extra_data']={'extra_pnginfo':deepcopy(extra_pnginfo)}
         pdata['prompt']=deepcopy(prompt)
         start_id=start[0]
         result=''
-        if 'extra_pnginfo' in pdata['extra_data'] and pdata['extra_data']['extra_pnginfo'] :
+        if extra_pnginfo :
+            pdata['extra_data']={'extra_pnginfo':deepcopy(extra_pnginfo)}
             StatusInfo=pdata['extra_data']['extra_pnginfo']['StatusInfo'] if 'StatusInfo' in pdata['extra_data']['extra_pnginfo'] else ''
             index=pdata['extra_data']['extra_pnginfo']['index'] if 'index' in pdata['extra_data']['extra_pnginfo'] else 0
             if index==0:
