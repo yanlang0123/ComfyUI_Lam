@@ -152,35 +152,35 @@ class Painter {
     this.canvas = this.initCanvas(canvas);
     this.image = node.widgets.find((w) => w.name === "image");
 
-    let default_value = this.image.value;
-    Object.defineProperty(this.image, "value", {
-      set: function (value) {
-        this._real_value = value;
-      },
+    // let default_value = this.image.value;
+    // Object.defineProperty(this.image, "value", {
+    //   set: function (value) {
+    //     this._real_value = value;
+    //   },
 
-      get: function () {
-        let value = "";
-        if (this._real_value) {
-          value = this._real_value;
-        } else {
-          return default_value;
-        }
+    //   get: function () {
+    //     let value = "";
+    //     if (this._real_value) {
+    //       value = this._real_value;
+    //     } else {
+    //       return default_value;
+    //     }
 
-        if (value.filename) {
-          let real_value = value;
-          value = "";
-          if (real_value.subfolder) {
-            value = real_value.subfolder + "/";
-          }
+    //     if (value.filename) {
+    //       let real_value = value;
+    //       value = "";
+    //       if (real_value.subfolder) {
+    //         value = real_value.subfolder + "/";
+    //       }
 
-          value += real_value.filename;
+    //       value += real_value.filename;
 
-          if (real_value.type && real_value.type !== "input")
-            value += ` [${real_value.type}]`;
-        }
-        return value;
-      },
-    });
+    //       if (real_value.type && real_value.type !== "input")
+    //         value += ` [${real_value.type}]`;
+    //     }
+    //     return value;
+    //   },
+    // });
   }
 
   initCanvas(canvasEl) {
