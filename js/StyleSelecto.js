@@ -29,6 +29,7 @@ $el("style", {
         text-decoration: underline;
     }
     .lam_style-model-tags-list {
+        width: 100%;
         display: flex;
         align-content: flex-start;
         flex-wrap: wrap;
@@ -101,7 +102,7 @@ $el("style", {
     }
     
     .lam_style-preview {
-        max-width: 50%;
+        max-width: 100%;
         margin-left: 10px;
         position: relative;
     }

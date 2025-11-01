@@ -125,8 +125,8 @@
                                 <el-table-column prop="promptImage" label="镜头图片" width="100">
                                     <template #default="scope" v-if="bookDetail.param5">
                                         <template v-if="bookDetail.param5[scope.$index]"> 
-                                            <el-image style="width: 70px; height: auto;" :hide-on-click-modal="true" :preview-src-list="[pathProcess(bookDetail.param5[scope.$index])]"
-                                        show-progress :preview-teleported="true" :initial-index="0" fit="cover" :src="pathProcess(bookDetail.param5[scope.$index])" :fit="bookDetail.param5[scope.$index]" />
+                                            <el-image style="width: 70px; height: auto;" :hide-on-click-modal="true" :preview-src-list="pathProcess(bookDetail.param5)"
+                                        show-progress :preview-teleported="true" :initial-index="scope.$index" fit="cover" :src="pathProcess(bookDetail.param5[scope.$index])" :fit="bookDetail.param5[scope.$index]" />
                                         </template>
                                     </template>
                                 </el-table-column>
@@ -592,6 +592,11 @@ const app = Vue.createApp({
         pathProcess(path) {
             if(!path){
                 return '';
+            }
+            if(path instanceof Array){
+                return path.map(item=>{
+                    return this.pathProcess(item)
+                })
             }
             let paths=path.split('\\output\\')
             let dirs=paths[paths.length-1].split('\\')
