@@ -176,63 +176,84 @@
                             </template>
                             <div  class="aigc-advanced">
                                 <div  class="aigc-advanced__mid--text" style="font-weight: bold;font-size: medium;"> 其他参数 </div>
+                                <el-row >
                                     <template v-for="(param,paramKey,paramindex) in paramList ">
-                                    <el-form-item :label="param.zhName" v-if="param.options">
-                                        <el-select v-model="param.value" :placeholder="'请选择'+param.zhName">
-                                            <el-option v-for="(value, key, index) in param.options" :key="value" :label="key" :value="value"></el-option>
-                                        </el-select>
-                                    </el-form-item>
-                                    <el-form-item :label="param.zhName" v-else-if="param.type == 'text'">
-                                        <el-input v-model="param.value" :placeholder="'请输入'+param.zhName" >
-                                        </el-input>
-                                    </el-form-item>
-                                    <el-form-item :label="param.zhName" v-else-if="param.type == 'seed'">
-                                        <el-input v-model="param.value" :placeholder="'请输入'+param.zhName" >
-                                            <template #append>
-                                                <el-button icon="Refresh" @click="refreshSeed(param)" />
-                                              </template>
-                                        </el-input>
-                                    </el-form-item>
-                                    <el-form-item :label="param.zhName" v-else-if="param.type == 'image'">
-                                        <div :class="param.fileList.length>0?'image-view':''">
-                                            <el-upload
-                                                v-model:file-list="param.fileList" :limit="1" drag
-                                                action="../upload/image" name="image" method="post"  :data="{'overwrite': true,'type':'input'}"
-                                                list-type="picture-card" :on-preview="(val) => handlePictureCardPreview(val, param?.maskKey)" :before-upload="beforeAvatarUpload"
-                                                :on-success="(val)=>updateSuccess(val,paramKey)"  :on-remove="(val) => handleRemove(val, paramKey)">
-                                                <el-icon class="el-icon--upload" :size="80"><upload-filled /></el-icon>
-                                            </el-upload>
-                                        </div>
-                                    </el-form-item>
-                                    <el-form-item :label="param.zhName" v-else-if="param.type == 'number'">
-                                        <el-input-number v-model="param.value" :min="param.min" :max="param.max" :step="param?.step"></el-input-number>
-                                    </el-form-item>
-                                    <el-form-item :label="param.zhName" v-else-if="param.type == 'slider'">
-                                        <el-slider v-model="param.value" :min="param.min" :max="param.max" :step="param?.step"></el-slider>
-                                    </el-form-item>
-                                    <el-form-item :label="param.zhName" v-else-if="param.type == 'switch'">
-                                        <el-switch v-model="param.value" :active-value="param.onVal" :inactive-value="param.offVal"></el-switch>
-                                    </el-form-item>
-                                    <el-form-item :label="param.zhName" v-else-if="param.type == 'color'">
-                                        <el-color-picker v-model="param.value" />
-                                    </el-form-item>
-                                    <el-form-item :label="param.zhName" v-else-if="param.type == 'checkbox'">
-                                        <el-checkbox-group v-model="param.value">
-                                            <el-checkbox v-for="(value, key, index) in param.options"
-                                             :label="key" :value="value" :name="paramKey"></el-checkbox>
-                                        </el-checkbox-group>
-                                    </el-form-item>
-                                    <el-form-item :label="param.zhName" v-else-if="param.type == 'radio'">
-                                        <el-radio-group v-model="param.value">
-                                            <el-radio v-for="(value, key, index) in param.options"
-                                             :label="key" :value="value"></el-radio>
-                                          </el-radio-group>
-                                    </el-form-item>
+                                        <el-col :span="24" v-if="param.options">
+                                            <el-form-item :label="param.zhName" >
+                                                <el-select v-model="param.value" :placeholder="'请选择'+param.zhName">
+                                                    <el-option v-for="(value, key, index) in param.options" :key="value" :label="key" :value="value"></el-option>
+                                                </el-select>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="24" v-else-if="param.type == 'text'">
+                                            <el-form-item :label="param.zhName" >
+                                                <el-input v-model="param.value" :placeholder="'请输入'+param.zhName" >
+                                                </el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="24"  v-else-if="param.type == 'seed'">
+                                            <el-form-item :label="param.zhName">
+                                                <el-input v-model="param.value" :placeholder="'请输入'+param.zhName" >
+                                                    <template #append>
+                                                        <el-button icon="Refresh" @click="refreshSeed(param)" />
+                                                    </template>
+                                                </el-input>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="12" v-else-if="param.type == 'image'">
+                                            <el-form-item :label="param.zhName" >
+                                                <div :class="param.fileList.length>0?'image-view':''">
+                                                    <el-upload
+                                                        v-model:file-list="param.fileList" :limit="1" drag
+                                                        action="../upload/image" name="image" method="post"  :data="{'overwrite': true,'type':'input'}"
+                                                        list-type="picture-card" :on-preview="(val) => handlePictureCardPreview(val, param?.maskKey)" :before-upload="beforeAvatarUpload"
+                                                        :on-success="(val)=>updateSuccess(val,paramKey)"  :on-remove="(val) => handleRemove(val, paramKey)">
+                                                        <el-icon class="el-icon--upload" :size="80"><upload-filled /></el-icon>
+                                                    </el-upload>
+                                                </div>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="24" v-else-if="param.type == 'number'">
+                                            <el-form-item :label="param.zhName">
+                                                <el-input-number v-model="param.value" :min="param.min" :max="param.max" :step="param?.step"></el-input-number>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="24" v-else-if="param.type == 'slider'">
+                                            <el-form-item :label="param.zhName">
+                                                <el-slider v-model="param.value" :min="param.min" :max="param.max" :step="param?.step"></el-slider>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="24" v-else-if="param.type == 'switch'">
+                                            <el-form-item :label="param.zhName">
+                                                <el-switch v-model="param.value" :active-value="param.onVal" :inactive-value="param.offVal"></el-switch>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="24" v-else-if="param.type == 'color'">
+                                            <el-form-item :label="param.zhName">
+                                                <el-color-picker v-model="param.value" />
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="24" v-else-if="param.type == 'checkbox'">
+                                            <el-form-item :label="param.zhName">
+                                                <el-checkbox-group v-model="param.value">
+                                                    <el-checkbox v-for="(value, key, index) in param.options"
+                                                    :label="key" :value="value" :name="paramKey"></el-checkbox>
+                                                </el-checkbox-group>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="24" v-else-if="param.type == 'radio'">
+                                            <el-form-item :label="param.zhName">
+                                                <el-radio-group v-model="param.value">
+                                                    <el-radio v-for="(value, key, index) in param.options"
+                                                    :label="key" :value="value"></el-radio>
+                                                </el-radio-group>
+                                            </el-form-item>
+                                        </el-col>
                                     </template>
+                                </el-row>
                             </div>
                             </el-form>
                         </div>
-                        
                     </div>
                     <el-dialog v-model="dialogVisible" :title="maskKey? '遮罩画板':'图片预览'">
                         <div class="mask_edit_btn" style="display: -webkit-box;" v-if="maskKey">
