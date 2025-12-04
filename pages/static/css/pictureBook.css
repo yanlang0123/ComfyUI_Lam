@@ -1,0 +1,300 @@
+/* Extracted from pictureBook.html */
+
+.aigc-layout {
+    /* Add specific styles if needed, previously inline or default */
+}
+
+.head-title-image {
+    height: 100%;
+    width: auto;
+}
+
+.contact-admin-btn {
+    color: aliceblue;
+}
+
+.qr-code-img {
+    width: 100%;
+}
+
+.role-remark-input,
+.narration-input,
+.prompt-input {
+    background-color: #101a2d;
+}
+
+.prompt-image {
+    width: 70px;
+    height: auto;
+}
+
+.preview-image {
+    width: 100%;
+}
+
+.mask-edit-btn {
+    display: -webkit-box;
+}
+
+.brush-slider {
+    width: 40%;
+    margin: 0 10px;
+}
+
+.mask-btn {
+    margin: 0 10px;
+}
+
+.scroll-container {
+    overflow-y: scroll;
+    height: 78vh;
+}
+
+.mid-text {
+    font-weight: bold;
+    font-size: medium;
+}
+
+.el-message-box .box-title {
+    width: 100%;
+    text-align: center;
+    font-size: large;
+    color: aliceblue;
+}
+
+.el-message-box .qrcode {
+    width: 100%;
+    height: auto;
+}
+
+.el-message-box .el-input-group {
+    box-shadow: 0 0 0 1px var(--el-input-border-color, var(--el-border-color)) inset;
+    border-radius: var(--el-input-border-radius, var(--el-border-radius-base));
+}
+
+.el-message-box input {
+    text-align: center;
+}
+
+.el-message-box .el-input-group__append {
+    color: aliceblue;
+}
+
+.el-message-box {
+    margin-top: 4px;
+    padding: 20px 16px;
+    color: rgb(253 248 248 / 80%);
+    background-color: #606266;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: lighter;
+    border: 1px solid #606266;
+}
+
+.head-title {
+    color: aliceblue;
+    font-size: x-large;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.el-card__body,
+.el-card__footer {
+    padding: 0;
+}
+
+.el-upload-dragger,
+.el-upload-dragger.is-dragover {
+    padding: 0;
+    background-color: rgba(255, 255, 255, .0);
+    border: none;
+    border-radius: 6px;
+    box-sizing: border-box;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.image-view .el-upload--picture-card {
+    display: none;
+}
+
+.el-upload-list--picture-card .el-upload-list__item,
+.el-upload--picture-card {
+    width: 100px;
+    height: 100px;
+}
+
+.el-menu--horizontal {
+    --el-menu-horizontal-height: 100px;
+}
+
+.el-form-item__label,
+.el-checkbox__label,
+.el-radio__label,
+.el-input__inner,
+.el-statistic__head,
+.el-statistic__number {
+    color: rgba(255, 255, 255, .8);
+}
+
+.el-input__wrapper {
+    font-weight: lighter;
+    position: relative;
+    background-color: rgba(255, 255, 255, .05);
+    color: rgba(255, 255, 255, .8);
+    border-radius: 9px;
+    font-size: 13px;
+    border: 1px solid transparent;
+}
+
+.el-textarea__inner {
+    font-weight: lighter;
+    position: relative;
+    background-color: rgba(255, 255, 255, .05);
+    color: rgba(255, 255, 255, .8);
+    border-radius: 9px;
+    font-size: 13px;
+    border: 1px solid transparent;
+}
+
+.el-card,
+.el-card__body,
+.el-card__header,
+.el-card__footer {
+    color: rgba(255, 255, 255, .8);
+    background-color: rgba(255, 255, 255, .0);
+    border: 0px solid transparent;
+}
+
+.el-input-group__append,
+.el-switch__core,
+.el-input-number__decrease,
+.el-input-number__increase,
+.el-upload--picture-card {
+    background-color: rgba(255, 255, 255, .05);
+}
+
+.el-textarea .el-input__count {
+    color: rgba(255, 255, 255, .8);
+    background-color: rgba(255, 255, 255, 0);
+}
+
+.el-icon {
+    color: rgba(255, 255, 255, .8);
+}
+
+.el-popper.is-pure {
+    padding: 13px 0;
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 40px rgba(2, 10, 29, .4);
+    border-radius: 9px;
+}
+
+.el-select-dropdown__item {
+    padding: 5px 20px 5px 12px;
+    position: relative;
+    background: transparent;
+    color: #fff;
+    display: block;
+    min-height: 32px;
+    padding: 5px 12px;
+    color: rgba(250, 250, 250, 0.88);
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 1.5714285714285714;
+    box-sizing: border-box;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.el-select-dropdown__item.hover,
+.el-select-dropdown__item:hover {
+    background: rgba(255, 255, 255, .05);
+}
+
+.el-select-dropdown__item.selected {
+    color: #fff;
+}
+
+.el-select-dropdown__item.selected:after {
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    content: "";
+    background: url(https://staticsns.cdn.bcebos.com/amis/2024-1/1704594047813/selected.png);
+    background-size: 100% 100%;
+    right: 8px;
+    top: 8px;
+}
+
+.el-button.is-disabled,
+.el-button.is-disabled:focus,
+.el-button.is-disabled:hover {
+    position: relative;
+    background: linear-gradient(to bottom right, rgb(229, 250, 87), rgb(64, 252, 67));
+    font-size: 16px;
+    font-weight: 900;
+    text-align: center;
+    line-height: 19.6px;
+    border-radius: 48px;
+    color: #000;
+    cursor: not-allowed;
+}
+
+.el-carousel__container {
+    height: 100%;
+    width: 100%;
+}
+
+/* Auth Dialog Styles */
+.auth-dialog-content {
+    text-align: center;
+}
+
+.auth-title {
+    width: 100%;
+    text-align: center;
+    font-size: large;
+    color: aliceblue;
+    margin-bottom: 10px;
+}
+
+.auth-qrcode {
+    width: 100%;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.auth-input-container {
+    margin-bottom: 10px;
+}
+
+.auth-input {
+    text-align: center;
+}
+
+.auth-msg {
+    color: #ffb3b3;
+    margin-top: 10px;
+}
+
+.book-menu {
+    height: 30px;
+}
+
+.book-content {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.story-content-item {
+    z-index: 0;
+}

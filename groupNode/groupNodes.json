@@ -1,1 +1,243 @@
-{}
+{
+    "胜多负少": {
+        "nodes": [
+            {
+                "id": -1,
+                "type": "KSampler",
+                "pos": [
+                    980,
+                    197
+                ],
+                "size": [
+                    315,
+                    262
+                ],
+                "flags": {},
+                "order": 4,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "label": "模型",
+                        "localized_name": "模型",
+                        "name": "model",
+                        "type": "MODEL",
+                        "link": null
+                    },
+                    {
+                        "label": "正面条件",
+                        "localized_name": "正面条件",
+                        "name": "positive",
+                        "type": "CONDITIONING",
+                        "link": null
+                    },
+                    {
+                        "label": "负面条件",
+                        "localized_name": "负面条件",
+                        "name": "negative",
+                        "type": "CONDITIONING",
+                        "link": null
+                    },
+                    {
+                        "label": "Latent",
+                        "localized_name": "Latent图像",
+                        "name": "latent_image",
+                        "type": "LATENT",
+                        "link": null
+                    },
+                    {
+                        "localized_name": "随机种",
+                        "name": "seed",
+                        "type": "INT",
+                        "widget": {
+                            "name": "seed"
+                        },
+                        "link": null
+                    },
+                    {
+                        "localized_name": "步数",
+                        "name": "steps",
+                        "type": "INT",
+                        "widget": {
+                            "name": "steps"
+                        },
+                        "link": null
+                    },
+                    {
+                        "localized_name": "CFG",
+                        "name": "cfg",
+                        "type": "FLOAT",
+                        "widget": {
+                            "name": "cfg"
+                        },
+                        "link": null
+                    },
+                    {
+                        "localized_name": "采样器",
+                        "name": "sampler_name",
+                        "type": "COMBO",
+                        "widget": {
+                            "name": "sampler_name"
+                        },
+                        "link": null
+                    },
+                    {
+                        "localized_name": "调度器",
+                        "name": "scheduler",
+                        "type": "COMBO",
+                        "widget": {
+                            "name": "scheduler"
+                        },
+                        "link": null
+                    },
+                    {
+                        "localized_name": "降噪",
+                        "name": "denoise",
+                        "type": "FLOAT",
+                        "widget": {
+                            "name": "denoise"
+                        },
+                        "link": null
+                    }
+                ],
+                "outputs": [
+                    {
+                        "label": "Latent",
+                        "localized_name": "Latent",
+                        "name": "LATENT",
+                        "type": "LATENT",
+                        "slot_index": 0,
+                        "links": []
+                    }
+                ],
+                "properties": {
+                    "cnr_id": "comfy-core",
+                    "ver": "0.3.56",
+                    "Node name for S&R": "KSampler"
+                },
+                "widgets_values": [
+                    156680208700286,
+                    "randomize",
+                    20,
+                    8,
+                    "euler",
+                    "normal",
+                    1
+                ],
+                "index": 0
+            },
+            {
+                "id": -1,
+                "type": "VAEDecode",
+                "pos": [
+                    1326,
+                    199
+                ],
+                "size": [
+                    210,
+                    46
+                ],
+                "flags": {},
+                "order": 5,
+                "mode": 0,
+                "inputs": [
+                    {
+                        "label": "Latent",
+                        "localized_name": "Latent",
+                        "name": "samples",
+                        "type": "LATENT",
+                        "link": null
+                    },
+                    {
+                        "label": "VAE",
+                        "localized_name": "vae",
+                        "name": "vae",
+                        "type": "VAE",
+                        "link": null
+                    }
+                ],
+                "outputs": [
+                    {
+                        "label": "图像",
+                        "localized_name": "图像",
+                        "name": "IMAGE",
+                        "type": "IMAGE",
+                        "slot_index": 0,
+                        "links": []
+                    }
+                ],
+                "properties": {
+                    "cnr_id": "comfy-core",
+                    "ver": "0.3.56",
+                    "Node name for S&R": "VAEDecode"
+                },
+                "index": 1
+            }
+        ],
+        "links": [
+            [
+                null,
+                0,
+                0,
+                0,
+                4,
+                "MODEL"
+            ],
+            [
+                null,
+                0,
+                0,
+                1,
+                6,
+                "CONDITIONING"
+            ],
+            [
+                null,
+                0,
+                0,
+                2,
+                7,
+                "CONDITIONING"
+            ],
+            [
+                null,
+                0,
+                0,
+                3,
+                5,
+                "LATENT"
+            ],
+            [
+                0,
+                0,
+                1,
+                0,
+                19,
+                "LATENT"
+            ],
+            [
+                null,
+                2,
+                1,
+                1,
+                4,
+                "VAE"
+            ]
+        ],
+        "external": [
+            [
+                1,
+                0,
+                "IMAGE"
+            ]
+        ],
+        "widgets_values": [
+            156680208700286,
+            "randomize",
+            20,
+            8,
+            "euler",
+            "normal",
+            1
+        ]
+    }
+}

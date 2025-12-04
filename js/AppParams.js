@@ -1,29 +1,29 @@
 import { app } from "/scripts/app.js";
 import { ComfyWidgets } from "/scripts/widgets.js";
-import { GroupNodeConfig,GroupNodeHandler } from "/extensions/core/groupNode.js";
-import { $el,ComfyDialog } from "../../../scripts/ui.js";
+import { GroupNodeConfig, GroupNodeHandler } from "/extensions/core/groupNode.js";
+import { $el, ComfyDialog } from "../../../scripts/ui.js";
 import { api } from "../../../scripts/api.js";
 
 // Displays input text on a node
 const CONVERTED_TYPE = "converted-widget";
-const type2paramType={
-  "STRING": "text",
-  "combo":"select",
-  "number":"number",
-  "toggle":"toggle",
-  "BOOLEAN":"switch",
-  "text":"text",
-  "string":"text",
-  "customtext":"customtext"
+const type2paramType = {
+    "STRING": "text",
+    "combo": "select",
+    "number": "number",
+    "toggle": "toggle",
+    "BOOLEAN": "switch",
+    "text": "text",
+    "string": "text",
+    "customtext": "customtext"
 }
 var update_comfyui_button = null;
 var switch_comfyui_button = null;
 var fetch_updates_button = null;
 var update_all_button = null;
 let share_option = 'all';
-let manager_instance =null;
+let manager_instance = null;
 $el("style", {
-	textContent: `
+    textContent: `
     
 /*表单样式*/
 .lam_app_form {
@@ -135,143 +135,155 @@ $el("style", {
   }
   
 `,
-parent: document.body,
+    parent: document.body,
 })
-let initData={}
+let initData = {}
 class ManagerMenuDialog extends ComfyDialog {
 
     createControlsLeft() {
-		let self = this;
-        let authorIds=initData?.base?.authorIds || []
-        let commands=initData?.commands||[]
-        let authorEls=[]
-        for(let id of authorIds){
-            authorEls.push($el('ol',{style:{marginRight:'10px'}},[
-                $el('span',{textContent:id}),
-                $el('button',{textContent:'删除',dataset:{authorId:id},$:(el) => {
-                    el.onclick = () => {
-                        initData.base.authorIds=authorIds.filter(id=>id!=el.dataset.authorId)
-                        manager_instance.initElement();
+        let self = this;
+        let authorIds = initData?.base?.authorIds || []
+        let commands = initData?.commands || []
+        let authorEls = []
+        for (let id of authorIds) {
+            authorEls.push($el('ol', { style: { marginRight: '10px' } }, [
+                $el('span', { textContent: id }),
+                $el('button', {
+                    textContent: '删除', dataset: { authorId: id }, $: (el) => {
+                        el.onclick = () => {
+                            initData.base.authorIds = authorIds.filter(id => id != el.dataset.authorId)
+                            manager_instance.initElement();
+                        }
                     }
-                }}),
+                }),
             ]))
         }
-        let commonEls=[]
-        for(let command in commands){
-            commonEls.push($el('ol',{style:{marginRight:'10px'}},[
-                $el('span',{textContent:command}),
-                $el('button',{textContent:'删除',dataset:{command:command},$:(el) => {
-                    el.onclick = () => {
-                        delete initData.commands[command]
-                        manager_instance.initElement();
+        let commonEls = []
+        for (let command in commands) {
+            commonEls.push($el('ol', { style: { marginRight: '10px' } }, [
+                $el('span', { textContent: command }),
+                $el('button', {
+                    textContent: '删除', dataset: { command: command }, $: (el) => {
+                        el.onclick = () => {
+                            delete initData.commands[command]
+                            manager_instance.initElement();
+                        }
                     }
-                }}),
+                }),
             ]))
         }
-        let from =$el("from", [
-                $el("div.txtb", [
-                    $el("label", { textContent: "应用标题:" }),
-                    $el("input", {
-                        name: "appTitle",
-                        value: initData?.base?.appTitle,
-                        onchange: (e) => {
-                            initData.base.appTitle = e.target.value;
-                        },
-                    }),
-                ]),
-                $el("div.txtb", [
-                    $el("label", { textContent: "应用logo:" }),
-                    $el("input", {
-                        name: "appLogo",
-                        value: initData?.base?.appLogo,
-                        onchange: (e) => {
-                            initData.base.appLogo = e.target.value;
-                        },
-                    }),
-                ]),
-                $el("div.txtb", [
-                    $el("label", { textContent: "免费次数(0为无限):" }),
-                    $el("input", {
-                        name: "freeSize",
-                        value: initData?.base?.freeSize,
-                        onchange: (e) => {
-                            let value=e.target.value
-                            if(isNaN(value)){
-                                value=0
-                            }else{
-                                value=parseInt(value)
-                            }
-                            initData.base.freeSize = value;
-                        },
-                    }),
-                ]),
-                $el("div.txtb", [
-                    $el("label", { textContent: "授权编号:" },[
-                        $el('button',{textContent:'添加',$:(el) => {
+        let from = $el("from", [
+            $el("div.txtb", [
+                $el("label", { textContent: "应用标题:" }),
+                $el("input", {
+                    name: "appTitle",
+                    value: initData?.base?.appTitle,
+                    onchange: (e) => {
+                        initData.base.appTitle = e.target.value;
+                    },
+                }),
+            ]),
+            $el("div.txtb", [
+                $el("label", { textContent: "应用logo:" }),
+                $el("input", {
+                    name: "appLogo",
+                    value: initData?.base?.appLogo,
+                    onchange: (e) => {
+                        initData.base.appLogo = e.target.value;
+                    },
+                }),
+            ]),
+            $el("div.txtb", [
+                $el("label", { textContent: "免费次数(0为无限):" }),
+                $el("input", {
+                    name: "freeSize",
+                    value: initData?.base?.freeSize,
+                    onchange: (e) => {
+                        let value = e.target.value
+                        if (isNaN(value)) {
+                            value = 0
+                        } else {
+                            value = parseInt(value)
+                        }
+                        initData.base.freeSize = value;
+                    },
+                }),
+            ]),
+            $el("div.txtb", [
+                $el("label", { textContent: "授权编号:" }, [
+                    $el('button', {
+                        textContent: '添加', $: (el) => {
                             el.onclick = () => {
                                 //随机字符串
                                 let authorId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
                                 initData.base.authorIds.push(authorId)
                                 manager_instance.initElement();
                             }
-                        }})
-                    ]),
-                    $el("ul.scroll-container",authorEls)
+                        }
+                    })
                 ]),
-                $el("div.txtb", [
-                    $el("label", { textContent: "应用管理:" }),
-                    $el("ul.scroll-container",commonEls)
-                ]),
-            ])
-        return [$el('div.lam_app_form',[from,
-            $el('span.btn',{textContent:'提交',$:(el) => {
-                el.onclick = () => {
-                    updateInitData()
+                $el("ul.scroll-container", authorEls)
+            ]),
+            $el("div.txtb", [
+                $el("label", { textContent: "应用管理:" }),
+                $el("ul.scroll-container", commonEls)
+            ]),
+        ])
+        return [$el('div.lam_app_form', [from,
+            $el('span.btn', {
+                textContent: '提交', $: (el) => {
+                    el.onclick = () => {
+                        updateInitData()
+                    }
                 }
-            }}),
-            $el('span.btn',{textContent:'应用预览',onclick:()=>{
-                openAppPage('default')
-            }}),
-            $el('span.btn',{textContent:'画板预览',onclick:()=>{
-                openAppPage()
-            }})
+            }),
+            $el('span.btn', {
+                textContent: '应用预览', onclick: () => {
+                    openAppPage('default')
+                }
+            }),
+            $el('span.btn', {
+                textContent: '画板预览', onclick: () => {
+                    openAppPage()
+                }
+            })
         ])];
     }
 
-	constructor() {
-		super();
+    constructor() {
+        super();
         const close_button = $el("button", { id: "cm-close-button", type: "button", textContent: "Close", onclick: () => this.close() });
-		const content =
-				$el("div.comfy-modal-content",
-					[
-						$el("tr.cm-title", {}, [
-								$el("font", {size:6, color:"white"}, [`应用管理`])]
-							),
-						$el("br", {}, []),
-						$el("div.cm-menu-container",
-							[
-                                ...this.createControlsLeft()
-							]),
+        const content =
+            $el("div.comfy-modal-content",
+                [
+                    $el("tr.cm-title", {}, [
+                        $el("font", { size: 6, color: "white" }, [`应用管理`])]
+                    ),
+                    $el("br", {}, []),
+                    $el("div.cm-menu-container",
+                        [
+                            ...this.createControlsLeft()
+                        ]),
 
-						$el("br", {}, []),
-						close_button,
-					]
-				);
+                    $el("br", {}, []),
+                    close_button,
+                ]
+            );
 
-		content.style.width = '100%';
-		content.style.height = '80%';
-		this.element = $el("div.comfy-modal", { id:'cm-manager-dialog', parent: document.body,style:{maxWidth:'700px',height:'800px'} }, [ content ]);
-	}
-
-    initElement(){
-		this.element.children[0].children[2].innerHTML=''
-        this.element.children[0].children[2].appendChild( ...this.createControlsLeft())
+        content.style.width = '100%';
+        content.style.height = '80%';
+        this.element = $el("div.comfy-modal", { id: 'cm-manager-dialog', parent: document.body, style: { maxWidth: '700px', height: '800px' } }, [content]);
     }
 
-	show() {
+    initElement() {
+        this.element.children[0].children[2].innerHTML = ''
+        this.element.children[0].children[2].appendChild(...this.createControlsLeft())
+    }
+
+    show() {
         this.initElement()
-		this.element.style.display = "block";
-	}
+        this.element.style.display = "block";
+    }
 }
 async function openAppPage(type) {
     try {
@@ -279,7 +291,7 @@ async function openAppPage(type) {
         if (resp.status === 200) {
             let data = await resp.json();
             //打开新标签页面
-            window.open('/wechatauth/'+(type=='default'?'app':'index')+'?openId='+data.data);
+            window.open('/wechatauth/' + (type == 'default' ? 'app' : 'index') + '?openId=' + data.data);
             return true;
         }
         throw new Error(resp.data.msg);
@@ -288,14 +300,14 @@ async function openAppPage(type) {
     }
 }
 
-async function getAppInit(){
+async function getAppInit() {
     try {
         const resp = await api.fetchApi(`/lam/getInitData`);
         if (resp.status === 200) {
             let data = await resp.json();
-            if(data.success){
+            if (data.success) {
                 console.log(data)
-                initData=data.data
+                initData = data.data
                 manager_instance.show();
             }
             return true;
@@ -308,11 +320,12 @@ async function getAppInit(){
 
 async function updateInitData() {
     try {
-        let data={appTitle:initData.base.appTitle,
-            appLogo:initData.base.appLogo,
-            freeSize:initData.base.freeSize,
-            authorIds:initData.base.authorIds,
-            commands:initData.commands
+        let data = {
+            appTitle: initData.base.appTitle,
+            appLogo: initData.base.appLogo,
+            freeSize: initData.base.freeSize,
+            authorIds: initData.base.authorIds,
+            commands: initData.commands
         }
         const response = await api.fetchApi("/lam/updateAppData", {
             method: "POST",
@@ -333,8 +346,8 @@ async function updateInitData() {
 
 async function setAppParams(data) {
     try {
-        let workflow= await app.graphToPrompt();
-        data['workflow']=workflow['output']
+        let workflow = await app.graphToPrompt();
+        data['workflow'] = workflow['output']
         const response = await api.fetchApi("/lam/setAppParams", {
             method: "POST",
             headers: {
@@ -351,61 +364,67 @@ async function setAppParams(data) {
         console.error(error);
     }
 }
-function add_param(w,appNode){
-    let typeEl=null;
-    if(w.type=='number'||w.type=='slider'){
-        typeEl=$el('td',[
-            $el('select',{value:w.type,$:(el) =>{el.onchange=()=>{
-                appNode.properties['paramList'].find(obj => obj.id === el.parentNode.parentNode.dataset.id).type=el.value
-            }}},[
-                $el('option',{selected:w.type=='number',textContent:'数值输入',value:'number'}),
-                $el('option',{selected:w.type=='slider',textContent:'数值滑条',value:'slider'}),
+function add_param(w, appNode) {
+    let typeEl = null;
+    if (w.type == 'number' || w.type == 'slider') {
+        typeEl = $el('td', [
+            $el('select', {
+                value: w.type, $: (el) => {
+                    el.onchange = () => {
+                        appNode.properties['paramList'].find(obj => obj.id === el.parentNode.parentNode.dataset.id).type = el.value
+                    }
+                }
+            }, [
+                $el('option', { selected: w.type == 'number', textContent: '数值输入', value: 'number' }),
+                $el('option', { selected: w.type == 'slider', textContent: '数值滑条', value: 'slider' }),
             ])
         ])
-    }else{
-        typeEl=$el('td',{textContent:w.type})
+    } else {
+        typeEl = $el('td', { textContent: w.type })
     }
-    let maskEl=null;
-    let maskd=appNode.properties['paramList'].find(obj => obj.id==w?.maskKey)
-    if(w.type=='image'){
-        maskEl=$el('td',[
-            $el('span',{textContent:maskd?'已关联:'+maskd.zhName:'关联遮罩',$:(el) => {
-                el.onclick = () => {
-                    let thIndex=appNode.properties['paramList'].findIndex(obj => obj.id==el.parentNode.parentNode.dataset.id)
-                    let imgs=appNode.properties['paramList'].filter(obj => obj.type === 'image'&&obj.id!=el.parentNode.parentNode.dataset.id)
-                    let maskKey=appNode.properties['paramList'][thIndex]?.maskKey
-                    if(imgs.length>0){
-                        if(!maskKey){
-                            appNode.properties['paramList'][thIndex]['maskKey']=imgs[0].id
-                            el.innerHTML='已关联：'+imgs[0].zhName
-                        }else{
-                            if(imgs.length==1){
-                                appNode.properties['paramList'][thIndex]['maskKey']=null
-                                el.innerHTML='关联遮罩'
-                            }else{
-                                let imgIndex=imgs.findIndex(obj => obj.id === maskKey)
-                                if(imgIndex==-1||imgIndex+1>=imgs.length){
-                                    appNode.properties['paramList'][thIndex]['maskKey']=null
-                                    el.innerHTML='关联遮罩'
-                                }else{
-                                    appNode.properties['paramList'][thIndex]['maskKey']=imgs[imgIndex+1].id
-                                    el.innerHTML='已关联：'+imgs[imgIndex+1].zhName
+    let maskEl = null;
+    let maskd = appNode.properties['paramList'].find(obj => obj.id == w?.maskKey)
+    if (w.type == 'image') {
+        maskEl = $el('td', [
+            $el('span', {
+                textContent: maskd ? '已关联:' + maskd.zhName : '关联遮罩', $: (el) => {
+                    el.onclick = () => {
+                        let thIndex = appNode.properties['paramList'].findIndex(obj => obj.id == el.parentNode.parentNode.dataset.id)
+                        let imgs = appNode.properties['paramList'].filter(obj => obj.type === 'image' && obj.id != el.parentNode.parentNode.dataset.id)
+                        let maskKey = appNode.properties['paramList'][thIndex]?.maskKey
+                        if (imgs.length > 0) {
+                            if (!maskKey) {
+                                appNode.properties['paramList'][thIndex]['maskKey'] = imgs[0].id
+                                el.innerHTML = '已关联：' + imgs[0].zhName
+                            } else {
+                                if (imgs.length == 1) {
+                                    appNode.properties['paramList'][thIndex]['maskKey'] = null
+                                    el.innerHTML = '关联遮罩'
+                                } else {
+                                    let imgIndex = imgs.findIndex(obj => obj.id === maskKey)
+                                    if (imgIndex == -1 || imgIndex + 1 >= imgs.length) {
+                                        appNode.properties['paramList'][thIndex]['maskKey'] = null
+                                        el.innerHTML = '关联遮罩'
+                                    } else {
+                                        appNode.properties['paramList'][thIndex]['maskKey'] = imgs[imgIndex + 1].id
+                                        el.innerHTML = '已关联：' + imgs[imgIndex + 1].zhName
+                                    }
                                 }
                             }
+                        } else {
+                            el.innerHTML = '关联遮罩'
+                            alert('请先添加遮罩图片参数')
                         }
-                    }else{
-                        el.innerHTML='关联遮罩'
-                        alert('请先添加遮罩图片参数')
+
                     }
-                    
-                }}
+                }
             })
         ])
-    }else{
-        maskEl=$el('td')
+    } else {
+        maskEl = $el('td')
     }
-    
-    return $el('tr',{
+
+    return $el('tr', {
         dataset: {
             id: w.id,
             name: w.name,
@@ -413,68 +432,76 @@ function add_param(w,appNode){
             type: w.type,
             value: w.value
         }
-    },[
-        $el('td',{textContent:w.name}),
-        $el('td',{},[
-            $el('input',{name:w.name,value:w.zhName,$:(el) =>{el.onchange=()=>{
-                appNode.properties['paramList'].find(obj => obj.id === el.parentNode.parentNode.dataset.id).zhName=el.value
-            }}})
+    }, [
+        $el('td', { textContent: w.name }),
+        $el('td', {}, [
+            $el('input', {
+                name: w.name, value: w.zhName, $: (el) => {
+                    el.onchange = () => {
+                        appNode.properties['paramList'].find(obj => obj.id === el.parentNode.parentNode.dataset.id).zhName = el.value
+                    }
+                }
+            })
         ]),
         typeEl,
         maskEl,
-        $el('td',{},[$el('button',{textContent:'删除',$:(el) => {
-            el.onclick = () => {
-                appNode.properties['paramList'].splice(appNode.properties['paramList'].findIndex(obj => obj.id === el.parentNode.parentNode.dataset.id),1)
-                el.parentNode.parentNode.parentNode.removeChild(el.parentNode.parentNode)
-            }}
+        $el('td', {}, [$el('button', {
+            textContent: '删除', $: (el) => {
+                el.onclick = () => {
+                    appNode.properties['paramList'].splice(appNode.properties['paramList'].findIndex(obj => obj.id === el.parentNode.parentNode.dataset.id), 1)
+                    el.parentNode.parentNode.parentNode.removeChild(el.parentNode.parentNode)
+                }
             }
+        }
         )]),
     ])
 }
 app.registerExtension({
     name: "AppParams",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        var names=["AppParams"]
-        if (names.indexOf(nodeData.name)>=0) {
+        var names = ["AppParams"]
+        if (names.indexOf(nodeData.name) >= 0) {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
-            nodeType.prototype.onNodeCreated = function() {
+            nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated?.apply(this, arguments);
                 this.setProperty("paramList", [])
-                const list = $el("table.lam_app_params_list",[
-                    $el('tr',[
-                        $el('td',{textContent:'参数名'}),
-                        $el('td',{textContent:'中文名'}),
-                        $el('td',{textContent:'组件类型'}),
-                        $el('td',{textContent:'绘制遮罩'}),
-                        $el('td',{textContent:'操作'}),
+                const list = $el("table.lam_app_params_list", [
+                    $el('tr', [
+                        $el('td', { textContent: '参数名' }),
+                        $el('td', { textContent: '中文名' }),
+                        $el('td', { textContent: '组件类型' }),
+                        $el('td', { textContent: '绘制遮罩' }),
+                        $el('td', { textContent: '操作' }),
                     ])
                 ]);
-                let params=this.addDOMWidget('styles',"list",$el('div.lam_app_param_div',[$el('button',{
-                    textContent:'应用预览',
-                    style:{},
-                    onclick:()=>{
+                let params = this.addDOMWidget('styles', "list", $el('div.lam_app_param_div', [$el('button', {
+                    textContent: '应用预览',
+                    style: {},
+                    onclick: () => {
                         let appType = this.widgets[this.widgets.findIndex(obj => obj.name === 'appType')];
                         openAppPage(appType.value)
-                    }}),$el('button',{
-                        textContent:'参数应用',
-                        style:{},
-                        onclick:()=>{
-                            let paramList=this.properties['paramList']
-                            let appName = this.widgets[this.widgets.findIndex(obj => obj.name === 'appName')];
-                            let appType = this.widgets[this.widgets.findIndex(obj => obj.name === 'appType')];
-                            let appDesc = this.widgets[this.widgets.findIndex(obj => obj.name === 'appDesc')];
-                            
-                            if(!appName.value){
-                                alert('请输入应用名称');
-                                return ;
-                            }
-                            if(paramList.length<=0){
-                                alert('请至少选择一个参数');
-                                return ;
-                            }
-                            let data={appName:appName.value,appType:appType.value,appDesc:appDesc.value,paramList:paramList}
-                            setAppParams(data)
-                    }}),list]));
+                    }
+                }), $el('button', {
+                    textContent: '参数应用',
+                    style: {},
+                    onclick: () => {
+                        let paramList = this.properties['paramList']
+                        let appName = this.widgets[this.widgets.findIndex(obj => obj.name === 'appName')];
+                        let appType = this.widgets[this.widgets.findIndex(obj => obj.name === 'appType')];
+                        let appDesc = this.widgets[this.widgets.findIndex(obj => obj.name === 'appDesc')];
+
+                        if (!appName.value) {
+                            alert('请输入应用名称');
+                            return;
+                        }
+                        if (paramList.length <= 0) {
+                            alert('请至少选择一个参数');
+                            return;
+                        }
+                        let data = { appName: appName.value, appType: appType.value, appDesc: appDesc.value, paramList: paramList }
+                        setAppParams(data)
+                    }
+                }), list]));
                 this.setSize([500, 600]);
                 return r;
             };
@@ -483,10 +510,10 @@ app.registerExtension({
     loadedGraphNode(node, _) {
         if (node.type === "AppParams") {
             node.properties['paramList'].forEach(el => {
-                node.widgets[3].element.children[2].appendChild(add_param(el,node))
+                node.widgets[3].element.children[2].appendChild(add_param(el, node))
             });
         }
-	},
+    },
 });
 
 async function addConvertToGroupOptions() {
@@ -494,9 +521,9 @@ async function addConvertToGroupOptions() {
     const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
     LGraphCanvas.prototype.getNodeMenuOptions = function (node) {
         const options = getNodeMenuOptions.apply(this, arguments);
-        if (!GroupNodeHandler.isGroupNode(node)&&node.type!='AppParams'&&node.widgets){
+        if (!GroupNodeHandler.isGroupNode(node) && node.type != 'AppParams' && node.widgets) {
             let toInput = [];
-            let wNames=node.inputs.filter(obj => obj.widget !== undefined && obj.link === null).map(obj => obj.name);
+            let wNames = node.inputs.filter(obj => obj.widget !== undefined && obj.link === null).map(obj => obj.name);
             for (const w of node.widgets) {
                 if (w.options?.forceInput || !wNames.includes(w.name)) {
                     continue;
@@ -506,72 +533,72 @@ async function addConvertToGroupOptions() {
                         content: `添加 ${w.label} 到输入参数`,
                         callback: async () => {
                             console.log(w)
-                            let nodes=graph.computeExecutionOrder(false)
-                            let appNode=nodes[nodes.findIndex(obj => obj.type === 'AppParams')]
-                            if(!appNode){
+                            let nodes = graph.computeExecutionOrder(false)
+                            let appNode = nodes[nodes.findIndex(obj => obj.type === 'AppParams')]
+                            if (!appNode) {
                                 alert('请先添加AppParams节点');
                                 return;
                             }
                             let appTypeEl = appNode.widgets[appNode.widgets.findIndex(obj => obj.name === 'appType')];
-                            if(!w.type in type2paramType){
+                            if (!w.type in type2paramType) {
                                 return;
                             }
-                            let paramData={id:'n'+node.id+'_'+w.name,keys:[''+node.id,'inputs',w.name],name:w.name,zhName:w.label,type:w.type,default:w.value,isRequired:false}
-                            if(w.type=='number'){
-                                paramData['min']=w.options.min
-                                paramData['max']=w.options.max
-                                paramData['step']=w.options.round
-                            }else if(w.type=='toggle'||w.type=='boolean'||w.type=='BOOLEAN'){
-                                paramData['type']='switch'
-                                paramData['onVal']=true
-                                paramData['offVal']=false
-                            }else if(w.type=='STRING'){
-                                paramData['type']='text'
-                            }else if(w.type=='combo'){
-                                paramData['type']='select'
-                                let values=w.options.values
-                                paramData['options']={}
-                                for(let i=0;i<values.length;i++){
-                                    paramData['options'][values[i]]=values[i]
+                            let paramData = { id: 'n' + node.id + '_' + w.name, keys: ['' + node.id, 'inputs', w.name], name: w.name, zhName: w.label, type: w.type, default: w.value, isRequired: false }
+                            if (w.type == 'number') {
+                                paramData['min'] = w.options.min
+                                paramData['max'] = w.options.max
+                                paramData['step'] = w.options.round
+                            } else if (w.type == 'toggle' || w.type == 'boolean' || w.type == 'BOOLEAN') {
+                                paramData['type'] = 'switch'
+                                paramData['onVal'] = true
+                                paramData['offVal'] = false
+                            } else if (w.type == 'STRING') {
+                                paramData['type'] = 'text'
+                            } else if (w.type == 'combo') {
+                                paramData['type'] = 'select'
+                                let values = w.options.values
+                                paramData['options'] = {}
+                                for (let i = 0; i < values.length; i++) {
+                                    paramData['options'][values[i]] = values[i]
                                 }
                             }
-                            if(node.type=="LamLoadPathImage"&&w.name=='image_path'){
-                                paramData['type']='image'
-                                paramData['default']=''
-                            }else if(node.type=="LamLoadImageBase64"&&w.name=='image'){
-                                paramData['type']='base64img'
-                                paramData['isRequired']=true
-                            }else if(w.name=='seed'){
-                                paramData['type']='seed'
-                                if(appTypeEl.value=='paint-board'){
-                                    paramData['default']=-1
+                            if (node.type == "LamLoadPathImage" && w.name == 'image_path') {
+                                paramData['type'] = 'image'
+                                paramData['default'] = ''
+                            } else if (node.type == "LamLoadImageBase64" && w.name == 'image') {
+                                paramData['type'] = 'base64img'
+                                paramData['isRequired'] = true
+                            } else if (w.name == 'seed') {
+                                paramData['type'] = 'seed'
+                                if (appTypeEl.value == 'paint-board') {
+                                    paramData['default'] = -1
                                 }
-                            }else if(w.name=='batch_size'){
-                                paramData['type']='number'
-                            }else if(w.name=='denoise'){
-                                paramData['type']='slider'
-                                if(appTypeEl.value=='paint-board'){
-                                    paramData['min']=0
-                                    paramData['max']=100
-                                    paramData['step']=1
-                                    paramData['original']=1
+                            } else if (w.name == 'batch_size') {
+                                paramData['type'] = 'number'
+                            } else if (w.name == 'denoise') {
+                                paramData['type'] = 'slider'
+                                if (appTypeEl.value == 'paint-board') {
+                                    paramData['min'] = 0
+                                    paramData['max'] = 100
+                                    paramData['step'] = 1
+                                    paramData['original'] = 1
                                 }
-                                paramData['default']=parseFloat(paramData['default'].toFixed(2))
-                            }   
+                                paramData['default'] = parseFloat(paramData['default'].toFixed(2))
+                            }
 
-                            let index=appNode.properties['paramList'].findIndex(obj => obj.id === paramData.id)
-                            if(index>=0){
+                            let index = appNode.properties['paramList'].findIndex(obj => obj.id === paramData.id)
+                            if (index >= 0) {
                                 return;
                             }
                             appNode.properties['paramList'].push(paramData)
-                            let tr=add_param(paramData,appNode)
+                            let tr = add_param(paramData, appNode)
                             appNode.widgets[3].element.children[2].appendChild(tr)
                         }
                     });
                 }
             }
             const index = options.findIndex((o) => o?.content === "Outputs") + 1 || options.length - 1;
-            toInput.length>0&&options.splice(index + 1, null, {
+            toInput.length > 0 && options.splice(index + 1, null, {
                 content: `设置应用参数`,
                 submenu: {
                     options: toInput
@@ -581,12 +608,12 @@ async function addConvertToGroupOptions() {
         return options;
     };
 
-    let cmGroup = new (await  import("../../scripts/ui/components/buttonGroup.js")).ComfyButtonGroup(
-        new(await  import("../../scripts/ui/components/button.js")).ComfyButton({
+    let cmGroup = new (await import("../../scripts/ui/components/buttonGroup.js")).ComfyButtonGroup(
+        new (await import("../../scripts/ui/components/button.js")).ComfyButton({
             icon: "puzzle",
             action: () => {
-                if(!manager_instance){
-                    manager_instance=  new ManagerMenuDialog();
+                if (!manager_instance) {
+                    manager_instance = new ManagerMenuDialog();
                 }
                 getAppInit()
             },
@@ -596,7 +623,7 @@ async function addConvertToGroupOptions() {
         }).element
     );
     app.menu?.settingsGroup.element.before(cmGroup.element);
-    
+
 }
 
 const id = "Lam.AppParams";
@@ -612,12 +639,10 @@ const ext = {
     //     // Store this so we can mutate it later with group nodes
     //     globalDefs = defs;
     // },
-    nodeCreated(node) {
-        if (!GroupNodeHandler.isGroupNode(node)) {
-            
-        }
-        
-    },
+    // nodeCreated(node) {
+    //     if (!GroupNodeHandler.isGroupNode(node)) {
+    //     }
+    // },
 };
 
 app.registerExtension(ext);

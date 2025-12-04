@@ -1,130 +1,589 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>简单画板</title>
-    <!--<link rel="stylesheet" href="https://unpkg.com/element-plus@2.4.4/dist/index.css"/>-->
-    <link rel="stylesheet" href="static/assets/index.css" />
-    <!--<script src="https://unpkg.com/vue@3.3.12/dist/vue.global.js"></script>-->
-    <script src="static/assets/vue.global.js"></script>
-    <!--<script src="https://unpkg.com/vue-i18n@9.8.0/dist/vue-i18n.global.js"></script>-->
-    <script src="static/assets/vue-i18n.global.js"></script>
-    <!--<script src="https://unpkg.com/element-plus@2.4.4/dist/index.full.min.js"></script>-->
-    <script src="static/assets/index.full.min.js"></script>
-    <!--<script src="https://unpkg.com/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>-->
-    <script src="static/assets/index.iife.min.js"></script>
-    <!--<script src="https://unpkg.com/clipboard@2.0.11/dist/clipboard.min.js"></script>-->
-    <script src="static/assets/clipboard.min.js"></script>
-    <!--<script src="https://unpkg.com/axios@1.6.2/dist/axios.min.js"></script>-->
-    <script src="static/assets/axios.min.js"></script>
-    <script src="static/assets/fabric.min.js"></script>
-  </head>
-  <body>
-    <div id="app" class="image-comparator">
-      <section  class="aigc-preview"  >
-        <el-carousel class="aigc-preview__img"  :interval="5000" arrow="always" :autoplay="false">
-            <el-carousel-item v-for="item in 4" :key="item">
-                <el-image class="aigc-preview__img"  src="../view?filename=ComfyUI_03170_.png&type=input&subfolder=" fit="contain" ></el-image>
-            </el-carousel-item>
-        </el-carousel>
-      </section>
-        <!-- 核心标签代码   -->
-        <div class="container" @mouseenter="startDrag" @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag">
-          <div class="image-wrapper"
-               :style="{ clipPath: `inset(0 ${100 - (dividerPosition / containerWidth * 100)}% 0 0)` }">
-               <el-image src="https://fuss10.elemecdn.com/9/bb/e27858e973f5d7d3904835f46abbdjpeg.jpeg" class="image" fit="contain"/>
-          </div>
-          <div class="divider" :style="{ left: `${dividerPosition}px` }"></div>
-          <div class="image-wrapper" :style="{ clipPath: `inset(0 0 0 ${(dividerPosition / containerWidth * 100)}%)` }">
-            <el-image src="https://fuss10.elemecdn.com/d/e6/c4d93a3805b3ce3f323f7974e6f78jpeg.jpeg" class="image" fit="contain"/>
-          </div>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>360°全景图播放器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+        }
+
+        header {
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .player-container {
+            position: relative;
+            width: 100%;
+            height: 70vh;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            margin-bottom: 30px;
+        }
+
+        #panorama {
+            width: 100%;
+            height: 100%;
+            background-color: #111;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            color: white;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 8px;
+        }
+
+        .error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            color: #ff6b6b;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .control-btn:active {
+            transform: translateY(1px);
+        }
+
+        .control-btn.active {
+            background: rgba(253, 187, 45, 0.7);
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            backdrop-filter: blur(5px);
+        }
+
+        .instructions h2 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .instructions ul {
+            text-align: left;
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .instructions li:before {
+            content: "•";
+            color: #fdbb2d;
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
+            top: -5px;
+        }
+
+        .image-selector {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .image-option {
+            width: 120px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .image-option:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        .image-option.active {
+            opacity: 1;
+            border-color: #fdbb2d;
+            transform: scale(1.05);
+        }
+
+        .image-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-option .placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #666, #999);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .player-container {
+                height: 50vh;
+            }
+
+            .control-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>360°全景图播放器</h1>
+            <p class="subtitle">沉浸式体验全景视觉盛宴</p>
+        </header>
+
+        <div class="player-container">
+            <div id="panorama"></div>
+            <div class="loading" id="loading">加载全景图...</div>
+            <div class="error-message" id="errorMessage">图片加载失败，请尝试其他全景图</div>
         </div>
+
+        <div class="controls">
+            <button class="control-btn" id="autoRotate">
+                <span>自动旋转</span>
+            </button>
+            <button class="control-btn" id="fullscreen">
+                <span>全屏模式</span>
+            </button>
+            <button class="control-btn" id="resetView">
+                <span>重置视角</span>
+            </button>
+        </div>
+
+        <div class="image-selector">
+            <div class="image-option active" data-src="/api/view?filename=ComfyUI_00004_.png&subfolder=&type=output&rand=0.4623513290192227">
+                <div class="placeholder">示例全景图1</div>
+            </div>
+            <div class="image-option" data-src="https://threejs.org/examples/textures/25258776a2_o.jpg">
+                <div class="placeholder">示例全景图2</div>
+            </div>
+            <div class="image-option" data-src="https://threejs.org/examples/textures/3583869462_03c4660a5d_o.jpg">
+                <div class="placeholder">示例全景图3</div>
+            </div>
+            <div class="image-option" data-src="https://threejs.org/examples/textures/landscape.png">
+                <div class="placeholder">示例全景图4</div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h2>使用说明</h2>
+            <ul>
+                <li>使用鼠标拖拽来旋转视角，探索全景环境</li>
+                <li>使用鼠标滚轮来放大或缩小视图</li>
+                <li>点击"自动旋转"按钮启用/禁用自动旋转</li>
+                <li>点击"全屏模式"按钮进入全屏沉浸体验</li>
+                <li>点击"重置视角"按钮回到初始视角</li>
+                <li>从下方选择不同的全景图进行切换</li>
+                <li><strong>注意：</strong>示例图片来自threejs.org，可能需要科学上网才能访问</li>
+            </ul>
+        </div>
+
+        <div class="instructions">
+            <h2>本地图片使用说明</h2>
+            <ul>
+                <li>如需使用本地图片，请将图片文件放在项目目录中</li>
+                <li>修改 data-src 属性为本地图片路径，例如：data-src="images/panorama1.jpg"</li>
+                <li>确保图片是等距柱状投影格式（360°全景图）</li>
+                <li>推荐图片尺寸：4096×2048 或 8192×4096</li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>© 2023 全景图播放器 | 使用 Three.js 构建</p>
+        </footer>
     </div>
-  </body>
 
-  <script>
-    const app = Vue.createApp({
-      data() {
-        return {
-          containerWidth: 500,
-          dividerPosition: 250,
-          dragging: false,
-          containerRect: null,
-        };
-      },
-      methods: {
-        updateContainerWidth() {
-          this.containerWidth = document.querySelector(".container").clientWidth;
-        },
-        startDrag(event) {
-          this.dragging = true;
-          this.containerRect = document.querySelector(".container").getBoundingClientRect();
-        },
-        onDrag(event) {
-          if (this.dragging && this.containerRect) {
-            let newPosition = event.clientX - this.containerRect.left;
-            if (newPosition < 0) newPosition = 0;
-            if (newPosition > this.containerRect.width)
-              newPosition = this.containerRect.width;
-            this.dividerPosition = newPosition;
-          }
-        },
-        endDrag() {
-          this.dragging = false;
-          this.containerRect = null;
-        },
-      },
-      mounted() {
-        this.updateContainerWidth();
-        window.addEventListener("resize", this.updateContainerWidth);
-      },
-      beforeDestroy() {
-        window.removeEventListener("resize", this.updateContainerWidth);
-      },
-    });
-    app.use(ElementPlus);
-    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-      app.component(key, component);
-    }
-    app.mount("#app");
-  </script>
-  <style scoped lang="less">
-    .image-comparator {
-      width: 90%;
-      /*max-width: 600px;*/
-      margin: 0 auto;
+    <!-- 引入Three.js库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-      .container {
-        position: relative;
-        width: 100%;
-        height: 600px;
-        overflow: hidden;
-      }
+    <script>
+        // 全景图播放器类
+        class PanoramaViewer {
+            constructor(containerId) {
+                this.container = document.getElementById(containerId);
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.sphere = null;
+                this.textureLoader = new THREE.TextureLoader();
 
-      .image-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-      }
+                // 控制参数
+                this.isUserInteracting = false;
+                this.onPointerDownMouseX = 0;
+                this.onPointerDownMouseY = 0;
+                this.onPointerDownLon = 0;
+                this.onPointerDownLat = 0;
+                this.lon = 0;
+                this.lat = 0;
+                this.phi = 0;
+                this.theta = 0;
+                this.target = new THREE.Vector3();
+                this.autoRotate = false;
+                this.autoRotateSpeed = 0.3;
 
-      .image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
+                this.init();
+            }
 
-      .divider {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background-color: black;
-        cursor: ew-resize;
-        z-index: 10;
-      }
-    }
-  </style>
+            init() {
+                // 创建场景
+                this.scene = new THREE.Scene();
+
+                // 创建相机
+                this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 1000);
+
+                // 创建渲染器
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                this.container.appendChild(this.renderer.domElement);
+
+                // 创建球体几何
+                const geometry = new THREE.SphereGeometry(500, 60, 40);
+                geometry.scale(-1, 1, 1); // 反转球体，使纹理在内部
+
+                // 创建默认材质（等待图片加载）
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0x222222,
+                    side: THREE.DoubleSide
+                });
+                this.sphere = new THREE.Mesh(geometry, material);
+                this.scene.add(this.sphere);
+
+                // 设置相机位置
+                this.camera.position.set(0, 0, 0.1);
+
+                // 添加事件监听
+                this.addEventListeners();
+
+                // 开始动画循环
+                this.animate();
+
+                // 窗口大小变化处理
+                window.addEventListener('resize', () => this.onWindowResize());
+            }
+
+            loadPanorama(imageUrl) {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('errorMessage').style.display = 'none';
+
+                // 设置超时时间
+                const timeout = setTimeout(() => {
+                    this.showError('图片加载超时，请检查网络连接或尝试其他图片');
+                }, 10000);
+
+                this.textureLoader.load(
+                    imageUrl,
+                    (texture) => {
+                        clearTimeout(timeout);
+                        texture.minFilter = THREE.LinearFilter;
+
+                        // 创建新材质
+                        const material = new THREE.MeshBasicMaterial({
+                            map: texture,
+                            side: THREE.DoubleSide
+                        });
+                        this.sphere.material = material;
+                        document.getElementById('loading').style.display = 'none';
+                    },
+                    (progress) => {
+                        // 加载进度
+                        const percent = Math.round((progress.loaded / progress.total) * 100);
+                        document.getElementById('loading').textContent = `加载中... ${percent}%`;
+                    },
+                    (error) => {
+                        clearTimeout(timeout);
+                        console.error('加载全景图失败:', error);
+                        this.showError('图片加载失败，请尝试其他全景图');
+                    }
+                );
+            }
+
+            showError(message) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('errorMessage').textContent = message;
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+
+            addEventListeners() {
+                const domElement = this.renderer.domElement;
+
+                // 鼠标按下事件
+                domElement.addEventListener('mousedown', (event) => {
+                    event.preventDefault();
+
+                    this.isUserInteracting = true;
+
+                    this.onPointerDownMouseX = event.clientX;
+                    this.onPointerDownMouseY = event.clientY;
+
+                    this.onPointerDownLon = this.lon;
+                    this.onPointerDownLat = this.lat;
+                });
+
+                // 鼠标移动事件
+                domElement.addEventListener('mousemove', (event) => {
+                    if (this.isUserInteracting) {
+                        this.lon = (this.onPointerDownMouseX - event.clientX) * 0.1 + this.onPointerDownLon;
+                        this.lat = (event.clientY - this.onPointerDownMouseY) * 0.1 + this.onPointerDownLat;
+                    }
+                });
+
+                // 鼠标释放事件
+                domElement.addEventListener('mouseup', () => {
+                    this.isUserInteracting = false;
+                });
+
+                // 鼠标离开事件
+                domElement.addEventListener('mouseleave', () => {
+                    this.isUserInteracting = false;
+                });
+
+                // 鼠标滚轮事件（缩放）
+                domElement.addEventListener('wheel', (event) => {
+                    event.preventDefault();
+
+                    // 调整相机FOV实现缩放效果
+                    this.camera.fov += event.deltaY * 0.05;
+                    this.camera.fov = THREE.MathUtils.clamp(this.camera.fov, 30, 110);
+                    this.camera.updateProjectionMatrix();
+                });
+
+                // 触摸事件支持
+                domElement.addEventListener('touchstart', (event) => {
+                    event.preventDefault();
+
+                    if (event.touches.length === 1) {
+                        this.isUserInteracting = true;
+
+                        this.onPointerDownMouseX = event.touches[0].pageX;
+                        this.onPointerDownMouseY = event.touches[0].pageY;
+
+                        this.onPointerDownLon = this.lon;
+                        this.onPointerDownLat = this.lat;
+                    }
+                });
+
+                domElement.addEventListener('touchmove', (event) => {
+                    event.preventDefault();
+
+                    if (event.touches.length === 1 && this.isUserInteracting) {
+                        this.lon = (this.onPointerDownMouseX - event.touches[0].pageX) * 0.1 + this.onPointerDownLon;
+                        this.lat = (event.touches[0].pageY - this.onPointerDownMouseY) * 0.1 + this.onPointerDownLat;
+                    }
+                });
+
+                domElement.addEventListener('touchend', () => {
+                    this.isUserInteracting = false;
+                });
+            }
+
+            onWindowResize() {
+                this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+            }
+
+            resetView() {
+                this.lon = 0;
+                this.lat = 0;
+                this.camera.fov = 75;
+                this.camera.updateProjectionMatrix();
+            }
+
+            toggleAutoRotate() {
+                this.autoRotate = !this.autoRotate;
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                if (this.autoRotate && !this.isUserInteracting) {
+                    this.lon += this.autoRotateSpeed;
+                }
+
+                this.lat = Math.max(-85, Math.min(85, this.lat));
+
+                this.phi = THREE.MathUtils.degToRad(90 - this.lat);
+                this.theta = THREE.MathUtils.degToRad(this.lon);
+
+                this.target.x = 500 * Math.sin(this.phi) * Math.cos(this.theta);
+                this.target.y = 500 * Math.cos(this.phi);
+                this.target.z = 500 * Math.sin(this.phi) * Math.sin(this.theta);
+
+                this.camera.lookAt(this.target);
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // 初始化全景查看器
+        let panoramaViewer;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // 创建全景查看器
+            panoramaViewer = new PanoramaViewer('panorama');
+
+            // 加载第一个全景图
+            const firstImage = document.querySelector('.image-option.active').getAttribute('data-src');
+            panoramaViewer.loadPanorama(firstImage);
+
+            // 绑定控制按钮事件
+            document.getElementById('autoRotate').addEventListener('click', function () {
+                panoramaViewer.toggleAutoRotate();
+                this.classList.toggle('active');
+                this.innerHTML = panoramaViewer.autoRotate ?
+                    '<span>停止旋转</span>' : '<span>自动旋转</span>';
+            });
+
+            document.getElementById('fullscreen').addEventListener('click', function () {
+                const container = document.querySelector('.player-container');
+
+                if (!document.fullscreenElement) {
+                    container.requestFullscreen().catch(err => {
+                        console.error(`全屏请求错误: ${err.message}`);
+                    });
+                    this.innerHTML = '<span>退出全屏</span>';
+                } else {
+                    document.exitFullscreen();
+                    this.innerHTML = '<span>全屏模式</span>';
+                }
+            });
+
+            document.getElementById('resetView').addEventListener('click', function () {
+                panoramaViewer.resetView();
+            });
+
+            // 绑定全景图切换事件
+            const imageOptions = document.querySelectorAll('.image-option');
+            imageOptions.forEach(option => {
+                option.addEventListener('click', function () {
+                    // 更新活动状态
+                    imageOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // 切换全景图
+                    const imageUrl = this.getAttribute('data-src');
+                    panoramaViewer.loadPanorama(imageUrl);
+                });
+            });
+
+            // 全屏变化事件
+            document.addEventListener('fullscreenchange', function () {
+                const fullscreenBtn = document.getElementById('fullscreen');
+                if (document.fullscreenElement) {
+                    fullscreenBtn.innerHTML = '<span>退出全屏</span>';
+                } else {
+                    fullscreenBtn.innerHTML = '<span>全屏模式</span>';
+                }
+            });
+        });
+    </script>
+</body>
+
 </html>
