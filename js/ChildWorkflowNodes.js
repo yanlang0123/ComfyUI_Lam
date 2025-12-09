@@ -43,11 +43,19 @@ app.registerExtension({
                 this.setProperty("workflow", {})
                 let thisNode = this
                 const widget = this.widgets.find(w => w.name === "workflowFile");
-                this.addDOMWidget('childJson',"list",$el('span.hidden',{style:{"word-wrap": "break-word"}}),{
-                    getValue(){
-                        return JSON.stringify(thisNode.properties['workflow'])  
-                    }
-                });
+                const widget1 = {  
+                    type: "HTML",   // whatever  
+                    name: "childJson"
+                };
+                widget1.getValue = function () {
+                    return JSON.stringify(thisNode.properties['workflow'])  
+                }
+                this.addCustomWidget(widget1);  
+                // this.addDOMWidget('childJson',"list",$el('span.hidden',{style:{"word-wrap": "break-word"}}),{
+                //     getValue(){
+                //         return JSON.stringify(thisNode.properties['workflow'])  
+                //     }
+                // });
                 widget.callback = async (value) => {
                     if (value) {
                         let props = await getWorkflow(value);
