@@ -1,6 +1,4 @@
 import { app } from "/scripts/app.js";
-import { ComfyWidgets } from "/scripts/widgets.js";
-import { GroupNodeConfig, GroupNodeHandler } from "/extensions/core/groupNode.js";
 import { $el, ComfyDialog } from "../../../scripts/ui.js";
 import { api } from "../../../scripts/api.js";
 
@@ -43,19 +41,11 @@ app.registerExtension({
                 this.setProperty("workflow", {})
                 let thisNode = this
                 const widget = this.widgets.find(w => w.name === "workflowFile");
-                const widget1 = {  
-                    type: "HTML",   // whatever  
-                    name: "childJson"
-                };
-                widget1.getValue = function () {
-                    return JSON.stringify(thisNode.properties['workflow'])  
-                }
-                this.addCustomWidget(widget1);  
-                // this.addDOMWidget('childJson',"list",$el('span.hidden',{style:{"word-wrap": "break-word"}}),{
-                //     getValue(){
-                //         return JSON.stringify(thisNode.properties['workflow'])  
-                //     }
-                // });
+                this.addDOMWidget('childJson',"list",$el('span.hidden',{style:{"word-wrap": "break-word"}}),{
+                    getValue(){
+                        return JSON.stringify(thisNode.properties['workflow'])  
+                    }
+                });
                 widget.callback = async (value) => {
                     if (value) {
                         let props = await getWorkflow(value);
