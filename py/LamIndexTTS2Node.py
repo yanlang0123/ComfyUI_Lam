@@ -6,11 +6,11 @@ from typing import Optional
 import folder_paths
 import comfy.utils
 import random
-from comfy_extras.nodes_audio import SaveAudioMP3
 import requests
 import time
 import json
 import os
+from comfy_api.latest import IO,UI
 
 class IndexTTSClient:
     def __init__(self, base_url="http://localhost:5000",output_path="outputs"):
@@ -242,7 +242,7 @@ class LamIndexTTS2UnloadModel:
         result = client.unload_model()
         return (result,)
 
-class LamIndexTTS2Node0(SaveAudioMP3):
+class LamIndexTTS2Node0():
     def __init__(self):
         self.audio_dir = folder_paths.get_output_directory()
         self.output_dir = folder_paths.get_temp_directory()
@@ -276,8 +276,12 @@ class LamIndexTTS2Node0(SaveAudioMP3):
             audio_path = audio
         else:
             # 生成临时音频文件
-            data=super().save_mp3(audio, "temp","mp3")
-            results=data['ui']['audio']
+            results=UI.AudioSaveHelper.save_audio(
+                audio,
+                filename_prefix="ComfyUI",
+                folder_type=IO.FolderType.temp,
+                cls=None,
+                format="mp3")
             paths=[]
             for  i in range(len(results)):
                 subfolder=results[i]['subfolder']
@@ -321,7 +325,7 @@ class LamIndexTTS2Node0(SaveAudioMP3):
             raise Exception("获取结果失败")
                     
 
-class LamIndexTTS2Node1(SaveAudioMP3):
+class LamIndexTTS2Node1():
     def __init__(self):
         self.audio_dir = folder_paths.get_output_directory()
         self.output_dir = folder_paths.get_temp_directory()
@@ -354,8 +358,12 @@ class LamIndexTTS2Node1(SaveAudioMP3):
         if isinstance(audio, str):
             audio_path = audio
         else:
-            data=super().save_mp3(audio, "temp","mp3")
-            results=data['ui']['audio']
+            results=UI.AudioSaveHelper.save_audio(
+                audio,
+                filename_prefix="ComfyUI",
+                folder_type=IO.FolderType.temp,
+                cls=None,
+                format="mp3")
             paths=[]
             for  i in range(len(results)):
                 subfolder=results[i]['subfolder']
@@ -369,8 +377,12 @@ class LamIndexTTS2Node1(SaveAudioMP3):
         if isinstance(ref_audio, str):
             ref_audio_path = ref_audio
         else:
-            data=super().save_mp3(ref_audio, "temp","mp3")
-            results=data['ui']['audio']
+            results=UI.AudioSaveHelper.save_audio(
+                audio,
+                filename_prefix="ComfyUI",
+                folder_type=IO.FolderType.temp,
+                cls=None,
+                format="mp3")
             paths=[]
             for  i in range(len(results)):
                 subfolder=results[i]['subfolder']
@@ -414,7 +426,7 @@ class LamIndexTTS2Node1(SaveAudioMP3):
             print(f"获取结果失败: {wait_result}")
             raise Exception("获取结果失败")
 
-class LamIndexTTS2Node2(SaveAudioMP3):
+class LamIndexTTS2Node2():
     def __init__(self):
         self.audio_dir = folder_paths.get_output_directory()
         self.output_dir = folder_paths.get_temp_directory()
@@ -455,8 +467,12 @@ class LamIndexTTS2Node2(SaveAudioMP3):
         if isinstance(audio, str):
             audio_path = audio
         else:
-            data=super().save_mp3(audio, "temp","mp3")
-            results=data['ui']['audio']
+            results=UI.AudioSaveHelper.save_audio(
+                audio,
+                filename_prefix="ComfyUI",
+                folder_type=IO.FolderType.temp,
+                cls=None,
+                format="mp3")
             paths=[]
             for  i in range(len(results)):
                 subfolder=results[i]['subfolder']
@@ -501,7 +517,7 @@ class LamIndexTTS2Node2(SaveAudioMP3):
             print(f"获取结果失败: {wait_result}")
             raise Exception("获取结果失败")
 
-class LamIndexTTS2Node3(SaveAudioMP3):
+class LamIndexTTS2Node3():
     def __init__(self):
         self.audio_dir = folder_paths.get_output_directory()
         self.output_dir = folder_paths.get_temp_directory()
@@ -535,8 +551,12 @@ class LamIndexTTS2Node3(SaveAudioMP3):
         if isinstance(audio, str):
             audio_path = audio
         else:
-            data=super().save_mp3(audio, "temp","mp3")
-            results=data['ui']['audio']
+            results=UI.AudioSaveHelper.save_audio(
+                audio,
+                filename_prefix="ComfyUI",
+                folder_type=IO.FolderType.temp,
+                cls=None,
+                format="mp3")
             paths=[]
             for  i in range(len(results)):
                 subfolder=results[i]['subfolder']

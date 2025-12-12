@@ -1,0 +1,7 @@
+{
+  "default_model": "Qwen/Qwen-Image",
+  "timeout": 720,
+  "image_download_timeout": 30,
+  "default_prompt": "A beautiful landscape",
+  "api_token": "ms-2a791ef5-0f60-4f7c-8fe7-68d78d14829b"
+}

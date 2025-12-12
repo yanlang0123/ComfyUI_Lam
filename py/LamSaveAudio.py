@@ -1,9 +1,9 @@
-from comfy_extras.nodes_audio import SaveAudioMP3
 import folder_paths
 import random
 import os
+from comfy_api.latest import IO,UI
 
-class LamSaveAudio(SaveAudioMP3):
+class LamSaveAudio():
     def __init__(self):
         self.output_dir = folder_paths.get_output_directory()
         self.type = "output"
@@ -27,8 +27,12 @@ class LamSaveAudio(SaveAudioMP3):
 
     CATEGORY = "lam"
     def save_audio_out(self, audio, filename_prefix="ComfyUI", format="mp3", prompt=None, extra_pnginfo=None, quality="128k"):
-        data=super().save_mp3(audio, filename_prefix,format, prompt, extra_pnginfo,quality)
-        results=data['ui']['audio']
+        results=UI.AudioSaveHelper.save_audio(
+                audio,
+                filename_prefix=filename_prefix,
+                folder_type=IO.FolderType.output,
+                cls=None,
+                format=format,quality=quality)
         paths=[]
         for  i in range(len(results)):
             subfolder=results[i]['subfolder']
@@ -39,8 +43,7 @@ class LamSaveAudio(SaveAudioMP3):
 
             paths.append(path)
 
-        data['result']=(paths[0] if len(paths)>0 else '',)
-        return data
+        return (paths[0] if len(paths)>0 else '',)
     
 NODE_CLASS_MAPPINGS = { #节点名称与类名对应关系
     "LamSaveAudio": LamSaveAudio,
