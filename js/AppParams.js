@@ -239,12 +239,17 @@ class ManagerMenuDialog extends ComfyDialog {
             }),
             $el('span.btn', {
                 textContent: '应用预览', onclick: () => {
-                    openAppPage('default')
+                    openAppPage('app')
                 }
             }),
             $el('span.btn', {
                 textContent: '画板预览', onclick: () => {
-                    openAppPage()
+                    openAppPage('index')
+                }
+            }),
+            $el('span.btn', {
+                textContent: '有声绘本', onclick: () => {
+                    openAppPage('pictureBook')
                 }
             })
         ])];
@@ -285,13 +290,13 @@ class ManagerMenuDialog extends ComfyDialog {
         this.element.style.display = "block";
     }
 }
-async function openAppPage(type) {
+async function openAppPage(type='app') {
     try {
         const resp = await api.fetchApi(`/lam/getAdminNo`);
         if (resp.status === 200) {
             let data = await resp.json();
             //打开新标签页面
-            window.open('/wechatauth/' + (type == 'default' ? 'app' : 'index') + '?openId=' + data.data);
+            window.open('/wechatauth/' + type + '?openId=' + data.data);
             return true;
         }
         throw new Error(resp.data.msg);

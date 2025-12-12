@@ -1,6 +1,7 @@
 from .src.utils.uitls import AlwaysEqualProxy,AlwaysTupleZero
 import json
 from comfy_execution.graph_utils import GraphBuilder
+import nodes
 import folder_paths
 import os
 
@@ -14,6 +15,7 @@ def is_link(obj):
     if not isinstance(obj[1], int) and not isinstance(obj[1], float) and not isinstance(obj[1], str):
         return False
     return True
+
 # 子工作流参数
 class ChildWorkflowParameters:
     @classmethod
@@ -61,6 +63,9 @@ class ChildWorkflowNodes:
 
     def hidden_nodes(self,workflowFile,childJson='',kwargsObj={},unique_id='',prompt={},**kwargs):
         try: 
+            if childJson=="":
+                childJson=[node['properties']['childJson'] for node in extra_pnginfo['workflow']['nodes'] if int(node['id'])==int(unique_id)][0]
+                
             for ikey in prompt[unique_id]['inputs'].keys():
                 if not is_link(prompt[unique_id]['inputs'][ikey]):
                     kwargs[ikey]=prompt[unique_id]['inputs'][ikey]
