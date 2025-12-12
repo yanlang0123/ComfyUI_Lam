@@ -50,6 +50,7 @@ class ChildWorkflowNodes:
                         "kwargsObj": ("OBJECT", {"default": {}}),
                         "unique_id": "UNIQUE_ID",           #节点编号
                         "prompt": "PROMPT",   #流程节点信息
+                        "extra_pnginfo": "EXTRA_PNGINFO"    #前端流程图信息
                     }
             }
 
@@ -61,7 +62,7 @@ class ChildWorkflowNodes:
     
     CATEGORY = "lam"
 
-    def hidden_nodes(self,workflowFile,childJson='',kwargsObj={},unique_id='',prompt={},**kwargs):
+    def hidden_nodes(self,workflowFile,childJson='',kwargsObj={},unique_id='',prompt={},extra_pnginfo={},**kwargs):
         try: 
             if childJson=="":
                 childJson=[node['properties']['childJson'] for node in extra_pnginfo['workflow']['nodes'] if int(node['id'])==int(unique_id)][0]
