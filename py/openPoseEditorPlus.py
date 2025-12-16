@@ -216,29 +216,8 @@ def mask_combine(destination, source, x, y, operation="add"):
 
 def create_mask(data, width, height):
     destination = solid_mask(0.0, width, height)
-    
-    # 检查是否是多边形数据
-    if len(data) == 1 and isinstance(data[0], list) and len(data[0]) > 0 and isinstance(data[0][0], list):
-        # 多边形数据格式：(([x1,y1], [x2,y2], [x3,y3], ...),)
-        polygon_points = data[0]
-        
-        # 创建一个空白掩码
-        mask = np.zeros((height, width), dtype=np.float32)
-        
-        # 将多边形点转换为OpenCV需要的格式
-        pts = np.array(polygon_points, np.int32)
-        pts = pts.reshape((-1, 1, 2))
-        
-        # 填充多边形区域
-        cv2.fillPoly(mask, [pts], color=1.0)
-        
-        # 将掩码转换为ComfyUI需要的格式
-        mask = torch.from_numpy(mask).unsqueeze(0)
-        return mask
-    else:
-        # 矩形数据，使用原来的逻辑
-        source = solid_mask(1.0, data[-2], data[-1])
-        return mask_combine(destination, source, data[0], data[1], operation="add")
+    source = solid_mask(1.0, data[-2], data[-1])
+    return mask_combine(destination, source, data[0], data[1], operation="add")
 
 # 在大图片上添加小图片的函数
 
@@ -340,55 +319,22 @@ class openPoseEditorPlus:
         index = 0
         for g in groups:
             if isinstance(g, dict):
-                if g.get('type') == 'polygon' and 'points' in g:
-                    # 处理多边形
-                    points = g['points']
-                    if len(points) < 3:  # 多边形至少需要3个顶点
-                        continue
-                    # 创建多边形掩码
-                    mask = create_mask((points,), width, height)
-                    body_masks.append(mask)
-                    # 计算多边形的边界框
-                    x_coords = [p[0] for p in points]
-                    y_coords = [p[1] for p in points]
-                    min_x = int(min(x_coords))
-                    min_y = int(min(y_coords))
-                    max_x = int(max(x_coords))
-                    max_y = int(max(y_coords))
-                    mwidth = max_x - min_x
-                    mheight = max_y - min_y
-                    # 确保边界框在范围内
-                    if min_x < 0:
-                        mwidth = mwidth - min_x
-                        min_x = 0
-                    if min_y < 0:
-                        mheight = mheight - min_y
-                        min_y = 0
-                    if min_x + mwidth > width:
-                        mwidth = width - min_x
-                    if min_y + mheight > height:
-                        mheight = height - min_y
-                    if mwidth <= 0 or mheight <= 0:
-                        continue
-                    body_boxs.append([mwidth, mheight, min_x, min_y])
-                elif 'left' in g and 'top' in g and 'width' in g and 'height' in g:
-                    # 处理矩形
-                    min_x, min_y, mwidth, mheight = (int(g['left']), int(
-                        g['top']), int(g['width']), int(g['height']))
-                    if min_x < 0:
-                        mwidth = mwidth - min_x
-                    if min_y < 0:
-                        mheight = mheight - min_y
-                    if min_x + mwidth > width:
-                        mwidth = width - min_x
-                    if min_y + mheight > height:
-                        mheight = height - min_y
-                    min_x = min_x if min_x > 0 else 0
-                    min_y = min_y if min_y > 0 else 0
-                    if mwidth <= 0 or mheight <= 0:
-                        continue
-                    body_masks.append(create_mask((min_x, min_y, mwidth, mheight), width, height))
-                    body_boxs.append([mwidth, mheight, min_x, min_y])
+                min_x, min_y, mwidth, mheight = (int(g['left']), int(
+                    g['top']), int(g['width']), int(g['height']))
+                if min_x < 0:
+                    mwidth = mwidth-min_x
+                if min_y < 0:
+                    mheight = mheight-min_y
+                if min_x+mwidth > width:
+                    mwidth = width-min_x
+                if min_y+mheight > height:
+                    mheight = height-min_y
+                min_x = min_x if min_x > 0 else 0
+                min_y = min_y if min_y > 0 else 0
+                if mwidth <= 0 or mheight <= 0:
+                    continue
+                body_masks.append(create_mask((min_x, min_y, mwidth, mheight), width, height))
+                body_boxs.append([mwidth, mheight,min_x, min_y])
                 continue
 
             head = get_bounding_box(

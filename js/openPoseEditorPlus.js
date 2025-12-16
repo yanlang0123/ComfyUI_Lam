@@ -92,11 +92,6 @@ class OpenPose {
     this.lockMode = false;
     this.visibleEyes = true;
     this.flipped = false;
-    this.isDrawingPolygon = false;
-    this.polygonPoints = [];
-    this.currentPolygon = null;
-    this.polygonColor = '#FF0000'; // 默认多边形颜色
-    this.tempLine = null;
     this.node = node;
     this.undo_history = LS_Poses[node.name].undo_history || [];
     this.redo_history = LS_Poses[node.name].redo_history || [];
@@ -402,56 +397,22 @@ class OpenPose {
     }
 
     if(!Array.isArray(keypoints)){
-      // 处理多边形数据
-      if(keypoints.type === "polygon"){
-        // 将绝对坐标转换为相对坐标（相对于多边形左上角）
-        // 找到最小的x和y坐标作为左上角
-        const minX = Math.min(...keypoints.points.map(p => p[0]));
-        const minY = Math.min(...keypoints.points.map(p => p[1]));
-        
-        // 转换为相对坐标
-        const relativePoints = keypoints.points.map(p => ({
-          x: p[0] - minX,
-          y: p[1] - minY
-        }));
-        
-        // 创建多边形对象
-        const polygon = new fabric.Polygon(relativePoints, {
-          fill: keypoints.fill,
-          opacity: 0.5,
-          stroke: '#FFFFFF',
-          strokeWidth: 1,
-          selectable: isEdit,
-          evented: isEdit,
-          left: minX,
-          top: minY
-        });
-        
-        this.canvas.add(polygon);
-        if(isEdit){
-          this.canvas.setActiveObject(polygon);
-        }
-        // 渲染画布
-        this.canvas.renderAll();
-      } else {
-        // 处理矩形数据
-        let nobj=Object.assign({
-          left: 100, // 初始水平位置
-          top: 100, // 初始垂直位置
-          width: 100,          // 正方形的宽度
-          height: 100,         // 正方形的高度
-          lockRotation: true,   // 设置不可旋转
-          selectable: isEdit,
-          evented: isEdit,
-        }, keypoints);
-        const square = new fabric.Rect(nobj);
-        this.canvas.add(square);
-        if(isEdit){
-          this.canvas.setActiveObject(square);
-        }
-        // 渲染画布
-        this.canvas.renderAll();
+      let nobj=Object.assign({
+        left: 100, // 初始水平位置
+        top: 100, // 初始垂直位置
+        width: 100,          // 正方形的宽度
+        height: 100,         // 正方形的高度
+        lockRotation: true,   // 设置不可旋转
+        selectable: isEdit,
+        evented: isEdit,
+      }, keypoints);
+      const square = new fabric.Rect(nobj);
+      this.canvas.add(square);
+      if(isEdit){
+        this.canvas.setActiveObject(square);
       }
+      // 渲染画布
+      this.canvas.renderAll();
     }else{
       const group = new fabric.Group();
       const makeCircle = (
@@ -569,8 +530,14 @@ class OpenPose {
             }
             p.scaleX = 1;
             p.scaleY = 1;
-            const top = rtop + p.top * target.scaleY * flipY + (target.height * target.scaleY) / 2;
-            const left = rleft + p.left * target.scaleX * flipX + (target.width * target.scaleX) / 2;
+            const top =
+              rtop +
+              p.top * target.scaleY * flipY +
+              (target.height * target.scaleY) / 2;
+            const left =
+              rleft +
+              p.left * target.scaleX * flipX +
+              (target.width * target.scaleX) / 2;
             p["_top"] = top;
             p["_left"] = left;
             if (p["id"] === 0) {
@@ -636,136 +603,6 @@ class OpenPose {
       }
       this.canvas.renderAll();
     };
-
-    // 多边形绘制相关事件
-    this.canvas.on('mouse:down', (e) => {
-      if (this.lockMode) return;
-      if (!this.isDrawingPolygon) return;
-      
-      const pointer = this.canvas.getPointer(e.e);
-      const x = pointer.x;
-      const y = pointer.y;
-      
-      // 如果是第一个顶点，创建多边形对象
-      if (this.polygonPoints.length === 0) {
-        // 使用相对坐标(0,0)创建第一个顶点，然后设置多边形位置为实际坐标
-        const relativePoints = [{ x: 0, y: 0 }];
-        this.currentPolygon = new fabric.Polygon(relativePoints, {
-          fill: this.polygonColor,
-          opacity: 0.5,
-          stroke: '#FFFFFF',
-          strokeWidth: 1,
-          selectable: true,
-          evented: true,
-          left: x,
-          top: y
-        });
-        this.canvas.add(this.currentPolygon);
-      } else {
-        // 将新顶点转换为相对坐标（相对于多边形左上角）
-        const relativePoint = {
-          x: x - this.currentPolygon.left,
-          y: y - this.currentPolygon.top
-        };
-        // 更新多边形顶点
-        const newPoints = [...this.currentPolygon.points, relativePoint];
-        this.currentPolygon.set({ points: newPoints });
-      }
-      
-      // 保存绝对坐标用于显示临时线
-      this.polygonPoints.push({ x, y });
-      
-      this.canvas.renderAll();
-    });
-    
-    this.canvas.on('mouse:move', (e) => {
-      if (!this.isDrawingPolygon || this.polygonPoints.length === 0) return;
-      
-      const pointer = this.canvas.getPointer(e.e);
-      const x = pointer.x;
-      const y = pointer.y;
-      
-      // 移除之前的临时线
-      if (this.tempLine) {
-        this.canvas.remove(this.tempLine);
-        this.tempLine = null;
-      }
-      
-      // 绘制临时线连接最后一个顶点和鼠标位置
-      if (this.polygonPoints.length > 0) {
-        const lastPoint = this.polygonPoints[this.polygonPoints.length - 1];
-        this.tempLine = new fabric.Line([lastPoint.x, lastPoint.y, x, y], {
-          stroke: '#FFFFFF',
-          strokeWidth: 1,
-          selectable: false,
-          evented: false,
-          opacity: 0.7
-        });
-        this.canvas.add(this.tempLine);
-        this.canvas.renderAll();
-      }
-    });
-    
-    this.canvas.on('mouse:dblclick', (e) => {
-      if (!this.isDrawingPolygon || !this.currentPolygon || this.polygonPoints.length < 3) return;
-      
-      // 移除临时线
-      if (this.tempLine) {
-        this.canvas.remove(this.tempLine);
-        this.tempLine = null;
-      }
-      
-      // 将绘制的多边形添加到当前分组
-      this.changeIndexPose();
-      
-      // 获取多边形的实际顶点坐标（考虑scale和位置）
-      const item = this.currentPolygon;
-      const points = item.points.map(p => [
-        Math.round(item.left + p[0] * item.scaleX),
-        Math.round(item.top + p[1] * item.scaleY)
-      ]);
-      
-      // 将多边形数据保存到groups数组
-      this.groups.push({
-        type: "polygon",
-        points: points,
-        fill: item.fill
-      });
-      
-      // 保持数据一致性，添加对应的hands、prompts和negatives数组元素
-      this.hands.push([]);
-      this.prompts.push('');
-      this.negatives.push('');
-      
-      // 更新索引和颜色
-      this.node.widgets[this.index].value = this.groups.length - 1;
-      this.node.widgets[this.index].options['max'] = this.groups.length - 1;
-      
-      for(let i = 0; i < this.groups.length; i++) {
-        if(this.groups[i].type === "polygon") {
-          let indexColor = getDrawColor(i / this.groups.length, "7F");
-          this.groups[i]['fill'] = indexColor;
-        }
-      }
-      
-      // 更新历史记录
-      this.undo_history.push({
-        'groups': JSON.parse(JSON.stringify(this.groups)),
-        'hands': JSON.parse(JSON.stringify(this.hands)),
-        'index': this.history_index
-      });
-      this.redo_history.length = 0;
-      this.history_change = true;
-      
-      // 重置绘制状态
-      this.currentPolygon = null;
-      this.polygonPoints = [];
-      
-      // 退出绘制模式
-      this.togglePolygonDrawMode();
-      
-      this.canvas.renderAll();
-    });
 
     this.canvas.on("object:moving", (e) => {
       updateLines(e.target);
@@ -1028,7 +865,7 @@ class OpenPose {
       keypoints: this.canvas
         .getObjects()
         .filter((item) => {
-          if (item.type === "circle" || (item.type === "rect" && item.selectable) || (item.type === "polygon" && item.selectable)) return item;
+          if (item.type === "circle" || (item.type === "rect" && item.selectable)) return item;
         })
         .map((item) => {
           if(item.type === "rect"){
@@ -1036,18 +873,6 @@ class OpenPose {
               width:item['scaleX']?item.width*item['scaleX']:item.width,
               height:item['scaleY']?item.height*item['scaleY']:item.height,
               fill:item.fill};
-          } else if(item.type === "polygon"){
-            // 对于多边形，保存顶点坐标和填充颜色
-            // 计算实际的顶点坐标（考虑scale和位置）
-            const points = item.points.map(p => [
-              Math.round(item.left + p[0] * item.scaleX),
-              Math.round(item.top + p[1] * item.scaleY)
-            ]);
-            return {
-              type: "polygon",
-              points: points,
-              fill: item.fill
-            };
           }
           return [Math.round(item.left), Math.round(item.top)];
         }),
@@ -1079,37 +904,6 @@ class OpenPose {
     this.node.widgets[this.index].options['max']=this.groups.length;
     this.node.setDirtyCanvas(true);
     this.setIndexPose(index,false)
-  }
-  
-  // 切换多边形绘制模式
-  togglePolygonDrawMode() {
-    this.isDrawingPolygon = !this.isDrawingPolygon;
-    // 更新按钮状态
-    const btn = document.querySelector(`[data-node-id="${this.node.id}"]`);
-    if (btn) {
-      btn.classList.toggle('active', this.isDrawingPolygon);
-    }
-    // 如果退出绘制模式，取消当前绘制
-    if (!this.isDrawingPolygon) {
-      // 移除当前多边形
-      if (this.currentPolygon) {
-        this.canvas.remove(this.currentPolygon);
-        this.currentPolygon = null;
-      }
-      // 移除临时线
-      if (this.tempLine) {
-        this.canvas.remove(this.tempLine);
-        this.tempLine = null;
-      }
-      // 重置顶点数组
-      this.polygonPoints = [];
-      this.canvas.renderAll();
-    }
-  }
-  
-  // 设置矩形颜色
-  setPolygonColor(color) {
-    this.polygonColor = color;
   }
 }
 
@@ -1257,7 +1051,6 @@ function createOpenPose(node, inputName, inputData, app) {
     fliplfButton = document.createElement("button"),
     fliptdButton = document.createElement("button"),
     rectButton = document.createElement("button"),
-    drawRectButton = document.createElement("button"),
     historyClearButton = document.createElement("button");
 
   panelButtons.className = "panelButtons comfy-menu-btns";
@@ -1271,7 +1064,6 @@ function createOpenPose(node, inputName, inputData, app) {
   fliplfButton.textContent = "↔";
   fliptdButton.textContent = "↕";
   rectButton.textContent = "□";
-  drawRectButton.textContent = "✏";
   historyClearButton.textContent = "✖";
   refButton.title = "背景图片";
   addButton.title = "添加骨骼";
@@ -1283,12 +1075,7 @@ function createOpenPose(node, inputName, inputData, app) {
   fliplfButton.title = "左右翻转";
   fliptdButton.title = "上下翻转";
   rectButton.title="矩形遮罩";
-  drawRectButton.title="自定义绘制多边形";
   historyClearButton.title = "清除历史";
-  
-  // 添加数据节点ID以便在togglePolygonDrawMode中找到按钮
-  drawRectButton.dataset.nodeId = node.id;
-  drawRectButton.className = "draw-rect-btn";
 
   refButton.addEventListener("click", () => node.openPose.backgroundInput.click());
   addButton.addEventListener("click", () => node.openPose.addPose());
@@ -1300,7 +1087,6 @@ function createOpenPose(node, inputName, inputData, app) {
   fliplfButton.addEventListener("click", () => node.openPose.fliplf());
   fliptdButton.addEventListener("click", () => node.openPose.fliptd());
   rectButton.addEventListener("click", () => node.openPose.addRect());
-  drawRectButton.addEventListener("click", () => node.openPose.togglePolygonDrawMode());
   historyClearButton.addEventListener("click", () => {
     if (confirm(`删除节点"${node.name}"的所有姿势历史记录 ?`)) {
       node.openPose.undo_history = [];
@@ -1330,7 +1116,6 @@ function createOpenPose(node, inputName, inputData, app) {
   panelButtons.appendChild(fliplfButton);
   panelButtons.appendChild(fliptdButton);
   panelButtons.appendChild(rectButton);
-  panelButtons.appendChild(drawRectButton);
   panelButtons.appendChild(historyClearButton);
   node.openPose.canvas.wrapperEl.appendChild(panelButtons);
 
