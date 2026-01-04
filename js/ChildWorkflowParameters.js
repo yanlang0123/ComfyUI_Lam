@@ -79,8 +79,8 @@ function get_position_style(ctx, widget_width, y, node_height) {
     return {  
         transformOrigin: '0 0',  
         transform: transform,  
-        left: `50px`,  
-        top: `35px`,  
+        left: `0px`,  
+        top: `0px`,  
         position: "absolute",  
         maxWidth: `${widget_width - MARGIN*2}px`,  
         maxHeight: `${node_height - MARGIN*2}px`,    // we're assuming we have the whole height of the node  

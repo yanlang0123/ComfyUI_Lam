@@ -40,12 +40,12 @@ app.registerExtension({
                 this.setProperty("paramList", [])
                 this.setProperty("workflow", {})
                 let thisNode = this
-                const widget = this.widgets.find(w => w.name === "workflowFile");
                 this.addDOMWidget('childJson',"list",$el('span.hidden',{style:{"word-wrap": "break-word"}}),{
                     getValue(){
                         return JSON.stringify(thisNode.properties['workflow'])  
                     }
                 });
+                const widget = this.widgets.find(w => w.name === "workflowFile");
                 widget.callback = async (value) => {
                     if (value) {
                         let props = await getWorkflow(value);
