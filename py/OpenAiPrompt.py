@@ -47,8 +47,9 @@ class OpenAiPrompt:
         client = OpenAI(api_key=api_key,base_url=server_url)
         if messages is None:
             messages = []
-        if system_prompt and len(system_prompt.strip())>0:
-            messages.append({"role": "system", "content": system_prompt})
+            if system_prompt and len(system_prompt.strip())>0:
+                messages.append({"role": "system", "content": system_prompt})
+                
         if images!=None:
             content=[]
             content.append({"type": "text", "text": text})

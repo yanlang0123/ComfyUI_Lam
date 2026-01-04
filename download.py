@@ -12,7 +12,12 @@ models={
         "model_id":"facebook/nllb-200-distilled-600M",
         "local_dir":"models/nllb-200-distilled-600M",
         "endpoint":"https://hf-mirror.com",
-    }
+    },
+    "IndexTTS-2":{
+        "model_id":"IndexTeam/IndexTTS-2",
+        "local_dir":"models/IndexTTS-2",
+        "endpoint":"https://hf-mirror.com",
+    },
 }
 # repo_id 模型id
 # local_dir 下载地址
