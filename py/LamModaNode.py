@@ -11,7 +11,7 @@ import base64
 import tempfile
 
 def load_config():
-    config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+    config_path = os.path.join(os.path.dirname(__file__), '../../config/config.json')
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -24,7 +24,7 @@ def load_config():
         }
 
 def save_config(config: dict) -> bool:
-    config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+    config_path = os.path.join(os.path.dirname(__file__), '../../config/config.json')
     try:
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
@@ -34,7 +34,7 @@ def save_config(config: dict) -> bool:
         return False
 
 def save_api_token(token):
-    token_path = os.path.join(os.path.dirname(__file__), '.qwen_token')
+    token_path = os.path.join(os.path.dirname(__file__), '../../config/.qwen_token')
     try:
         with open(token_path, 'w', encoding='utf-8') as f:
             f.write(token)
@@ -51,7 +51,7 @@ def save_api_token(token):
         return False
 
 def load_api_token():
-    token_path = os.path.join(os.path.dirname(__file__), '.qwen_token')
+    token_path = os.path.join(os.path.dirname(__file__), '../../config/.qwen_token')
     try:
         cfg = load_config()
         token_from_cfg = cfg.get("api_token", "").strip()
