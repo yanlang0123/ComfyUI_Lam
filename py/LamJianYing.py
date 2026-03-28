@@ -36,10 +36,35 @@ def correct_string(a, b):
     return corrected
 
 def add_newlines(text, max_length):
-    """在指定长度处添加换行符"""
+    """在指定长度处添加换行符，max_length 按中文字符数量计算（1 个中文=2 个英文宽度）"""
+    def get_char_width(char):
+        """获取字符的显示宽度：中文返回 2，英文/数字返回 1"""
+        # Unicode 范围：中文字符
+        if '\u4e00' <= char <= '\u9fff' or '\u3000' <= char <= '\u303f':
+            return 2
+        # 其他字符（英文、数字、标点等）按 1 计算
+        return 1
+
+    max_width = max_length * 2  # max_length 个中文字符 = max_length * 2 个显示宽度
     result = []
-    for i in range(0, len(text), max_length):
-        result.append(text[i:i + max_length])
+    current_line = ""
+    current_width = 0
+
+    for char in text:
+        char_width = get_char_width(char)
+        if current_width + char_width > max_width:
+            # 当前行已满，添加到结果并开始新行
+            result.append(current_line)
+            current_line = char
+            current_width = char_width
+        else:
+            current_line += char
+            current_width += char_width
+
+    # 添加最后一行
+    if current_line:
+        result.append(current_line)
+
     return '\n'.join(result)
 class JyAudioTrack:
     """
@@ -760,7 +785,7 @@ class JySaveDraft:
             text_segment = draft.Text_segment(
                 caption["subtitle"], target_timerange,  # 文本片段的首尾与上方视频片段一致
                 font=draft.Font_type.from_name(caption['font']),                                      # 设置字体
-                style=draft.Text_style(size=float(caption['size']),color=(r,g,b)),                    
+                style=draft.Text_style(size=float(caption['size']),color=(r,g,b),align=1),                    
                 border=draft.Text_border(color=(0, 0, 0.0)),                      # 设置边框颜色为黑色
                 clip_settings=draft.Clip_settings(**caption['clip_settings'])     # 位置在屏幕下方
             )
