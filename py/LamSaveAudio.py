@@ -40,7 +40,8 @@ class LamSaveAudio():
                 path=os.path.join(self.output_dir, results[i]['subfolder'],results[i]['filename'])
             else:
                 path=os.path.join(self.output_dir, results[i]['filename'])
-
+            # 关键：把路径转换成 Windows 双反斜杠格式
+            path = path.replace("/", "\\").replace("\\", "\\\\")
             paths.append(path)
 
         return (paths[0] if len(paths)>0 else '',)

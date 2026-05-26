@@ -627,7 +627,10 @@ def get_route_keys(endKey, prompt,uniqueIds):
 
 
 def custom_queue_put(data):
-    _, prompt_id, prompt, _,_=data
+    if len(data) == 6:
+        _, prompt_id, prompt, _, _, _ = data
+    else:
+        _, prompt_id, prompt, _, _ = data
     json_data={"prompt":prompt,"prompt":prompt}
     if Config().cluster and Config().cluster["isMain"]:
         prompt_id=str(uuid.uuid4())

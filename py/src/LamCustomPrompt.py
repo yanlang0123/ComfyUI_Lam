@@ -42,6 +42,8 @@ def get_route_keys(endKey, prompt,uniqueIds):
             keys.extend(get_route_keys(v1[0],prompt,uniqueIds))
     return keys
 def section_handle(json_data):
+    if 'prompt' not in json_data:
+        return json_data
     prompt=json_data['prompt']
     sectionNodeKeys=[x for x in prompt.keys() if 'class_type' in prompt[x] and prompt[x]['class_type']=='SectionEnd']
     for endNum in sectionNodeKeys:
