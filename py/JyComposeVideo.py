@@ -187,7 +187,13 @@ def get_font_pil(font_name, font_size):
     try:
         return ImageFont.load_default()
     except:
-        return None
+        pass
+    # Last resort: try any available system font
+    try:
+        return ImageFont.truetype('arial.ttf', font_size)
+    except:
+        pass
+    return None
 
 def hex_to_rgb(h):
     h = h.lstrip('#')
@@ -466,7 +472,17 @@ def render_subtitle(text, font_name, font_size_pct, color_hex, width, height, tr
     r, g, b = hex_to_rgb(color_hex)
     actual_size = max(int(font_size_pct * height / 300), 10)
     font = get_font_pil(font_name, actual_size)
-    if font is None: font = ImageFont.load_default()
+    if font is None:
+        print(f'[JyComposeVideo] Font not found: {font_name}, using default')
+        try:
+            font = ImageFont.truetype(r'C:\\Windows\\Fonts\\msyh.ttc', actual_size)
+        except:
+            try:
+                font = ImageFont.load_default()
+            except:
+                font = None
+    if font is None:
+        raise RuntimeError('No usable font found for subtitle rendering')
     img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     lines = text.split('\n')
@@ -520,135 +536,143 @@ class JyComposeVideo:
     CATEGORY = 'lam'
 
     def compose_video(self, medias, draft_name, width, height, fps=30, audios=[], effects=[], captions=[], **kwargs):
-        print(f"(width:{width}) ---- (height:{height}) ")
         from moviepy import VideoFileClip, AudioFileClip, CompositeVideoClip, CompositeAudioClip, concatenate_videoclips, VideoClip, ColorClip, ImageClip
         from moviepy.video import fx as _vfx
 
-        all_medias = list(medias)
-        all_audios = list(audios)
-        all_captions = list(captions)
-        for arg in kwargs:
-            if arg.startswith('track'):
+        video_tracks = []
+        if medias: video_tracks.append(list(medias))
+        audio_tracks = []
+        if audios: audio_tracks.append(list(audios))
+        caption_tracks = []
+        if captions: caption_tracks.append(list(captions))
+        track_keys = [a for a in kwargs if a.startswith('track')]
+        print(f'[JyComposeVideo] Found {len(track_keys)} tracks: {track_keys}')
+        for arg in track_keys:
                 trk = kwargs[arg]
                 if not isinstance(trk, dict): continue
                 tn = str(trk.get('track_type', '')).lower()
                 grp = trk.get('group', [])
                 if not grp: continue
-                if 'video' in tn: all_medias.extend(grp)
-                elif 'audio' in tn: all_audios.extend(grp)
-                elif 'text' in tn: all_captions.extend(grp)
+                print(f'[JyComposeVideo] Track {arg} type={tn}, items={len(grp)}')
+                if 'video' in tn: video_tracks.append(list(grp))
+                elif 'audio' in tn: audio_tracks.append(list(grp))
+                elif 'text' in tn: caption_tracks.append(list(grp))
 
-        clips = []
-        after_end = 0.0
-        for media in all_medias:
-            fp = media.get('media_file_full_name', '')
-            if not os.path.exists(fp):
-                print(f'[JyComposeVideo] Skip missing: {fp}')
-                continue
-            sim = media.get('start_in_media', 0) / 1e6
-            sat = media.get('start_at_track', 0) / 1e6
-            dur = media.get('duration', 0) / 1e6
-            vol = media.get('volume', 1.0)
-            anim_datas = media.get('animation_datas', [])
-            trans_data = media.get('transition_data', None)
+        total_audio_items = sum(len(t) for t in audio_tracks)
+        total_caption_items = sum(len(t) for t in caption_tracks)
 
-            try:
-                if is_image_file(fp):
-                    img = Image.open(fp).convert('RGB')
-                    if dur <= 0: dur = 5.0
-                    iw, ih = img.size
-                    scale_i = min(width / iw, height / ih) if iw > 0 and ih > 0 else 1.0
-                    nw_i, nh_i = int(iw * scale_i), int(ih * scale_i)
-                    img_rs = img.resize((nw_i, nh_i), Image.LANCZOS)
-                    canvas = Image.new('RGB', (width, height), (0, 0, 0))
-                    canvas.paste(img_rs, ((width - nw_i) // 2, (height - nh_i) // 2))
-                    mc = ImageClip(np.array(canvas), duration=dur).with_fps(fps)
-                else:
-                    vc = VideoFileClip(fp)
-                    if sim > 0: vc = vc.subclipped(sim)
-                    if dur > 0: vc = vc.subclipped(0, min(dur, vc.duration))
-                    elif dur <= 0: dur = vc.duration
-                    vw, vh = vc.size
-                    scale_v = min(width / vw, height / vh) if vw > 0 and vh > 0 else 1.0
-                    nw_v, nh_v = int(vw * scale_v), int(vh * scale_v)
-                    vc_rs = vc.resized((nw_v, nh_v)).with_fps(fps)
-                    bg = ColorClip(size=(width, height), color=(0, 0, 0), duration=vc_rs.duration)
-                    if dur <= 0:
-                        dur = vc_rs.duration if hasattr(vc_rs, 'duration') and vc_rs.duration else 1.0
-                    bg2 = ColorClip(size=(width, height), color=(0, 0, 0), duration=dur)
-                    mc = CompositeVideoClip([bg2, vc_rs.with_position(((width - nw_v) // 2, (height - nh_v) // 2))])
-                    if vc.audio is not None:
-                        mc = mc.with_audio(vc.audio)
-            except Exception as e:
-                print(f'[JyComposeVideo] Load error {fp}: {e}')
-                if dur <= 0: dur = 2.0
-                mc = ColorClip(size=(width, height), color=(0, 0, 0), duration=dur).with_fps(fps)
+        all_clips = []
+        all_transitions = []
+        for track_medias in video_tracks:
+            track_clips = []
+            after_end = 0.0
+            for media in track_medias:
+                fp = media.get('media_file_full_name', '')
+                if not os.path.exists(fp):
+                    print(f'[JyComposeVideo] Skip missing: {fp}')
+                    continue
+                sim = media.get('start_in_media', 0) / 1e6
+                sat = media.get('start_at_track', 0) / 1e6
+                dur = media.get('duration', 0) / 1e6
+                vol = media.get('volume', 1.0)
+                anim_datas = media.get('animation_datas', [])
+                trans_data = media.get('transition_data', None)
 
-            if sat <= 0: actual_start = after_end
-            else: actual_start = sat
-            actual_end = actual_start + dur
+                try:
+                    if is_image_file(fp):
+                        img = Image.open(fp).convert('RGB')
+                        if dur <= 0: dur = 5.0
+                        iw, ih = img.size
+                        scale_i = min(width / iw, height / ih) if iw > 0 and ih > 0 else 1.0
+                        nw_i, nh_i = int(iw * scale_i), int(ih * scale_i)
+                        img_rs = img.resize((nw_i, nh_i), Image.LANCZOS)
+                        canvas = Image.new('RGB', (width, height), (0, 0, 0))
+                        canvas.paste(img_rs, ((width - nw_i) // 2, (height - nh_i) // 2))
+                        mc = ImageClip(np.array(canvas), duration=dur).with_fps(fps)
+                    else:
+                        vc = VideoFileClip(fp)
+                        if sim > 0: vc = vc.subclipped(sim)
+                        if dur > 0: vc = vc.subclipped(0, min(dur, vc.duration))
+                        elif dur <= 0: dur = vc.duration
+                        vw, vh = vc.size
+                        scale_v = min(width / vw, height / vh) if vw > 0 and vh > 0 else 1.0
+                        nw_v, nh_v = int(vw * scale_v), int(vh * scale_v)
+                        vc_rs = vc.resized((nw_v, nh_v)).with_fps(fps)
+                        bg = ColorClip(size=(width, height), color=(0, 0, 0), duration=vc_rs.duration)
+                        if dur <= 0:
+                            dur = vc_rs.duration if hasattr(vc_rs, 'duration') and vc_rs.duration else 1.0
+                        bg2 = ColorClip(size=(width, height), color=(0, 0, 0), duration=dur)
+                        mc = CompositeVideoClip([bg2, vc_rs.with_position(((width - nw_v) // 2, (height - nh_v) // 2))])
+                        if vc.audio is not None:
+                            mc = mc.with_audio(vc.audio)
+                except Exception as e:
+                    print(f'[JyComposeVideo] Load error {fp}: {e}')
+                    if dur <= 0: dur = 2.0
+                    mc = ColorClip(size=(width, height), color=(0, 0, 0), duration=dur).with_fps(fps)
 
-            original_mf = mc.frame_function
-            def make_animated(t, mf=original_mf, ads=anim_datas, cd=dur):
-                frame = mf(t)
-                for ad in ads:
-                    at = ad.get('animation_type', '')
-                    an = ad.get('animation', '')
-                    adr = ad.get('duration', 0) / 1e6
-                    if adr <= 0: adr = 0.5
-                    if at == 'in':
-                        eff = INTRO_ANIMATION_MAP.get(an, 'fade_in')
-                        frame = apply_intro_frame(frame, t, eff, adr, width, height)
-                    elif at == 'out':
-                        eff = OUTRO_ANIMATION_MAP.get(an, 'fade_out')
-                        frame = apply_outro_frame(frame, t, eff, adr, width, height, cd)
-                return frame
+                if sat <= 0: actual_start = after_end
+                else: actual_start = sat
+                actual_end = actual_start + dur
 
-            ac = VideoClip(frame_function=make_animated, duration=dur).with_fps(fps)
-            if hasattr(mc, 'audio') and mc.audio:
-                ac.audio = mc.audio.with_volume_scaled(vol) if vol != 1.0 else mc.audio
+                original_mf = mc.frame_function
+                def make_animated(t, mf=original_mf, ads=anim_datas, cd=dur):
+                    frame = mf(t)
+                    for ad in ads:
+                        at = ad.get('animation_type', '')
+                        an = ad.get('animation', '')
+                        adr = ad.get('duration', 0) / 1e6
+                        if adr <= 0: adr = 0.5
+                        if at == 'in':
+                            eff = INTRO_ANIMATION_MAP.get(an, 'fade_in')
+                            frame = apply_intro_frame(frame, t, eff, adr, width, height)
+                        elif at == 'out':
+                            eff = OUTRO_ANIMATION_MAP.get(an, 'fade_out')
+                            frame = apply_outro_frame(frame, t, eff, adr, width, height, cd)
+                    return frame
 
-            trans_info = None
-            if trans_data:
-                tn = trans_data.get('transition', '')
-                td = trans_data.get('duration', 0) / 1e6
-                if td <= 0: td = 0.5
-                trans_info = {'type': TRANSITION_MAP.get(tn, 'crossfade'), 'duration': td}
+                ac = VideoClip(frame_function=make_animated, duration=dur).with_fps(fps)
+                if hasattr(mc, 'audio') and mc.audio:
+                    ac.audio = mc.audio.with_volume_scaled(vol) if vol != 1.0 else mc.audio
 
-            clips.append({'clip': ac, 'start': actual_start, 'end': actual_end,
-                          'duration': dur, 'transition': trans_info})
-            after_end = actual_end
+                trans_info = None
+                if trans_data:
+                    tn = trans_data.get('transition', '')
+                    td = trans_data.get('duration', 0) / 1e6
+                    if td <= 0: td = 0.5
+                    trans_info = {'type': TRANSITION_MAP.get(tn, 'crossfade'), 'duration': td}
 
-        if not clips:
+                track_clips.append({'clip': ac, 'start': actual_start, 'end': actual_end,
+                              'duration': dur, 'transition': trans_info})
+                after_end = actual_end
+
+            # Transitions within this track
+            for i in range(len(track_clips) - 1):
+                if track_clips[i].get('transition'):
+                    ti = track_clips[i]['transition']
+                    td, tt, ts = ti['duration'], ti['type'], track_clips[i]['end'] - ti['duration']
+                    ca, cb = track_clips[i]['clip'], track_clips[i + 1]['clip']
+                    def make_tf(t, _ca=ca, _cb=cb, _ts=ts, _td=td, _tt=tt):
+                        at = _ts + t
+                        try: fa = _ca.get_frame(at)
+                        except: fa = np.zeros((height, width, 3), dtype=np.uint8)
+                        try: fb = _cb.get_frame(at)
+                        except: fb = np.zeros((height, width, 3), dtype=np.uint8)
+                        return make_transition_frame(fa, fb, t / _td if _td > 0 else 1.0, _tt, width, height)
+                    tovl = VideoClip(frame_function=make_tf, duration=td).with_start(ts).with_fps(fps)
+                    all_transitions.append(tovl)
+            all_clips.extend(track_clips)
+
+        if not all_clips:
             raise Exception('[JyComposeVideo] No valid media clips')
         if width <= 0 or height <= 0:
             raise Exception(f'[JyComposeVideo] Invalid dimensions: {width}x{height}')
-        total_dur = max(c['end'] for c in clips)
+        print(f'[JyComposeVideo] Processing: {len(all_clips)} media, {total_audio_items} audio, {total_caption_items} captions')
+        total_dur = max(c['end'] for c in all_clips)
 
         # Build CompositeVideoClip
-        video_elements = []
-        for ci in clips:
-            bclip = ci['clip'].with_start(ci['start'])
-            if ci['transition']:
-                pass  # transition handled by overlay clip below
-            video_elements.append(bclip)
-
+        video_elements = [ci['clip'].with_start(ci['start']) for ci in all_clips]
         trans_overlays = []
-        for i in range(len(clips) - 1):
-            if clips[i].get('transition'):
-                ti = clips[i]['transition']
-                td, tt, ts = ti['duration'], ti['type'], clips[i]['end'] - ti['duration']
-                ca, cb = clips[i]['clip'], clips[i + 1]['clip']
-                def make_tf(t, _ca=ca, _cb=cb, _ts=ts, _td=td, _tt=tt):
-                    at = _ts + t
-                    try: fa = _ca.get_frame(at)
-                    except: fa = np.zeros((height, width, 3), dtype=np.uint8)
-                    try: fb = _cb.get_frame(at)
-                    except: fb = np.zeros((height, width, 3), dtype=np.uint8)
-                    return make_transition_frame(fa, fb, t / _td if _td > 0 else 1.0, _tt, width, height)
-                tovl = VideoClip(frame_function=make_tf, duration=td).with_start(ts).with_fps(fps)
-                trans_overlays.append(tovl)
-
+        trans_overlays.extend(all_transitions)
         all_vid = video_elements + trans_overlays
         if not all_vid:
             all_vid = [ColorClip(size=(width, height), color=(0, 0, 0), duration=1).with_fps(fps)]
@@ -657,37 +681,39 @@ class JyComposeVideo:
             if total_dur > 0:
                 final_video = final_video.with_duration(total_dur)
         except:
-            sorted_clips = sorted(clips, key=lambda x: x['start'])
+            sorted_clips = sorted(all_clips, key=lambda x: x['start'])
             final_video = concatenate_videoclips([c['clip'] for c in sorted_clips])
             final_video = final_video.resized((width, height)).with_fps(fps)
 
         # Subtitles
-        if all_captions:
+        if total_caption_items > 0:
             cap_elements = []
-            ac_end = 0.0
-            for cap in all_captions:
-                text = cap.get('subtitle', '')
-                fn = cap.get('font', '微软雅黑')
-                col = cap.get('color', '#FFFFFF')
-                sz = cap.get('size', 8.0)
-                sat = cap.get('start_at_track', 0) / 1e6
-                cd = cap.get('duration', 0) / 1e6
-                cs = cap.get('clip_settings', {})
-                tx = cs.get('transform_x', 0.0)
-                ty = cs.get('transform_y', -0.8)
-                if cd <= 0: cd = 2.0
-                if sat <= 0: sat = ac_end
-                try:
-                    rgba = render_subtitle(text, fn, sz, col, width, height, tx, ty)
-                    rgb_img = rgba[:, :, :3]
-                    alpha_img = rgba[:, :, 3].astype(float) / 255.0
-                    sub_clip = ImageClip(rgb_img, duration=cd).with_start(sat).with_fps(fps)
-                    mask = ImageClip(alpha_img, is_mask=True, duration=cd).with_start(sat)
-                    sub_clip = sub_clip.with_mask(mask)
-                    cap_elements.append(sub_clip)
-                except Exception as e:
-                    print(f'[JyComposeVideo] Subtitle error: {e}')
-                ac_end = sat + cd
+            for track_captions in caption_tracks:
+                ac_end = 0.0
+                for cap in track_captions:
+                    text = cap.get('subtitle', '')
+                    fn = cap.get('font', '????')
+                    col = cap.get('color', '#FFFFFF')
+                    sz = cap.get('size', 8.0)
+                    sat = cap.get('start_at_track', 0) / 1e6
+                    cd = cap.get('duration', 0) / 1e6
+                    cs = cap.get('clip_settings', {})
+                    tx = cs.get('transform_x', 0.0)
+                    ty = cs.get('transform_y', -0.8)
+                    if cd <= 0: cd = 2.0
+                    if sat <= 0: sat = ac_end
+                    try:
+                        rgba = render_subtitle(text, fn, sz, col, width, height, tx, ty)
+                        rgb_img = rgba[:, :, :3]
+                        alpha_img = rgba[:, :, 3].astype(float) / 255.0
+                        sub_clip = ImageClip(rgb_img, duration=cd).with_start(sat).with_fps(fps)
+                        mask = ImageClip(alpha_img, is_mask=True, duration=cd).with_start(sat)
+                        sub_clip = sub_clip.with_mask(mask)
+                        cap_elements.append(sub_clip)
+                    except Exception as e:
+                        print(f'[JyComposeVideo] Subtitle error: {e}')
+                    ac_end = sat + cd
+            print(f'[JyComposeVideo] Rendered {len(cap_elements)}/{total_caption_items} subtitles')
             if cap_elements:
                 all_vid = video_elements + trans_overlays + cap_elements
                 if all_vid:
@@ -697,50 +723,67 @@ class JyComposeVideo:
 
         # Audio
         audio_clips = []
-        aa_end = 0.0
-        for aud in all_audios:
-            afp = aud.get('media_file_full_name', '')
-            if not os.path.exists(afp): continue
-            sim_s = aud.get('start_in_media', 0) / 1e6
-            sat_s = aud.get('start_at_track', 0) / 1e6
-            adur_s = aud.get('duration', 0) / 1e6
-            avol = aud.get('volume', 1.0)
-            try:
-                ac = AudioFileClip(afp)
-                if sim_s > 0: ac = ac.subclipped(sim_s)
-                if adur_s > 0: ac = ac.subclipped(0, min(adur_s, ac.duration))
-                if avol != 1.0: ac = ac.with_volume_scaled(avol)
-                if sat_s <= 0: sat_s = aa_end
-                ac = ac.with_start(sat_s)
-                audio_clips.append(ac)
-                aa_end = sat_s + ac.duration
-            except Exception as e:
-                print(f'[JyComposeVideo] Audio error {afp}: {e}')
+        for track_audios in audio_tracks:
+            aa_end = 0.0
+            for aud in track_audios:
+                afp = aud.get('media_file_full_name', '')
+                if not afp or not os.path.exists(afp):
+                    print(f'[JyComposeVideo] Audio file missing: {afp}')
+                    continue
+                sim_s = aud.get('start_in_media', 0) / 1e6
+                sat_s = aud.get('start_at_track', 0) / 1e6
+                adur_s = aud.get('duration', 0) / 1e6
+                avol = aud.get('volume', 1.0)
+                try:
+                    ac = AudioFileClip(afp)
+                    if sim_s > 0: ac = ac.subclipped(sim_s)
+                    if adur_s > 0: ac = ac.subclipped(0, min(adur_s, ac.duration))
+                    if avol != 1.0: ac = ac.with_volume_scaled(avol)
+                    if sat_s <= 0: sat_s = aa_end
+                    ac = ac.with_start(sat_s)
+                    audio_clips.append(ac)
+                    aa_end = sat_s + ac.duration
+                except Exception as e:
+                    print(f'[JyComposeVideo] Audio error {afp}: {e}')
 
+        print(f'[JyComposeVideo] Audio loaded: {len(audio_clips)}/{total_audio_items}')
         if audio_clips:
             try:
                 final_video = final_video.with_audio(CompositeAudioClip(audio_clips))
-            except: pass
+                print(f'[JyComposeVideo] Audio composited: {len(audio_clips)} clips')
+            except Exception as e:
+                print(f'[JyComposeVideo] Audio composite failed: {e}')
 
         # Export
         output_filename = f'{draft_name}_{uuid.uuid4().hex[:8]}.mp4'
         output_path = os.path.join(self.output_dir, output_filename)
 
+        has_audio = final_video.audio is not None if hasattr(final_video, 'audio') else False
+        print(f'[JyComposeVideo] Final: size={final_video.size}, dur={final_video.duration:.1f}s, audio={"yes" if has_audio else "no"}')
+
         fv_size = final_video.size if hasattr(final_video, 'size') else (0, 0)
         if fv_size[0] <= 0 or fv_size[1] <= 0:
             raise Exception(f'[JyComposeVideo] Invalid output size: {fv_size}, input was {width}x{height}')
 
-        try:
-            final_video.write_videofile(output_path, fps=fps, codec='libx264',
-                                        audio_codec='aac', preset='medium', threads=4, logger=None)
-        except:
+        export_ok = False
+        for attempt in [
+            {'codec': 'libx264', 'audio_codec': 'aac'},
+            {'codec': 'libx264', 'audio_codec': 'libmp3lame'},
+            {'codec': 'libx264', 'audio': False},
+        ]:
             try:
-                final_video.write_videofile(output_path, fps=fps, codec='libx264',
-                                            audio=False, preset='medium', threads=4, logger=None)
+                final_video.write_videofile(output_path, fps=fps, preset='medium',
+                                            threads=4, logger=None, **attempt)
+                export_ok = True
+                if attempt.get('audio') is False:
+                    print('[JyComposeVideo] Video exported without audio')
+                break
             except Exception as e:
-                raise Exception(f'Export failed: {e}')
+                print(f'[JyComposeVideo] Export attempt {attempt} failed: {e}')
+        if not export_ok:
+            raise Exception('[JyComposeVideo] All export attempts failed')
 
-        for ci in clips:
+        for ci in all_clips:
             try: ci['clip'].close()
             except: pass
         for ac in audio_clips:
