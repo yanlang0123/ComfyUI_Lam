@@ -1,5 +1,5 @@
 import os, math, uuid, numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import folder_paths
 
 TRANSITION_MAP = {
@@ -931,8 +931,7 @@ class JyComposeVideo:
 
         if all_effects:
             print(f"[JyComposeVideo] Applying {len(all_effects)}/{total_effect_items} effects")
-            import copy
-            effs = copy.deepcopy(all_effects)
+            effs = all_effects
             def effect_filter(gf, t):
                 frame = gf(t)
                 for ef in effs:
@@ -944,7 +943,22 @@ class JyComposeVideo:
             print(f"[JyComposeVideo] Effects applied successfully")
 
 
-        # Export
+        # Export ? detect GPU encoders for hardware acceleration
+        import subprocess
+        hw_encoder = None
+        try:
+            result = subprocess.run(['ffmpeg', '-hide_banner', '-encoders'],
+                                    capture_output=True, text=True, timeout=5,
+                                    creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
+            if 'h264_nvenc' in result.stdout:
+                hw_encoder = 'h264_nvenc'
+            elif 'h264_qsv' in result.stdout:
+                hw_encoder = 'h264_qsv'
+            elif 'h264_amf' in result.stdout:
+                hw_encoder = 'h264_amf'
+        except Exception as e:
+            print(f'[JyComposeVideo] GPU detection skipped: {e}')
+
         output_filename = f'{draft_name}_{uuid.uuid4().hex[:8]}.mp4'
         output_path = os.path.join(self.output_dir, output_filename)
 
@@ -955,21 +969,34 @@ class JyComposeVideo:
         if fv_size[0] <= 0 or fv_size[1] <= 0:
             raise Exception(f'[JyComposeVideo] Invalid output size: {fv_size}, input was {width}x{height}')
 
+        # Build export attempts: GPU first, then software fallback
+        export_attempts = []
+        if hw_encoder:
+            hw_preset_map = {'h264_nvenc': 'p4', 'h264_amf': 'speed', 'h264_qsv': 'veryfast'}
+            hw_preset = hw_preset_map.get(hw_encoder, 'medium')
+            export_attempts.append({
+                'codec': hw_encoder, 'audio_codec': 'aac', '_preset': hw_preset,
+                '_label': f'GPU ({hw_encoder})'
+            })
+            print(f'[JyComposeVideo] Hardware encoder detected: {hw_encoder}')
+        export_attempts.extend([
+            {'codec': 'libx264', 'audio_codec': 'aac', '_label': 'CPU (x264 + aac)'},
+            {'codec': 'libx264', 'audio_codec': 'libmp3lame', '_label': 'CPU (x264 + mp3)'},
+            {'codec': 'libx264', 'audio': False, '_label': 'CPU (x264, no audio)'},
+        ])
+
         export_ok = False
-        for attempt in [
-            {'codec': 'libx264', 'audio_codec': 'aac'},
-            {'codec': 'libx264', 'audio_codec': 'libmp3lame'},
-            {'codec': 'libx264', 'audio': False},
-        ]:
+        for attempt in export_attempts:
             try:
-                final_video.write_videofile(output_path, fps=fps, preset='medium',
-                                            threads=4, logger=None, **attempt)
+                apreset = attempt.pop('_preset', 'veryfast')
+                label = attempt.pop('_label', '')
+                final_video.write_videofile(output_path, fps=fps, preset=apreset,
+                                            threads=max(4, os.cpu_count() or 4), logger='bar', **attempt)
                 export_ok = True
-                if attempt.get('audio') is False:
-                    print('[JyComposeVideo] Video exported without audio')
+                print(f'[JyComposeVideo] Export OK via {label}')
                 break
             except Exception as e:
-                print(f'[JyComposeVideo] Export attempt {attempt} failed: {e}')
+                print(f'[JyComposeVideo] Export via {label} failed: {e}')
         if not export_ok:
             raise Exception('[JyComposeVideo] All export attempts failed')
 
