@@ -57,7 +57,7 @@ app.registerExtension({
             };
         }
         var names=["MultiTextConcatenate","JyMultiMediaGroup","JyMultiAudioGroup","JyMultiCaptionsGroup","JyMultiEffectGroup"
-        ,'JySaveDraft','JySaveOutDraft','JySaveNotOutDraft','JySaveNoOutDraft'
+        ,'JySaveDraft','JySaveOutDraft','JySaveNotOutDraft','JySaveNoOutDraft','JyComposeVideo','JyComposeVideoOut'
         ,'MultiTextSelelct',"MultiIntFormula","MultiParamFormula","LamSwitcherCase"]
         if (names.indexOf(nodeData.name)>=0) {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
@@ -100,7 +100,7 @@ app.registerExtension({
                     this.inputType="*"
                     this.inputPrefix="case"
                 }
-                if(["JySaveNotOutDraft","JySaveDraft","JySaveOutDraft","JySaveNoOutDraft"].indexOf(nodeData.name)>=0){
+                if(["JySaveNotOutDraft","JySaveDraft","JySaveOutDraft","JySaveNoOutDraft","JyComposeVideo","JyComposeVideoOut"].indexOf(nodeData.name)>=0){
                     this.originalsize=4
                     this.inputType="TRACK"
                     this.inputPrefix="track"

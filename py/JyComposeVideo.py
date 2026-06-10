@@ -152,6 +152,36 @@ OUTRO_ANIMATION_MAP = {
 }
 
 DEFAULT_OUTRO = 'fade_out'
+EFFECT_MAP = {
+    "模糊": "blur",
+    "马赛克": "mosaic",
+    "低像素": "pixelate",
+    "低像素_II": "pixelate",
+    "像素": "pixelate",
+    "变亮": "brighten",
+    "提亮": "brighten",
+    "变暗": "darken",
+    "压暗": "darken",
+    "灰度": "grayscale",
+    "黑白": "grayscale",
+    "黑白电影": "grayscale",
+    "黑白胶片": "grayscale",
+    "复古": "sepia",
+    "怀旧": "sepia",
+    "做旧": "sepia",
+    "暖色": "warm",
+    "冷色": "cool",
+    "反色": "invert",
+    "反转": "invert",
+    "镜像": "mirror_h",
+    "左右镜像": "mirror_h",
+    "上下镜像": "mirror_v",
+    "锐化": "sharpen",
+    "毛刺": "glitch",
+    "色差": "chromatic",
+    "重影": "ghost",
+}
+
 
 # Image extensions
 IMAGE_EXTENSIONS = {'.png','.jpg','.jpeg','.bmp','.webp','.tiff','.tif'}
@@ -167,11 +197,14 @@ FONT_MAP = {
     '幼圆': 'SIMYOU.TTF',
 }
 
+font_dir = os.path.abspath(os.path.join(__file__, "../../fonts"))
+if not os.path.exists(font_dir):
+    os.mkdir(font_dir)
+
 def is_image_file(path):
     return os.path.splitext(path)[1].lower() in IMAGE_EXTENSIONS
 
 def get_font_pil(font_name, font_size):
-    font_dir = r'C:\\Windows\\Fonts'
     candidates = []
     if font_name in FONT_MAP:
         candidates.append(os.path.join(font_dir, FONT_MAP[font_name]))
@@ -506,10 +539,120 @@ def render_subtitle(text, font_name, font_size_pct, color_hex, width, height, tr
         current_y += lh + 4
     return np.array(img)
 
+def apply_effect_frame(frame, effect_name, t, duration, w, h):
+    import math
+    p = min(t / max(duration, 0.001), 1.0) if duration > 0 else 0.5
+    eff_key = EFFECT_MAP.get(effect_name)
+    if not eff_key:
+        ename_lower = effect_name.lower()
+        for k, v in EFFECT_MAP.items():
+            if k in effect_name or ename_lower in k.lower():
+                eff_key = v
+                break
+    if not eff_key:
+        return frame
+
+    if eff_key == "blur":
+        ksize = int(3 + 20 * p)
+        if ksize % 2 == 0:
+            ksize += 1
+        if ksize > 31:
+            ksize = 31
+        img = Image.fromarray(frame)
+        return np.array(img.filter(ImageFilter.GaussianBlur(ksize)))
+
+    elif eff_key in ("mosaic", "pixelate"):
+        block = max(2, int(3 + 40 * p))
+        h_img, w_img = frame.shape[:2]
+        small_w, small_h = max(w_img // block, 1), max(h_img // block, 1)
+        img = Image.fromarray(frame)
+        small = img.resize((small_w, small_h), Image.NEAREST)
+        return np.array(small.resize((w_img, h_img), Image.NEAREST))
+
+    elif eff_key == "brighten":
+        factor = 1.0 + 0.6 * p
+        return np.clip(frame.astype(np.float32) * factor, 0, 255).astype(np.uint8)
+
+    elif eff_key == "darken":
+        factor = 1.0 - 0.6 * p
+        return np.clip(frame.astype(np.float32) * factor, 0, 255).astype(np.uint8)
+
+    elif eff_key == "grayscale":
+        gray = np.dot(frame[..., :3], [0.299, 0.587, 0.114])
+        alpha = 0.3 + 0.7 * p
+        blend = frame.astype(np.float32) * (1 - alpha) + np.stack([gray, gray, gray], axis=-1) * alpha
+        return np.clip(blend, 0, 255).astype(np.uint8)
+
+    elif eff_key == "sepia":
+        gray = np.dot(frame[..., :3], [0.299, 0.587, 0.114])
+        r = np.clip(gray * 1.15, 0, 255)
+        g = np.clip(gray * 0.87, 0, 255)
+        b = np.clip(gray * 0.65, 0, 255)
+        sepia_frame = np.stack([r, g, b], axis=-1).astype(np.uint8)
+        alpha = 0.3 + 0.7 * p
+        return np.clip(frame.astype(np.float32) * (1 - alpha) + sepia_frame.astype(np.float32) * alpha, 0, 255).astype(np.uint8)
+
+    elif eff_key == "warm":
+        f = frame.astype(np.float32)
+        warmth = 0.2 + 0.3 * p
+        f[..., 0] = np.clip(f[..., 0] * (1.0 + warmth), 0, 255)
+        f[..., 2] = np.clip(f[..., 2] * (1.0 - warmth), 0, 255)
+        return f.astype(np.uint8)
+
+    elif eff_key == "cool":
+        f = frame.astype(np.float32)
+        coolness = 0.2 + 0.3 * p
+        f[..., 0] = np.clip(f[..., 0] * (1.0 - coolness), 0, 255)
+        f[..., 2] = np.clip(f[..., 2] * (1.0 + coolness), 0, 255)
+        return f.astype(np.uint8)
+
+    elif eff_key == "invert":
+        alpha = 0.3 + 0.7 * p
+        inverted = 255 - frame
+        return np.clip(frame.astype(np.float32) * (1 - alpha) + inverted.astype(np.float32) * alpha, 0, 255).astype(np.uint8)
+
+    elif eff_key == "mirror_h":
+        return frame[:, ::-1, :]
+    elif eff_key == "mirror_v":
+        return frame[::-1, :, :]
+
+    elif eff_key == "sharpen":
+        img = Image.fromarray(frame)
+        sharp = img.filter(ImageFilter.SHARPEN)
+        alpha = 0.3 + 0.7 * p
+        return np.clip(frame.astype(np.float32) * (1 - alpha) + np.array(sharp).astype(np.float32) * alpha, 0, 255).astype(np.uint8)
+
+    elif eff_key == "glitch":
+        result = frame.copy()
+        if p > 0.1:
+            shift = int(3 + 10 * p * math.sin(t * 30))
+            result = np.roll(result, shift, axis=1)
+            r_shift = int(2 + 5 * p)
+            if result.shape[2] >= 3:
+                result[..., 0] = np.roll(result[..., 0], r_shift, axis=1)
+                result[..., 2] = np.roll(result[..., 2], -r_shift, axis=1)
+        return np.clip(result, 0, 255).astype(np.uint8)
+
+    elif eff_key == "chromatic":
+        r_shift = int(2 + 8 * p * math.sin(t * 15))
+        result = frame.copy()
+        if result.shape[2] >= 3:
+            result[..., 0] = np.roll(result[..., 0], r_shift, axis=1)
+            result[..., 2] = np.roll(result[..., 2], -r_shift, axis=1)
+        return result
+
+    elif eff_key == "ghost":
+        alpha = 0.1 + 0.25 * p
+        shifted = np.roll(frame, int(5 + 10 * p), axis=0)
+        return np.clip(frame.astype(np.float32) * (1 - alpha) + shifted.astype(np.float32) * alpha, 0, 255).astype(np.uint8)
+
+    return frame
+
+
 class JyComposeVideo:
     def __init__(self):
-        self.output_dir = folder_paths.get_temp_directory()
-        self.type = 'temp'
+        self.output_dir = folder_paths.get_output_directory()
+        self.type = "output"
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -532,7 +675,7 @@ class JyComposeVideo:
     RETURN_TYPES = ('STRING', 'FLOAT')
     RETURN_NAMES = ('视频路径', '视频时长')
     FUNCTION = 'compose_video'
-    OUTPUT_NODE = True
+    OUTPUT_NODE = False
     CATEGORY = 'lam'
 
     def compose_video(self, medias, draft_name, width, height, fps=30, audios=[], effects=[], captions=[], **kwargs):
@@ -545,6 +688,8 @@ class JyComposeVideo:
         if audios: audio_tracks.append(list(audios))
         caption_tracks = []
         if captions: caption_tracks.append(list(captions))
+        effect_tracks = []
+        if effects: effect_tracks.append(list(effects))
         track_keys = [a for a in kwargs if a.startswith('track')]
         print(f'[JyComposeVideo] Found {len(track_keys)} tracks: {track_keys}')
         for arg in track_keys:
@@ -557,9 +702,11 @@ class JyComposeVideo:
                 if 'video' in tn: video_tracks.append(list(grp))
                 elif 'audio' in tn: audio_tracks.append(list(grp))
                 elif 'text' in tn: caption_tracks.append(list(grp))
+                elif 'effect' in tn: effect_tracks.append(list(grp))
 
         total_audio_items = sum(len(t) for t in audio_tracks)
         total_caption_items = sum(len(t) for t in caption_tracks)
+        total_effect_items = sum(len(t) for t in effect_tracks)
 
         all_clips = []
         all_transitions = []
@@ -666,7 +813,7 @@ class JyComposeVideo:
             raise Exception('[JyComposeVideo] No valid media clips')
         if width <= 0 or height <= 0:
             raise Exception(f'[JyComposeVideo] Invalid dimensions: {width}x{height}')
-        print(f'[JyComposeVideo] Processing: {len(all_clips)} media, {total_audio_items} audio, {total_caption_items} captions')
+        print(f'[JyComposeVideo] Processing: {len(all_clips)} media, {total_audio_items} audio, {total_caption_items} captions, {total_effect_items} effects')
         total_dur = max(c['end'] for c in all_clips)
 
         # Build CompositeVideoClip
@@ -754,6 +901,49 @@ class JyComposeVideo:
             except Exception as e:
                 print(f'[JyComposeVideo] Audio composite failed: {e}')
 
+        # Effects (post-processing on final video)
+        all_effects = []
+        for track_effects in effect_tracks:
+            ee_end = 0.0
+            for eff in track_effects:
+                ename = eff.get("effect_name_or_resource_id", "")
+                if not ename:
+                    continue
+                estart = eff.get("start", 0) / 1e6
+                edur = eff.get("duration", 0) / 1e6
+                if edur <= 0:
+                    edur = 2.0
+                if estart <= 0:
+                    estart = ee_end
+                eff_key = None
+                if ename in EFFECT_MAP:
+                    eff_key = EFFECT_MAP[ename]
+                else:
+                    for k in EFFECT_MAP:
+                        if k in ename or ename.lower() in k.lower():
+                            eff_key = EFFECT_MAP[k]
+                            break
+                if eff_key:
+                    all_effects.append({"name": ename, "start": estart, "duration": edur})
+                else:
+                    print(f"[JyComposeVideo] Effect not supported, skipped: {ename}")
+                ee_end = estart + edur
+
+        if all_effects:
+            print(f"[JyComposeVideo] Applying {len(all_effects)}/{total_effect_items} effects")
+            import copy
+            effs = copy.deepcopy(all_effects)
+            def effect_filter(gf, t):
+                frame = gf(t)
+                for ef in effs:
+                    es, ed = ef["start"], ef["duration"]
+                    if es <= t < es + ed:
+                        frame = apply_effect_frame(frame, ef["name"], t - es, ed, width, height)
+                return frame
+            final_video = final_video.fl(effect_filter)
+            print(f"[JyComposeVideo] Effects applied successfully")
+
+
         # Export
         output_filename = f'{draft_name}_{uuid.uuid4().hex[:8]}.mp4'
         output_path = os.path.join(self.output_dir, output_filename)
@@ -793,13 +983,18 @@ class JyComposeVideo:
         except: pass
 
         results = [{'filename': output_filename, 'subfolder': '', 'type': self.type}]
-        return {'ui': {'down': results}, 'result': (output_path, total_dur)}
+        return { "ui": { "images": results, "animated": (True,) },"result": (output_path, total_dur) }
+    
+class JyComposeVideoOut(JyComposeVideo):
+    OUTPUT_NODE = True
 
 
 NODE_CLASS_MAPPINGS = {
     'JyComposeVideo': JyComposeVideo,
+    'JyComposeVideoOut':JyComposeVideoOut
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    'JyComposeVideo': '剪映合成视频',
+    'JyComposeVideo': '剪映合成视频非输出',
+    'JyComposeVideoOut': '剪映合成视频'
 }
