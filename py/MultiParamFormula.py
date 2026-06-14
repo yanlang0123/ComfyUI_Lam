@@ -52,6 +52,7 @@ class MultiParamFormula:
         msg='完成'
         r=""
         expand=None
+        ui={}
         try:
             if advanced=='enable':
                 exec(expression, lookup)
@@ -61,15 +62,19 @@ class MultiParamFormula:
                     r = lookup['result']
                 if "expand" in lookup:
                     expand = lookup['expand']
+                if "ui" in lookup:
+                    ui=lookup['ui']
             else:
                 r = eval(expression, lookup)
         except Exception as e:
+            print(e)
             msg='表达式错误'
 
         if not isinstance(r, tuple):
             r = (r,)
-        
-        return {"ui": {"value": [msg]}, "result": r,"expand":expand} if isView else r
+
+        ui['value']=[msg]
+        return {"ui": ui, "result": r,"expand":expand} if isView else r
     
 NODE_CLASS_MAPPINGS = {
     "MultiParamFormula": MultiParamFormula

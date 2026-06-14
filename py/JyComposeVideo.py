@@ -650,6 +650,241 @@ def apply_effect_frame(frame, effect_name, t, duration, w, h):
 
 
 
+def _wrap_intro(clip, anim_type, duration, w, h):
+    """Wrap a moviepy clip so that during [0, duration] frames pass through _apply_anim_core
+    as an intro animation. Frames after the window pass through unchanged."""
+    if duration <= 0 or anim_type in (None, '', 'fade_in'):
+        return clip
+    dur = float(duration)
+
+    def _fl(get_frame, t):
+        frame = get_frame(t)
+        if t >= dur:
+            return frame
+        try:
+            return apply_intro_frame(frame, t, anim_type, dur, w, h)
+        except Exception:
+            return frame
+
+    try:
+        return clip.transform(_fl, keep_duration=True)
+    except Exception:
+        return clip
+
+
+def _wrap_outro(clip, anim_type, duration, w, h, clip_dur):
+    """Wrap a moviepy clip so that during the last `duration` seconds frames pass
+    through _apply_anim_core as an outro animation."""
+    if duration <= 0 or anim_type in (None, '', 'fade_out'):
+        return clip
+    dur = float(duration)
+    cdur = float(clip_dur) if clip_dur else (clip.duration or dur)
+
+    def _fl(get_frame, t):
+        frame = get_frame(t)
+        remaining = cdur - t
+        if remaining >= dur or remaining <= 0:
+            return frame
+        try:
+            return apply_outro_frame(frame, t, anim_type, dur, w, h, cdur)
+        except Exception:
+            return frame
+
+    try:
+        return clip.transform(_fl, keep_duration=True)
+    except Exception:
+        return clip
+
+
+def _build_track_with_transitions(t_clips, width, height, fps,
+                                  concatenate_videoclips, CompositeVideoClip,
+                                  VideoClip, _vfx):
+    """Compose a single track of clips with the transition declared on each clip.
+
+    - 'crossfade' transitions use moviepy CrossFadeIn/Out (fast).
+    - Other transition types use make_transition_frame on the overlap window via a
+      custom VideoClip that pulls frames from both neighbours.
+
+    Returns a single composited VideoClip representing the whole track timeline.
+    """
+    import numpy as _np
+
+    n = len(t_clips)
+    if n == 0:
+        return None
+    if n == 1:
+        return t_clips[0]['clip']
+
+    # Compute timeline positions and effective transition durations.
+    layout = []
+    pos = 0.0
+    for i, ci in enumerate(t_clips):
+        clip = ci['clip']
+        cdur = float(clip.duration or ci.get('duration', 0.0) or 0.0)
+        trans = ci.get('transition')
+        td = float(trans['duration']) if trans else 0.0
+        # Transition overlaps with the NEXT clip, clamp by both clip lengths.
+        if i + 1 < n:
+            next_dur = float(t_clips[i + 1]['clip'].duration
+                             or t_clips[i + 1].get('duration', 0.0) or 0.0)
+            td = max(0.0, min(td, cdur * 0.9, next_dur * 0.9))
+        else:
+            td = 0.0
+        layout.append({'clip': clip, 'duration': cdur, 'trans': trans, 'td': td,
+                       'start': pos})
+        # Next clip overlaps by td.
+        pos += cdur - td
+    total = pos + layout[-1]['duration'] if False else (layout[-1]['start'] + layout[-1]['duration'])
+
+    # Build two pools: base clip layers (drawn first) and transition overlays
+    # (drawn last, so they always paint on top during the overlap window).
+    base_elements = []
+    overlay_elements = []
+    for i, item in enumerate(layout):
+        clip = item['clip']
+        start = item['start']
+        td = item['td']
+        trans = item['trans']
+        ttype = (trans or {}).get('type', 'crossfade') if trans else None
+        prev_td = layout[i - 1]['td'] if i > 0 else 0.0
+        prev_ttype = (layout[i - 1]['trans'] or {}).get('type', 'crossfade') if i > 0 and layout[i - 1]['trans'] else None
+
+        # For pure crossfade we use moviepy's built-in alpha fade.
+        if ttype in (None, 'crossfade', 'dissolve_blur'):
+            seg = clip
+            if prev_td > 0 and prev_ttype in (None, 'crossfade', 'dissolve_blur'):
+                try:
+                    seg = seg.with_effects([_vfx.CrossFadeIn(prev_td)])
+                except Exception:
+                    pass
+            if td > 0 and ttype in ('crossfade', 'dissolve_blur'):
+                try:
+                    seg = seg.with_effects([_vfx.CrossFadeOut(td)])
+                except Exception:
+                    pass
+            base_elements.append(seg.with_start(start))
+            continue
+
+        # Non-crossfade transitions: trim the body so it ends before the overlay
+        # starts; the overlay paints the transition itself.
+        body_dur = max(item['duration'] - td, 0.01)
+        try:
+            body = clip.subclipped(0, body_dur)
+        except Exception:
+            body = clip
+        base_elements.append(body.with_start(start))
+
+        if td > 0 and i + 1 < n:
+            nxt = layout[i + 1]
+            trans_start = start + body_dur
+            clip_a = clip
+            clip_b = nxt['clip']
+            tdur = td
+            ttype_local = ttype
+            body_local = body_dur
+            item_dur = item['duration']
+
+            def _make(t, _ca=clip_a, _cb=clip_b, _tdur=tdur, _ttype=ttype_local,
+                      _body=body_local, _ba=item_dur):
+                p = max(0.0, min(1.0, float(t) / float(_tdur))) if _tdur > 0 else 1.0
+                ta = min(max(_ba - 1e-3, 0.0), _body + t)
+                tb = max(0.0, t)
+                try:
+                    fa = _ca.get_frame(ta)
+                except Exception:
+                    fa = _np.zeros((height, width, 3), dtype=_np.uint8)
+                try:
+                    fb = _cb.get_frame(tb)
+                except Exception:
+                    fb = _np.zeros((height, width, 3), dtype=_np.uint8)
+                if fa.shape[:2] != (height, width):
+                    fa = _np.array(Image.fromarray(fa).resize((width, height), Image.BILINEAR))
+                if fb.shape[:2] != (height, width):
+                    fb = _np.array(Image.fromarray(fb).resize((width, height), Image.BILINEAR))
+                try:
+                    return make_transition_frame(fa, fb, p, _ttype, width, height)
+                except Exception:
+                    a = fa.astype(_np.float32); b = fb.astype(_np.float32)
+                    return _np.clip(a * (1 - p) + b * p, 0, 255).astype(_np.uint8)
+
+            try:
+                trans_clip = VideoClip(frame_function=_make,
+                                       duration=tdur).with_fps(fps).with_start(trans_start)
+                overlay_elements.append(trans_clip)
+            except Exception as e:
+                print(f'[JyComposeVideo] Transition build failed ({ttype_local}): {e}')
+
+    track_video = CompositeVideoClip(base_elements + overlay_elements, size=(width, height))
+    return track_video
+
+
+def _apply_effect_window(final_video, eff_key, e_start, e_end, width, height, _vfx):
+    """Apply an effect only inside [e_start, e_end] of `final_video`.
+
+    Strategy:
+      * For built-in moviepy color FX (grayscale/invert/mirror/etc.) we slice the
+        window with subclipped, apply the FX in C-level, then composite back.
+      * For per-frame effects we use VideoClip.transform on the windowed sub-clip,
+        evaluating apply_effect_frame each frame.
+    """
+    from moviepy import CompositeVideoClip
+    import numpy as _np
+
+    total = float(final_video.duration or 0.0)
+    if total <= 0:
+        return final_video
+    e_start = max(0.0, float(e_start))
+    e_end = max(e_start, min(float(e_end), total))
+    if e_end <= e_start:
+        return final_video
+    dur = e_end - e_start
+
+    try:
+        window = final_video.subclipped(e_start, e_end)
+    except Exception:
+        window = final_video
+
+    builtin_map = {
+        'grayscale': lambda c: c.with_effects([_vfx.BlackAndWhite()]),
+        'invert':    lambda c: c.with_effects([_vfx.InvertColors()]),
+        'brighten':  lambda c: c.with_effects([_vfx.LumContrast(lum=1.3, contrast=1.0)]),
+        'darken':    lambda c: c.with_effects([_vfx.LumContrast(lum=0.7, contrast=1.0)]),
+        'warm':      lambda c: c.with_effects([_vfx.MultiplyColor(1.1)]),
+        'cool':      lambda c: c.with_effects([_vfx.MultiplyColor(0.9)]),
+        'mirror_h':  lambda c: c.with_effects([_vfx.MirrorX()]),
+        'mirror_v':  lambda c: c.with_effects([_vfx.MirrorY()]),
+    }
+
+    if eff_key in builtin_map:
+        try:
+            window = builtin_map[eff_key](window)
+        except Exception as e:
+            print(f'[JyComposeVideo] Builtin effect {eff_key} failed, fallback to per-frame: {e}')
+            eff_key_fallback = eff_key
+            def _fl(get_frame, t, _k=eff_key_fallback, _d=dur):
+                return apply_effect_frame(get_frame(t), _k, t, _d, width, height)
+            window = window.transform(_fl, keep_duration=True)
+    else:
+        def _fl(get_frame, t, _k=eff_key, _d=dur):
+            return apply_effect_frame(get_frame(t), _k, t, _d, width, height)
+        try:
+            window = window.transform(_fl, keep_duration=True)
+        except Exception as e:
+            print(f'[JyComposeVideo] Per-frame effect {eff_key} failed: {e}')
+            return final_video
+
+    elements = [final_video]
+    elements.append(window.with_start(e_start))
+    composite = CompositeVideoClip(elements, size=(width, height))
+    composite = composite.with_duration(total)
+    if final_video.audio is not None:
+        try:
+            composite = composite.with_audio(final_video.audio)
+        except Exception:
+            pass
+    return composite
+
+
 _SLIDE_IN_MAP = {'slide_in_left': 'left', 'slide_in_right': 'right', 'slide_in_up': 'top', 'slide_in_down': 'bottom'}
 _SLIDE_OUT_MAP = {'slide_out_left': 'left', 'slide_out_right': 'right', 'slide_out_up': 'top', 'slide_out_down': 'bottom'}
 
@@ -765,38 +1000,37 @@ class JyComposeVideo:
                 else: actual_start = sat
                 actual_end = actual_start + dur
 
-                # Apply animations via moviepy built-in FX (C-level, no Python per-frame)
+                # Apply intro/outro animations: prefer moviepy built-in FX where possible,
+                # otherwise fall back to per-frame _apply_anim_core for the rich custom animations.
+                ac = mc.with_fps(fps)
                 if anim_datas:
-                    ac = mc.with_fps(fps)
                     try:
                         for ad in anim_datas:
                             at = ad.get('animation_type', '')
                             an = ad.get('animation', '')
                             adr = max(ad.get('duration', 0) / 1e6, 0.1)
+                            clip_dur_anim = ac.duration if ac.duration else dur
+                            adr = min(adr, max(clip_dur_anim, 0.1))
                             if at == 'in':
                                 eff = INTRO_ANIMATION_MAP.get(an, 'fade_in')
                                 side_in = _SLIDE_IN_MAP.get(eff)
                                 if side_in:
                                     ac = ac.with_effects([_vfx.SlideIn(adr, side_in)])
-                                elif eff in ('fade_in', 'zoom_in', 'zoom_in_from_small', 'slight_zoom_in', 'dynamic_zoom_in',
-                                             'rotate_in', 'rotate_open', 'mirror_flip_in', 'swirl_in',
-                                             'fold_open', 'jump_open', 'swing_in_down', 'swing_in_right',
-                                             'swing_in_left_up', 'swing_in_right_up', 'swing_in_left_down',
-                                             'swing_in_right_down', 'shake', 'shake_v', 'shake_h', 'shake_drop'):
+                                elif eff == 'fade_in':
                                     ac = ac.with_effects([_vfx.FadeIn(adr)])
                                 else:
-                                    ac = ac.with_effects([_vfx.FadeIn(adr)])
+                                    ac = _wrap_intro(ac, eff, adr, width, height)
                             elif at == 'out':
                                 eff = OUTRO_ANIMATION_MAP.get(an, 'fade_out')
                                 side_out = _SLIDE_OUT_MAP.get(eff)
                                 if side_out:
                                     ac = ac.with_effects([_vfx.SlideOut(adr, side_out)])
-                                else:
+                                elif eff == 'fade_out':
                                     ac = ac.with_effects([_vfx.FadeOut(adr)])
+                                else:
+                                    ac = _wrap_outro(ac, eff, adr, width, height, clip_dur_anim)
                     except Exception as e:
                         print(f'[JyComposeVideo] Animation FX failed, using clip as-is: {e}')
-                else:
-                    ac = mc.with_fps(fps)
                 if hasattr(mc, 'audio') and mc.audio:
                     ac.audio = mc.audio.with_volume_scaled(vol) if vol != 1.0 else mc.audio
 
@@ -838,31 +1072,13 @@ class JyComposeVideo:
                 track_videos.append(t_clips[0]['clip'])
                 continue
 
-            # Build track with crossfade transitions using moviepy built-in effects
-            segments = []
-            for i, ci in enumerate(t_clips):
-                clip = ci['clip']
-                trans = ci.get('transition')
-                if trans:
-                    td = trans['duration']
-                    clip = clip.with_effects([_vfx.CrossFadeOut(td)])
-                if i > 0:
-                    prev_trans = t_clips[i - 1].get('transition')
-                    if prev_trans:
-                        td = prev_trans['duration']
-                        clip = clip.with_effects([_vfx.CrossFadeIn(td)])
-                segments.append(clip)
-
-            try:
-                track_video = concatenate_videoclips(segments)
-            except Exception as e:
-                print(f'[JyComposeVideo] Concatenate failed, fallback to composite: {e}')
-                elements = []
-                pos = 0.0
-                for seg in segments:
-                    elements.append(seg.with_start(pos))
-                    pos += seg.duration
-                track_video = CompositeVideoClip(elements, size=(width, height))
+            # Build track with transitions. Use moviepy crossfade for plain crossfade
+            # (fast, C-level), and fall back to a custom per-frame builder for richer
+            # transitions like wipe/slide/zoom/circle/etc.
+            track_video = _build_track_with_transitions(
+                t_clips, width, height, fps,
+                concatenate_videoclips, CompositeVideoClip, VideoClip, _vfx,
+            )
             track_videos.append(track_video)
 
         if len(track_videos) == 0:
@@ -944,7 +1160,9 @@ class JyComposeVideo:
             except Exception as e:
                 print(f'[JyComposeVideo] Audio composite failed: {e}')
 
-        # Effects via moviepy built-in FX (C-level, no Python per-frame)
+        # Effects: apply each effect within its time window (start, start+duration).
+        # Whole-clip color FX use moviepy built-ins via SubClip slicing, while per-frame
+        # effects (blur, mosaic, glitch, etc.) are evaluated through apply_effect_frame.
         applied_count = 0
         for track_effects in effect_tracks:
             for eff in track_effects:
@@ -960,32 +1178,24 @@ class JyComposeVideo:
                 if not eff_key:
                     print(f"[JyComposeVideo] Effect not supported, skipped: {ename}")
                     continue
+                e_start = eff.get('start', 0) / 1e6
+                e_dur = eff.get('duration', 0) / 1e6
+                if e_dur <= 0:
+                    e_dur = max(final_video.duration - e_start, 0.0)
+                if e_dur <= 0:
+                    print(f"[JyComposeVideo] Effect {ename} has non-positive duration, skipped")
+                    continue
+                e_end = min(e_start + e_dur, final_video.duration)
                 try:
-                    if eff_key == 'grayscale':
-                        final_video = final_video.with_effects([_vfx.BlackAndWhite()])
-                    elif eff_key == 'invert':
-                        final_video = final_video.with_effects([_vfx.InvertColors()])
-                    elif eff_key == 'brighten':
-                        final_video = final_video.with_effects([_vfx.LumContrast(lum=1.3, contrast=1.0)])
-                    elif eff_key == 'darken':
-                        final_video = final_video.with_effects([_vfx.LumContrast(lum=0.7, contrast=1.0)])
-                    elif eff_key == 'warm':
-                        final_video = final_video.with_effects([_vfx.MultiplyColor(1.1)])
-                    elif eff_key == 'cool':
-                        final_video = final_video.with_effects([_vfx.MultiplyColor(0.9)])
-                    elif eff_key == 'mirror_h':
-                        final_video = final_video.with_effects([_vfx.MirrorX()])
-                    elif eff_key == 'mirror_v':
-                        final_video = final_video.with_effects([_vfx.MirrorY()])
-                    else:
-                        print(f"[JyComposeVideo] Effect {ename} requires Python frame processing, skipped for speed")
-                        continue
+                    final_video = _apply_effect_window(
+                        final_video, eff_key, e_start, e_end, width, height, _vfx,
+                    )
                     applied_count += 1
                 except Exception as e:
                     print(f"[JyComposeVideo] Effect {ename} failed: {e}")
 
         if applied_count > 0:
-            print(f"[JyComposeVideo] Applied {applied_count}/{total_effect_items} effects via moviepy FX")
+            print(f"[JyComposeVideo] Applied {applied_count}/{total_effect_items} effects")
 
 
         # Export ? detect GPU encoders for hardware acceleration
