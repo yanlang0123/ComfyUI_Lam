@@ -808,7 +808,7 @@ class JySaveDraft:
             if maxTime<target_timerange.end:
                 maxTime=target_timerange.end
         return maxTime
-    def save_draft_fun(self,medias,draft_name,width,height,audios=[],effects=[],captions=[],tracks=[],draft_root=r"C:\Users\Administrator\AppData\Local\JianyingPro\User Data\Projects\com.lveditor.draft"):
+    def save_draft_fun(self,medias,draft_name,width,height,audios=[],effects=[],captions=[],tracks=[],draft_root=r"C:\Users\Lam\AppData\Local\JianyingPro\User Data\Projects\com.lveditor.draft"):
         script = draft.Script_file(draft_name,width,height,draft_root=draft_root)
         maxTime = 0
         fileList=[]

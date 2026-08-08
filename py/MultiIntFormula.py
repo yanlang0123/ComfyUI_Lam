@@ -15,6 +15,7 @@ class MultiIntFormula:
         return {
             "required": {
                 "expression": ("STRING",{"multiline": True}),
+                "errorEnd": (["enable", "disable"],{"default": "disable"}), 
             },
             "optional": {
                 "n0": ("INT,FLOAT", ),
@@ -32,7 +33,7 @@ class MultiIntFormula:
     CATEGORY = "lam"
     OUTPUT_NODE = False
 
-    def evaluate(self, expression, **kwargs):
+    def evaluate(self, expression,errorEnd, **kwargs):
         lookup = {}
         for arg in kwargs:
             if type(kwargs[arg]) == int or type(kwargs[arg])== float:
@@ -43,6 +44,8 @@ class MultiIntFormula:
             r = eval(expression, lookup)
             msg=[r]
         except Exception as e:
+            if errorEnd=='enable':
+                raise Exception(e)
             msg=["表达式错误"]
         return {"ui": {"value": msg}, "result": (int(r), float(r),)}
     

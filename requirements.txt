@@ -21,7 +21,7 @@ face_alignment
 pyzbar
 redis
 zhipuai
-opencv-contrib-python
+# opencv-contrib-python
 websocket-client
 insightface
 basiclibrary-py
