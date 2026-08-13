@@ -86,12 +86,25 @@ class DoWhileEnd:
                     node.set_input(k, v)
         new_open = graph.lookup_node(open_node)
         assert new_open is not None
-        inode = graph.node("MultiParamFormula", advanced="disable",expression="p0+p1",isView=False, p0=[open_node,1], p1=stop)
+        # Use initial_value3 to carry the loop counter across iterations.
+        # Read prev_i from the cloned start's initial_value3 (set by the previous iteration's DoWhileEnd).
+        # On first call (no previous iteration), fall back to the start's slot 1 (widget i).
+        prev_i = new_open.get_input("initial_value3")
+        if prev_i is None:
+            prev_i = [open_node, 1]
+        inode = graph.node("MultiParamFormula", advanced="disable",expression="p0+p1",isView=False, p0=prev_i, p1=stop)
         new_open.set_input('i', inode.out(0))
         new_open.set_input('obj', obj)
         for i in range(NUM_FLOW_SOCKETS):
             key = f"initial_value{i}"
             new_open.set_input(key, kwargs.get(key, None))
+        # Forward the new i to the next iteration's cloned start via initial_value3
+        new_open.set_input('initial_value3', inode.out(0))
+        # Forward the previous-iteration inode for nodes that use initial_value4 (e.g. ForInnerEnd)
+        if NUM_FLOW_SOCKETS > 4:
+            inv4 = kwargs.get("initial_value4", None)
+            if inv4 is not None:
+                new_open.set_input('initial_value4', inv4)
         my_clone = graph.lookup_node("Recurse")
         assert my_clone is not None
         result = map(lambda x: my_clone.out(x), range(NUM_FLOW_SOCKETS+2))

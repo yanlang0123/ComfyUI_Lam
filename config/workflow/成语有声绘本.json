@@ -1,0 +1,2323 @@
+{
+    "1": {
+        "inputs": {},
+        "class_type": "OutDoWhileStart",
+        "_meta": {
+            "title": "判断外循环首"
+        }
+    },
+    "2": {
+        "inputs": {
+            "StatusInfo": "第1论结束.........\n整个循环结束",
+            "start": [
+                "1",
+                0
+            ],
+            "ANY": [
+                "7",
+                0
+            ],
+            "obj": [
+                "200",
+                0
+            ]
+        },
+        "class_type": "OutDoWhileEnd",
+        "_meta": {
+            "title": "判断外循环尾"
+        }
+    },
+    "7": {
+        "inputs": {
+            "expression": "len(p0)>1",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "115",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "是否继续循环1死循环，p0<3循环4次"
+        }
+    },
+    "9": {
+        "inputs": {
+            "value": "【角色设定】\n你是一位充满无限想象力与童心的童话作家。擅长从简单的元素中汲取灵感，创作出结构完整、语言优美且富有隐喻意义的原创童话。故事风格温馨奇幻，包含魔法、冒险、友谊或成长等经典主题，并始终传递希望与勇气。\n\n【核心指令】\n我会提供一个或多个初始元素（例如角色、物品、地点或概念）。请你以此为灵感起点，自由构建出一个新颖、完整、适合讲给孩子听的童话故事。\n\n【创作要求】\n\n1. 结构完整：  \n   - 开头须使用经典开场方式，如“很久很久以前…”；  \n   - 中段包含明确的情节推进与一次高潮；  \n   - 结尾使用“从此以后…”或类似闭合句式，传递明确的结局感。\n\n2. 语言风格：  \n   - 优美流畅，善用比喻、拟人、排比等修辞；  \n   - 可加入少量对话塑造角色性格与情绪；  \n   - 保持口语化讲述感，适合朗读或睡前讲述。\n\n3. 创意发挥：  \n   - 基于提供元素自由扩展世界观、角色与情节；  \n   - 可自然融入魔法元素、帮助者、挑战与成长线索；  \n   - 鼓励在经典框架中注入意想不到的转折或细节。\n\n4. 故事长度：  \n   - 保持短篇形式，约300-500字。\n\n5. 注意事项：  \n   - 如涉及现有童话形象或设定，需严格尊重原作背景与性格；  \n   - 若元素属于公共版权或原创范畴，则可完全自由发挥。",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "PrimitiveStringMultiline",
+        "_meta": {
+            "title": "故事生成"
+        }
+    },
+    "10": {
+        "inputs": {
+            "api_key": [
+                "114",
+                0
+            ],
+            "system_prompt": [
+                "13",
+                0
+            ],
+            "prompt": [
+                "14",
+                0
+            ],
+            "model": "DeepSeek-V3",
+            "seed": [
+                "1",
+                2
+            ],
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "DeepSeekV3",
+        "_meta": {
+            "title": "DeepSeek V3"
+        }
+    },
+    "11": {
+        "inputs": {
+            "api_key": [
+                "114",
+                0
+            ],
+            "prompt": [
+                "12",
+                0
+            ],
+            "model": "DeepSeek-R1",
+            "seed": [
+                "1",
+                2
+            ],
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "DeepSeekR1",
+        "_meta": {
+            "title": "DeepSeek R1"
+        }
+    },
+    "12": {
+        "inputs": {
+            "linebreak_addition": "false",
+            "delimiter": "根据以下内容生成：",
+            "text0": [
+                "13",
+                0
+            ],
+            "text1": [
+                "14",
+                0
+            ]
+        },
+        "class_type": "MultiTextConcatenate",
+        "_meta": {
+            "title": "多文本联合"
+        }
+    },
+    "13": {
+        "inputs": {
+            "switcher": [
+                "58",
+                0
+            ],
+            "case0": [
+                "58",
+                0
+            ],
+            "case1": [
+                "9",
+                0
+            ],
+            "case2": [
+                "215",
+                0
+            ],
+            "case3": [
+                "18",
+                0
+            ],
+            "case4": [
+                "20",
+                0
+            ]
+        },
+        "class_type": "LamSwitcherCase",
+        "_meta": {
+            "title": "条件选择器"
+        }
+    },
+    "14": {
+        "inputs": {
+            "switcher": [
+                "58",
+                0
+            ],
+            "case0": [
+                "58",
+                0
+            ],
+            "case1": [
+                "17",
+                0
+            ],
+            "case2": [
+                "30",
+                0
+            ],
+            "case3": [
+                "216",
+                0
+            ],
+            "case4": [
+                "30",
+                0
+            ]
+        },
+        "class_type": "LamSwitcherCase",
+        "_meta": {
+            "title": "条件选择器"
+        }
+    },
+    "15": {
+        "inputs": {
+            "ANY": [
+                "16",
+                0
+            ],
+            "IF_TRUE": [
+                "11",
+                0
+            ],
+            "IF_FALSE": [
+                "286",
+                0
+            ]
+        },
+        "class_type": "IfInnerExecute",
+        "_meta": {
+            "title": "判断选择"
+        }
+    },
+    "16": {
+        "inputs": {
+            "value": true
+        },
+        "class_type": "BOOLConstant",
+        "_meta": {
+            "title": "是否deepseek，否为豆包"
+        }
+    },
+    "17": {
+        "inputs": {
+            "value": "小猫钓鱼"
+        },
+        "class_type": "PrimitiveString",
+        "_meta": {
+            "title": "历史名人名称"
+        }
+    },
+    "18": {
+        "inputs": {
+            "value": "# 你是一位卓越的绘本分镜撰写专家\n根据输入的故事拆分成几张详细的画面场景分镜，以数组的格式返回数据，分别返回字幕和镜头提示词。根据输入的角色名称，需要在提示词里面用【{}】把角色包起来。\n[{\"narration\":\"小马过河的故事\",\"prompt\":\"一片广阔的翠绿色草原上，【{小星}】站立着，旁边有一条小河流。\"},{\"narration\":\"很久很久以前，在一片翠绿的草原上，住着一匹名叫小星的小马。\",\"prompt\":\"一片广阔的翠绿色草原上，【{小星}】站立着，它有表情略带胆怯。\"}]\n请特别注意：\n1、生成提示词中不要有解释说明性的文字\n2、用中文语言返回\n3、第一句字幕就是故事标题，提示词为封面提示词\n4、用户输入的角色列表不包含的角色不需要【{}】\n5、返回字符串数组，格式实例:[{\"narration\":\"字幕\",\"prompt\":\"提示词\"}]",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "PrimitiveStringMultiline",
+        "_meta": {
+            "title": "根据自述文案生成分镜头脚本"
+        }
+    },
+    "20": {
+        "inputs": {
+            "value": "```\n# 你是卓越的歌曲创作者.\n\n# 根据客户给你的信息分析主题，写一篇歌词, 用词脍炙人口.\n# 根据客户给你的信息分析首歌整体是什么风格. \n# 要求包含 [verse], [chorus], [bridge], [outro] 英文标签, 并放在每一节的前面, \n# 歌词是中文, 并按如下格式输出:\n\n[verse]\n<歌词...>\n\n[chorus]\n<歌词...>\n\n[bridge]\n<歌词...>\n\n...\n\n# 再用不超过 10 个单词的英文 tags 简要描述首歌的风格, 乐器伴凑, 男或女声等,\n# 重点参考使用以下 tags:\n\nelectronic, rock, pop, funk, soul, cyberpunk, Acid jazz, electro, electronic music, soft electric drums, melodic, background music for parties, radio broadcasts, workout playlists, saxophone, jazz, piano, violin, female voice, male voice, clean vocals, 110 bpm, fast tempo, slow tempo, loops, fills, acoustic guitar, electric bass, Rap\n\n# 只输出 歌词 和 tags, tags 之前必须有标签 \"tags:\" 隔开",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "PrimitiveStringMultiline",
+        "_meta": {
+            "title": "音乐生成"
+        }
+    },
+    "22": {
+        "inputs": {
+            "keywords1": "*",
+            "folder_path": [
+                "24",
+                0
+            ],
+            "file_formats1": "txt",
+            "dummy_parameter": [
+                "1",
+                2
+            ]
+        },
+        "class_type": "LamReadFileList",
+        "_meta": {
+            "title": "读取文件列表"
+        }
+    },
+    "24": {
+        "inputs": {
+            "linebreak_addition": "false",
+            "delimiter": "\\",
+            "text0": [
+                "276",
+                0
+            ],
+            "text1": [
+                "17",
+                0
+            ]
+        },
+        "class_type": "MultiTextConcatenate",
+        "_meta": {
+            "title": "多文本联合"
+        }
+    },
+    "25": {
+        "inputs": {
+            "switcher": [
+                "58",
+                0
+            ],
+            "case0": [
+                "7",
+                0
+            ],
+            "case1": [
+                "272",
+                0
+            ],
+            "case2": [
+                "218",
+                0
+            ],
+            "case3": [
+                "15",
+                0
+            ],
+            "case4": [
+                "15",
+                0
+            ],
+            "case5": [
+                "137",
+                0
+            ],
+            "case6": [
+                "121",
+                0
+            ],
+            "case7": [
+                "49",
+                0
+            ],
+            "case8": [
+                "168",
+                0
+            ]
+        },
+        "class_type": "LamSwitcherCase",
+        "_meta": {
+            "title": "条件选择器"
+        }
+    },
+    "26": {
+        "inputs": {
+            "expression": "import os \n\ndef save_txt(file_path, content):\n    with open(file_path, 'w', encoding='utf-8') as file:\n        file.write(content)\n\npath=os.path.join(p0, str(p2)+'.txt')\nresult=save_txt(path,str(p1)) if str(p2)!='0' else str(p2)",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "24",
+                0
+            ],
+            "p1": [
+                "25",
+                0
+            ],
+            "p2": [
+                "268",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "保存字符串到txt文件"
+        }
+    },
+    "30": {
+        "inputs": {
+            "expression": "import os\ndef read_txt(file_path):\n    if not os.path.exists(file_path):\n        return None\n    with open(file_path, 'r', encoding='utf-8') as file:\n        content = file.read()\n    return content\nindexss=[[0],[0],[1],[1,2],[1],[3,2,'5_old'],[3,'6_old'],[4,6],[3,6,7,5]]\npaths=[os.path.join(p0, str(i)+'.txt') for i in indexss[p1]]\nresult=tuple([read_txt(i) for i in paths])",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "24",
+                0
+            ],
+            "p1": [
+                "58",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "31": {
+        "inputs": {
+            "expression": "gequs=p0.split('tags:')\nresult=(gequs[0],gequs[1])",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "30",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "33": {
+        "inputs": {
+            "shift": 4.000000000000001,
+            "model": [
+                "35",
+                0
+            ]
+        },
+        "class_type": "ModelSamplingSD3",
+        "_meta": {
+            "title": "模型采样算法SD3"
+        }
+    },
+    "34": {
+        "inputs": {
+            "conditioning": [
+                "38",
+                0
+            ]
+        },
+        "class_type": "ConditioningZeroOut",
+        "_meta": {
+            "title": "条件零化"
+        }
+    },
+    "35": {
+        "inputs": {
+            "ckpt_name": "ace_step_v1_3.5b.safetensors"
+        },
+        "class_type": "CheckpointLoaderSimple",
+        "_meta": {
+            "title": "Checkpoint加载器(简易)"
+        }
+    },
+    "36": {
+        "inputs": {
+            "seed": [
+                "1",
+                2
+            ],
+            "steps": 50,
+            "cfg": 4,
+            "sampler_name": "res_multistep",
+            "scheduler": "simple",
+            "denoise": 1,
+            "model": [
+                "33",
+                0
+            ],
+            "positive": [
+                "38",
+                0
+            ],
+            "negative": [
+                "34",
+                0
+            ],
+            "latent_image": [
+                "40",
+                0
+            ]
+        },
+        "class_type": "KSampler",
+        "_meta": {
+            "title": "K采样器"
+        }
+    },
+    "38": {
+        "inputs": {
+            "tags": [
+                "57",
+                0
+            ],
+            "lyrics": "[instrumental]",
+            "lyrics_strength": 1,
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "clip": [
+                "35",
+                1
+            ]
+        },
+        "class_type": "TextEncodeAceStepAudio",
+        "_meta": {
+            "title": "TextEncodeAceStepAudio"
+        }
+    },
+    "39": {
+        "inputs": {
+            "lyrics": [
+                "31",
+                0
+            ],
+            "language": "Chinese",
+            "threshold": 0.8,
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "LyricsLangSwitch",
+        "_meta": {
+            "title": "ACE-Step Lyrics Language Switch"
+        }
+    },
+    "40": {
+        "inputs": {
+            "seconds": [
+                "122",
+                0
+            ],
+            "batch_size": 1
+        },
+        "class_type": "EmptyAceStepLatentAudio",
+        "_meta": {
+            "title": "EmptyAceStepLatentAudio"
+        }
+    },
+    "42": {
+        "inputs": {
+            "samples": [
+                "36",
+                0
+            ],
+            "vae": [
+                "35",
+                2
+            ]
+        },
+        "class_type": "VAEDecodeAudio",
+        "_meta": {
+            "title": "VAE解码_Audio"
+        }
+    },
+    "49": {
+        "inputs": {
+            "filename_prefix": [
+                "279",
+                0
+            ],
+            "quality": "128k",
+            "audio": [
+                "42",
+                0
+            ]
+        },
+        "class_type": "LamSaveAudio",
+        "_meta": {
+            "title": "保存音频输出"
+        }
+    },
+    "51": {
+        "inputs": {
+            "audio": "203446-iGPXn-0613.mp3",
+            "audioUI": ""
+        },
+        "class_type": "LoadAudio",
+        "_meta": {
+            "title": "加载音频"
+        }
+    },
+    "52": {
+        "inputs": {
+            "expression": "strList=eval(p0)\nresult=(strList,len(strList))",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "30",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "53": {
+        "inputs": {
+            "version": "v1.5",
+            "top_k": 0.8,
+            "top_p": 1,
+            "temperature": 3,
+            "num_beams": 786,
+            "max_mel_tokens": 94,
+            "max_text_tokens_per_sentence": 4,
+            "sentences_bucket_max_size": true,
+            "fast_inference": false,
+            "custom_cuda_kernel": false,
+            "unload_model": true,
+            "audio": [
+                "51",
+                0
+            ],
+            "text": [
+                "92",
+                0
+            ]
+        },
+        "class_type": "IndexTTSRun",
+        "_meta": {
+            "title": "IndexTTS Run"
+        }
+    },
+    "55": {
+        "inputs": {
+            "filename_prefix": [
+                "279",
+                0
+            ],
+            "quality": "V0",
+            "audio": [
+                "165",
+                0
+            ]
+        },
+        "class_type": "LamSaveAudio",
+        "_meta": {
+            "title": "保存音频输出"
+        }
+    },
+    "57": {
+        "inputs": {
+            "StatusInfo": " pop, acoustic guitar, female voice, clean vocals, slow tempo",
+            "obj": [
+                "31",
+                1
+            ]
+        },
+        "class_type": "LamCommonPrintNoOutput",
+        "_meta": {
+            "title": "通用打印输出(非输出节点)"
+        }
+    },
+    "58": {
+        "inputs": {
+            "StatusInfo": "0",
+            "obj": [
+                "115",
+                1
+            ]
+        },
+        "class_type": "LamCommonPrintNoOutput",
+        "_meta": {
+            "title": "打印文件数量"
+        }
+    },
+    "88": {
+        "inputs": {
+            "total": [
+                "52",
+                1
+            ],
+            "stop": 1,
+            "i": 0
+        },
+        "class_type": "ForInnerStart",
+        "_meta": {
+            "title": "计次内循环首"
+        }
+    },
+    "89": {
+        "inputs": {
+            "start": [
+                "88",
+                0
+            ],
+            "obj": [
+                "230",
+                0
+            ]
+        },
+        "class_type": "ForInnerEnd",
+        "_meta": {
+            "title": "计次内循环尾"
+        }
+    },
+    "92": {
+        "inputs": {
+            "expression": "(p1[p0]['narration'],p1[p0]['prompt'],)",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "88",
+                1
+            ],
+            "p1": [
+                "52",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "114": {
+        "inputs": {
+            "value": "sk-281a7865120a40fd8732acc78e6891ca"
+        },
+        "class_type": "PrimitiveString",
+        "_meta": {
+            "title": "DeepSeek授权key"
+        }
+    },
+    "115": {
+        "inputs": {
+            "expression": "alls=[str(i)+'.txt' for i in range(1,p0+1)]\ncj=[int(i.split('.')[0]) for i in alls if all(i not in s for s in p1)]\nresult=(cj,cj[0] if len(cj)>0 else 0)",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "116",
+                0
+            ],
+            "p1": [
+                "22",
+                1
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "116": {
+        "inputs": {
+            "value": 8
+        },
+        "class_type": "INTConstant",
+        "_meta": {
+            "title": "整数常量"
+        }
+    },
+    "117": {
+        "inputs": {
+            "text": ",皮克斯风格。",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "Text Multiline",
+        "_meta": {
+            "title": "多行文本"
+        }
+    },
+    "118": {
+        "inputs": {
+            "autio_path": [
+                "206",
+                0
+            ]
+        },
+        "class_type": "AutioInfo",
+        "_meta": {
+            "title": "获取音频信息"
+        }
+    },
+    "120": {
+        "inputs": {
+            "expression": "{\"path\":p0,\"seconds\":p1,\"captions_group\":[],\"end_time\":0}",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "206",
+                0
+            ],
+            "p1": [
+                "118",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "121": {
+        "inputs": {
+            "expression": "import json\nresult=json.dumps(p0, ensure_ascii=False)",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "89",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "122": {
+        "inputs": {
+            "expression": "sum(map(lambda d: d['seconds'], eval(p0)))",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "30",
+                1
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "123": {
+        "inputs": {
+            "unet_name": "qwen-image-Q4_K_S.gguf"
+        },
+        "class_type": "UnetLoaderGGUF",
+        "_meta": {
+            "title": "Unet Loader (GGUF)"
+        }
+    },
+    "124": {
+        "inputs": {
+            "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "type": "qwen_image",
+            "device": "default"
+        },
+        "class_type": "CLIPLoader",
+        "_meta": {
+            "title": "CLIP加载器"
+        }
+    },
+    "125": {
+        "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+        },
+        "class_type": "VAELoader",
+        "_meta": {
+            "title": "VAE加载器"
+        }
+    },
+    "127": {
+        "inputs": {
+            "width": [
+                "138",
+                0
+            ],
+            "height": [
+                "138",
+                1
+            ],
+            "batch_size": 1
+        },
+        "class_type": "EmptyLatentImage",
+        "_meta": {
+            "title": "空Latent"
+        }
+    },
+    "128": {
+        "inputs": {
+            "text": " low quality, bad anatomy, extra digits, missing digits, extra limbs, missing limbs",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "clip": [
+                "124",
+                0
+            ]
+        },
+        "class_type": "CLIPTextEncode",
+        "_meta": {
+            "title": "CLIP文本编码器"
+        }
+    },
+    "129": {
+        "inputs": {
+            "text": [
+                "199",
+                0
+            ],
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "clip": [
+                "124",
+                0
+            ]
+        },
+        "class_type": "CLIPTextEncode",
+        "_meta": {
+            "title": "CLIP文本编码器"
+        }
+    },
+    "130": {
+        "inputs": {
+            "shift": 3.1000000000000005,
+            "model": [
+                "194",
+                0
+            ]
+        },
+        "class_type": "ModelSamplingAuraFlow",
+        "_meta": {
+            "title": "模型采样算法AuraFlow"
+        }
+    },
+    "131": {
+        "inputs": {
+            "seed": [
+                "135",
+                2
+            ],
+            "steps": 8,
+            "cfg": 1,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1,
+            "model": [
+                "130",
+                0
+            ],
+            "positive": [
+                "129",
+                0
+            ],
+            "negative": [
+                "128",
+                0
+            ],
+            "latent_image": [
+                "127",
+                0
+            ]
+        },
+        "class_type": "KSampler",
+        "_meta": {
+            "title": "K采样器"
+        }
+    },
+    "132": {
+        "inputs": {
+            "tile_size": 512,
+            "overlap": 64,
+            "temporal_size": 64,
+            "temporal_overlap": 8,
+            "samples": [
+                "131",
+                0
+            ],
+            "vae": [
+                "125",
+                0
+            ]
+        },
+        "class_type": "VAEDecodeTiled",
+        "_meta": {
+            "title": "VAE分块解码"
+        }
+    },
+    "133": {
+        "inputs": {
+            "filename_prefix": [
+                "279",
+                0
+            ],
+            "images": [
+                "209",
+                0
+            ],
+            "custom_prompt": [
+                "280",
+                0
+            ]
+        },
+        "class_type": "SaveImageLam",
+        "_meta": {
+            "title": "保存图像（内循环用）"
+        }
+    },
+    "134": {
+        "inputs": {
+            "expression": "import random\nroleData=eval(p2)\nrandom.seed(None)\nresult=(p1[p0]['prompt'].format(**roleData)+p3,random.randint(1, 999999),)",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "135",
+                1
+            ],
+            "p1": [
+                "52",
+                0
+            ],
+            "p2": [
+                "30",
+                1
+            ],
+            "p3": [
+                "117",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "135": {
+        "inputs": {
+            "total": [
+                "52",
+                1
+            ],
+            "stop": 1,
+            "i": 0
+        },
+        "class_type": "ForInnerStart",
+        "_meta": {
+            "title": "计次内循环首"
+        }
+    },
+    "136": {
+        "inputs": {
+            "start": [
+                "135",
+                0
+            ],
+            "obj": [
+                "225",
+                0
+            ]
+        },
+        "class_type": "ForInnerEnd",
+        "_meta": {
+            "title": "计次内循环尾"
+        }
+    },
+    "137": {
+        "inputs": {
+            "expression": "import json\nresult=json.dumps(p0, ensure_ascii=False)",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "136",
+                0
+            ],
+            "p1": [
+                "30",
+                2
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "138": {
+        "inputs": {
+            "aspect_ratio": "928×1664 ∣ 9:16",
+            "width": 0,
+            "height": 0
+        },
+        "class_type": "AspectRatio",
+        "_meta": {
+            "title": "宽高比"
+        }
+    },
+    "139": {
+        "inputs": {
+            "expression": "(p0['meida_group'],p0['audio_group'],p0['captions_group'],) if p0 else ([],[],[],)",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "140",
+                3
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "解析回传数据（没有时返回空数组）"
+        }
+    },
+    "140": {
+        "inputs": {
+            "total": [
+                "148",
+                4
+            ],
+            "stop": 1,
+            "i": 0
+        },
+        "class_type": "ForInnerStart",
+        "_meta": {
+            "title": "计次内循环首"
+        }
+    },
+    "142": {
+        "inputs": {
+            "file_path": [
+                "147",
+                1
+            ],
+            "start_in_media": 0,
+            "start_at_track": 0,
+            "duration": 0,
+            "volume": 1,
+            "audio_group": [
+                "139",
+                1
+            ]
+        },
+        "class_type": "JyAudioNative",
+        "_meta": {
+            "title": "剪映音频"
+        }
+    },
+    "144": {
+        "inputs": {
+            "text": [
+                "147",
+                0
+            ],
+            "font": "小可爱体",
+            "color": "#ffde00",
+            "size": 9,
+            "transform_x": 0,
+            "transform_y": -0.8,
+            "start_at_track": 0,
+            "duration": [
+                "147",
+                2
+            ],
+            "row_max_size": 16,
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "captions_group": [
+                "139",
+                2
+            ]
+        },
+        "class_type": "JyCaptionsNative",
+        "_meta": {
+            "title": "剪映字幕"
+        }
+    },
+    "145": {
+        "inputs": {
+            "expression": "{\"meida_group\":p0,\"audio_group\":p1,\"captions_group\":p2}",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "190",
+                0
+            ],
+            "p1": [
+                "142",
+                1
+            ],
+            "p2": [
+                "260",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "组装回传数据"
+        }
+    },
+    "146": {
+        "inputs": {
+            "start": [
+                "140",
+                0
+            ],
+            "obj": [
+                "145",
+                0
+            ]
+        },
+        "class_type": "ForInnerEnd",
+        "_meta": {
+            "title": "计次内循环尾"
+        }
+    },
+    "147": {
+        "inputs": {
+            "expression": "(p1[p0]['narration'],p2[p0]['path'],float(p2[p0]['seconds']),p2[p0]['captions_group'],p3[p0])",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "140",
+                1
+            ],
+            "p1": [
+                "148",
+                0
+            ],
+            "p2": [
+                "148",
+                1
+            ],
+            "p3": [
+                "148",
+                2
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "根据下标取字幕，音频地址，音频时长，图片地址"
+        }
+    },
+    "148": {
+        "inputs": {
+            "expression": "strList1=eval(p0)\nstrList2=eval(p1)\nstrList3=eval(p3)\n\nresult=(strList1,strList2,strList3,p2,len(strList1))",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "30",
+                0
+            ],
+            "p1": [
+                "30",
+                1
+            ],
+            "p2": [
+                "30",
+                2
+            ],
+            "p3": [
+                "30",
+                3
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "149": {
+        "inputs": {
+            "file_path": [
+                "148",
+                3
+            ],
+            "start_in_media": 0,
+            "start_at_track": 0,
+            "duration": 0,
+            "volume": 0.10000000000000002
+        },
+        "class_type": "JyAudioNative",
+        "_meta": {
+            "title": "剪映音频"
+        }
+    },
+    "150": {
+        "inputs": {
+            "expression": "(p0['meida_group'],p0['audio_group'],p0['captions_group'],) if p0 else ([],[],[],)",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "146",
+                1
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "152": {
+        "inputs": {
+            "file_path": [
+                "147",
+                4
+            ],
+            "start_in_media": 0,
+            "start_at_track": 0,
+            "duration": [
+                "147",
+                2
+            ],
+            "volume": 1,
+            "meida_group": [
+                "139",
+                0
+            ],
+            "animation_group": [
+                "154",
+                0
+            ]
+        },
+        "class_type": "JyMediaAnimation",
+        "_meta": {
+            "title": "剪映带动画图片/视频"
+        }
+    },
+    "154": {
+        "inputs": {
+            "animation": "左拉镜",
+            "duration": [
+                "240",
+                0
+            ]
+        },
+        "class_type": "JyAnimationGroup",
+        "_meta": {
+            "title": "组动画"
+        }
+    },
+    "165": {
+        "inputs": {
+            "before": 0.5000000000000001,
+            "after": 0.5000000000000001,
+            "audio": [
+                "53",
+                0
+            ]
+        },
+        "class_type": "AudioBeforeAfterSilence",
+        "_meta": {
+            "title": "音频前后加静音"
+        }
+    },
+    "168": {
+        "inputs": {
+            "draft_name": [
+                "17",
+                0
+            ],
+            "width": [
+                "138",
+                0
+            ],
+            "height": [
+                "138",
+                1
+            ],
+            "medias": [
+                "150",
+                0
+            ],
+            "audios": [
+                "150",
+                1
+            ],
+            "effects": [
+                "244",
+                1
+            ],
+            "captions": [
+                "150",
+                2
+            ],
+            "track0": [
+                "174",
+                0
+            ],
+            "track1": [
+                "258",
+                0
+            ]
+        },
+        "class_type": "JySaveNotOutDraft",
+        "_meta": {
+            "title": "保存草稿非输出"
+        }
+    },
+    "174": {
+        "inputs": {
+            "track_name": "audio1",
+            "audio_group": [
+                "149",
+                1
+            ]
+        },
+        "class_type": "JyAudioTrack",
+        "_meta": {
+            "title": "剪映音频轨道"
+        }
+    },
+    "189": {
+        "inputs": {
+            "transition": "翻页",
+            "duration": 2.5,
+            "meida_out": [
+                "152",
+                0
+            ],
+            "meida_group": [
+                "139",
+                0
+            ]
+        },
+        "class_type": "JyTransition",
+        "_meta": {
+            "title": "剪映转场"
+        }
+    },
+    "190": {
+        "inputs": {
+            "ANY": [
+                "191",
+                0
+            ],
+            "IF_TRUE": [
+                "189",
+                1
+            ],
+            "IF_FALSE": [
+                "152",
+                1
+            ]
+        },
+        "class_type": "IfInnerExecute",
+        "_meta": {
+            "title": "判断选择"
+        }
+    },
+    "191": {
+        "inputs": {
+            "expression": "p0+1<p1",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "140",
+                1
+            ],
+            "p1": [
+                "140",
+                4
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "最后一个不加转场"
+        }
+    },
+    "194": {
+        "inputs": {
+            "lora_name": "Qwen-Image-Lightning-8steps-V1.1-bf16.safetensors",
+            "strength_model": 1,
+            "model": [
+                "123",
+                0
+            ]
+        },
+        "class_type": "LoraLoaderModelOnly",
+        "_meta": {
+            "title": "LoRA加载器(仅模型)"
+        }
+    },
+    "199": {
+        "inputs": {
+            "StatusInfo": "【小猫:幼猫，年龄约五六岁，圆脸大眼睛，浅灰色毛发带白色斑点；身穿亮蓝色背带裤，白色棉质衬衫，脚穿红色雨靴；头戴橙色棒球帽，帽檐有猫耳形状；手持竹制鱼竿。】兴奋地拉起鱼竿，一条大鱼跃出水面，【小猫:幼猫，年龄约五六岁，圆脸大眼睛，浅灰色毛发带白色斑点；身穿亮蓝色背带裤，白色棉质衬衫，脚穿红色雨靴；头戴橙色棒球帽，帽檐有猫耳形状；手持竹制鱼竿。】脸上绽放笑容。,皮克斯风格。",
+            "obj": [
+                "134",
+                0
+            ]
+        },
+        "class_type": "LamCommonPrintNoOutput",
+        "_meta": {
+            "title": "通用打印输出(非输出节点)"
+        }
+    },
+    "200": {
+        "inputs": {
+            "anything": [
+                "26",
+                0
+            ]
+        },
+        "class_type": "easy clearCacheAll",
+        "_meta": {
+            "title": "清除全部缓存"
+        }
+    },
+    "206": {
+        "inputs": {
+            "ANY": [
+                "220",
+                0
+            ],
+            "IF_TRUE": [
+                "55",
+                0
+            ],
+            "IF_FALSE": [
+                "247",
+                0
+            ]
+        },
+        "class_type": "IfInnerExecute",
+        "_meta": {
+            "title": "判断选择"
+        }
+    },
+    "208": {
+        "inputs": {
+            "prompt": [
+                "199",
+                0
+            ],
+            "api_token": "ms-2a791ef5-0f60-4f7c-8fe7-68d78d14829b",
+            "model": "Tongyi-MAI/Z-Image-Turbo",
+            "negative_prompt": "",
+            "width": [
+                "138",
+                0
+            ],
+            "height": [
+                "138",
+                1
+            ],
+            "seed": [
+                "134",
+                1
+            ],
+            "steps": 30,
+            "guidance": 7.5,
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "QwenImageNode",
+        "_meta": {
+            "title": "Qwen-Image 生图节点"
+        }
+    },
+    "209": {
+        "inputs": {
+            "ANY": [
+                "221",
+                0
+            ],
+            "IF_TRUE": [
+                "208",
+                0
+            ],
+            "IF_FALSE": [
+                "132",
+                0
+            ]
+        },
+        "class_type": "IfInnerExecute",
+        "_meta": {
+            "title": "判断选择"
+        }
+    },
+    "215": {
+        "inputs": {
+            "value": "# 你是一位卓越的绘本分镜撰写专家\n根据输入的故事提取故事里的所有角色描述提示词，对象的格式返回数据，分别角色名称和角色描述提示词。提示词需要有人物的话有，相貌，年龄，服装样式，鞋子，帽子，裤子，配饰，颜色等信息，细节丰富一点。如果角色有不同年龄段，可以分别创建不太的角色，用小时候某某，长大后某某，年老后某某来做多个角色。\n示例：\n{\"曹冲\":\"七八岁男孩，身着带有金色花纹的蓝绿色华丽中国传统汉服，脚穿黑鞋，黑头发梳成古代发髻，插着带宝石的发簪，手持竹简。\",\"曹操\":\"中年男人，身材挺拔，面容棱角分明，眼神锐利，自带不怒自威的气场；头戴汉代进贤冠，身穿玄色镶暗红边的朝服，衣摆与袖口细节精致，腰间系着嵌有玉饰的革带\"}\n请特别注意：\n1、生成提示词中不要有解释说明性的文字\n2、用中文语言返回\n3、只需要角色描述，不要描述动作和位置\n4、输出内容禁止使用比喻等修辞手法，如果有需转换为白话。\n5、返回字符串数组，格式实例:{\"名称\":\"提示词\"}",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "PrimitiveStringMultiline",
+        "_meta": {
+            "title": "关键角色提取"
+        }
+    },
+    "216": {
+        "inputs": {
+            "expression": "roleData=eval(p1)\nrolestr='角色：'+str(list(roleData.keys()))\nresult=p0+'\\n'+rolestr\n",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "30",
+                0
+            ],
+            "p1": [
+                "30",
+                1
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "分镜头提示词处理"
+        }
+    },
+    "218": {
+        "inputs": {
+            "expression": "import json\ndef add_key_prefix_dict_comprehension(original_dict):\n    \"\"\"使用字典推导式为每个值添加key前缀\"\"\"\n    return {k: f\"{k}:{v}\" for k, v in original_dict.items()}\nroleData=eval(p0)\nresult=json.dumps(add_key_prefix_dict_comprehension(roleData),indent=4,ensure_ascii=False)",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "15",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "角色需要提示词前面加上名称"
+        }
+    },
+    "220": {
+        "inputs": {
+            "value": false
+        },
+        "class_type": "BOOLConstant",
+        "_meta": {
+            "title": "是IndexTTS1否IndexTTS2"
+        }
+    },
+    "221": {
+        "inputs": {
+            "value": true
+        },
+        "class_type": "BOOLConstant",
+        "_meta": {
+            "title": "是否网络生图"
+        }
+    },
+    "223": {
+        "inputs": {
+            "expression": "r0 = False\nr1 = ''\nif p1 is not None:\n    datas=eval(p1)\n    r1 = datas[p0]\nif r1 and len(r1) > 0:\n    r0 = True\n\nresult = (r0,r1)",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "135",
+                1
+            ],
+            "p1": [
+                "30",
+                2
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "判断那些需要重新生成"
+        }
+    },
+    "225": {
+        "inputs": {
+            "ANY": [
+                "223",
+                0
+            ],
+            "IF_TRUE": [
+                "223",
+                1
+            ],
+            "IF_FALSE": [
+                "133",
+                1
+            ]
+        },
+        "class_type": "IfInnerExecute",
+        "_meta": {
+            "title": "判断选择"
+        }
+    },
+    "226": {
+        "inputs": {
+            "model": "medium",
+            "file_path": [
+                "228",
+                3
+            ],
+            "start_at_track": [
+                "227",
+                0
+            ],
+            "font": "糯米团",
+            "color": "#ffde00",
+            "size": 9,
+            "transform_x": 0,
+            "transform_y": -0.8,
+            "row_max_size": 16,
+            "all_subtitles": [
+                "92",
+                0
+            ]
+        },
+        "class_type": "JyAudio2CaptionsGroup",
+        "_meta": {
+            "title": "音频转字幕组"
+        }
+    },
+    "227": {
+        "inputs": {
+            "expression": "(p0['end_time'],) if p0 else (0.0,)",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "88",
+                3
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "解析回传数据（没有时返回空数组）"
+        }
+    },
+    "228": {
+        "inputs": {
+            "expression": "r0 = False\nr1 = None\nr2 = 0\nr3 = ''\nif p1 is not None:\n    datas=eval(p1)\n    r1 = datas[p0]\nif r1:\n    r0 = True\n    captions_group=r1['captions_group']\n    seconds=r1['seconds']\n    r2=seconds\n    r3=r1['path']\n    if len(captions_group)>0:\n        start_at_track=int(round(p2 * 100)) * 10000\n        for caption in captions_group:\n            caption['start_at_track'] = start_at_track\n            start_at_track += caption['duration']\n        r1['end_time']=round(p2+seconds,3)\n        r1[\"end_time\"]= r1[\"end_time\"] if start_at_track/1000000 < r1[\"end_time\"] else start_at_track/1000000\n\nresult = (r0,r1,r2,r3,)",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "88",
+                1
+            ],
+            "p1": [
+                "30",
+                1
+            ],
+            "p2": [
+                "227",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "判断那些需要重新生成"
+        }
+    },
+    "230": {
+        "inputs": {
+            "ANY": [
+                "228",
+                0
+            ],
+            "IF_TRUE": [
+                "281",
+                0
+            ],
+            "IF_FALSE": [
+                "120",
+                0
+            ]
+        },
+        "class_type": "IfInnerExecute",
+        "_meta": {
+            "title": "判断选择"
+        }
+    },
+    "236": {
+        "inputs": {
+            "expression": "p0.extend(p1)\nresult=p0",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "139",
+                2
+            ],
+            "p1": [
+                "147",
+                3
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "240": {
+        "inputs": {
+            "expression": "p0+2.5",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "147",
+                2
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "动画时长没有全覆盖问题处理"
+        }
+    },
+    "242": {
+        "inputs": {
+            "expression": "end_time=p0 if p0>p1+p2 else p1+p2\np3['captions_group']=p4\np3['end_time']=end_time\nresult=p3",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "226",
+                2
+            ],
+            "p1": [
+                "227",
+                0
+            ],
+            "p2": [
+                "228",
+                2
+            ],
+            "p3": [
+                "228",
+                1
+            ],
+            "p4": [
+                "226",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "244": {
+        "inputs": {
+            "effect": "温柔细闪",
+            "start_at_track": 0,
+            "duration": [
+                "245",
+                0
+            ]
+        },
+        "class_type": "JyEffectNative",
+        "_meta": {
+            "title": "剪映特效"
+        }
+    },
+    "245": {
+        "inputs": {
+            "autio_path": [
+                "148",
+                3
+            ]
+        },
+        "class_type": "AutioInfo",
+        "_meta": {
+            "title": "获取音频信息"
+        }
+    },
+    "247": {
+        "inputs": {
+            "server": "http://test.santan.cc:5000",
+            "text": [
+                "92",
+                0
+            ],
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "audio": [
+                "51",
+                0
+            ],
+            "audio_dir": [
+                "17",
+                0
+            ]
+        },
+        "class_type": "LamIndexTTS2Node0",
+        "_meta": {
+            "title": "IndexTTS2-音色情感同时参考"
+        }
+    },
+    "253": {
+        "inputs": {
+            "expression": "str(p0)+'_old' if p1==6 and p2==None else str(p0)",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "58",
+                0
+            ],
+            "p1": [
+                "58",
+                0
+            ],
+            "p2": [
+                "30",
+                1
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "254": {
+        "inputs": {
+            "text": "猫妈妈带着小猫在河边钓鱼。一只蜻蜓飞来了。小猫看见了，放下鱼竿，就去捉蜻蜓。蜻蜓飞走了，小猫没捉着，空着手回到河边。一看，猫妈妈钓着了一条大鱼。 一只蝴蝶飞来了。小猫看见了，放下鱼竿，又去捉蝴蝶。蝴蝶飞走了，小猫又没捉着，空着手回到河边。一看，猫妈妈又钓着了一条大鱼。 小猫说：“真气人，我怎么一条小鱼也钓不着？” 猫妈妈看了看小猫，说：“钓鱼要一心一意，不能三心二意。你一会儿捉蜻蜓，一会儿捉蝴蝶，怎么能钓着鱼呢？” 小猫听了猫妈妈的话，就一心一意地钓鱼。蜻蜓又飞来了，蝴蝶也飞来了，小猫就像没看见一样。不大一会儿，小猫也钓着了一条大鱼。",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "Text Multiline",
+        "_meta": {
+            "title": "多行文本"
+        }
+    },
+    "257": {
+        "inputs": {
+            "text": [
+                "17",
+                0
+            ],
+            "font": "宋体",
+            "color": "#ffde00",
+            "size": 16,
+            "transform_x": 0,
+            "transform_y": 0.6,
+            "start_at_track": 0,
+            "duration": [
+                "245",
+                0
+            ],
+            "row_max_size": 16,
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "JyCaptionsNative",
+        "_meta": {
+            "title": "剪映字幕"
+        }
+    },
+    "258": {
+        "inputs": {
+            "track_name": "captions1",
+            "captions_group": [
+                "257",
+                1
+            ]
+        },
+        "class_type": "JyCaptionsTrack",
+        "_meta": {
+            "title": "剪映字幕轨道"
+        }
+    },
+    "260": {
+        "inputs": {
+            "ANY": [
+                "261",
+                0
+            ],
+            "IF_TRUE": [
+                "144",
+                1
+            ],
+            "IF_FALSE": [
+                "236",
+                0
+            ]
+        },
+        "class_type": "IfInnerExecute",
+        "_meta": {
+            "title": "判断选择"
+        }
+    },
+    "261": {
+        "inputs": {
+            "value": true
+        },
+        "class_type": "BOOLConstant",
+        "_meta": {
+            "title": "长字幕"
+        }
+    },
+    "266": {
+        "inputs": {
+            "appName": "成语有声绘本",
+            "appType": "picture-book",
+            "appDesc": "自动化生成有声绘本",
+            "styles": ""
+        },
+        "class_type": "AppParams",
+        "_meta": {
+            "title": "应用参数管理"
+        }
+    },
+    "268": {
+        "inputs": {
+            "ANY": [
+                "261",
+                0
+            ],
+            "IF_TRUE": [
+                "58",
+                0
+            ],
+            "IF_FALSE": [
+                "253",
+                0
+            ]
+        },
+        "class_type": "IfInnerExecute",
+        "_meta": {
+            "title": "判断选择"
+        }
+    },
+    "272": {
+        "inputs": {
+            "linebreak_addition": "true",
+            "delimiter": "",
+            "text0": [
+                "17",
+                0
+            ],
+            "text1": [
+                "273",
+                0
+            ]
+        },
+        "class_type": "MultiTextConcatenate",
+        "_meta": {
+            "title": "多文本联合"
+        }
+    },
+    "273": {
+        "inputs": {
+            "ANY": [
+                "274",
+                0
+            ],
+            "IF_TRUE": [
+                "254",
+                0
+            ],
+            "IF_FALSE": [
+                "15",
+                0
+            ]
+        },
+        "class_type": "IfInnerExecute",
+        "_meta": {
+            "title": "判断选择"
+        }
+    },
+    "274": {
+        "inputs": {
+            "expression": "len(p0)>0",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "254",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "故事内容为空，ai生成"
+        }
+    },
+    "276": {
+        "inputs": {
+            "expression": "import folder_paths\nresult=folder_paths.get_output_directory()",
+            "advanced": "enable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "279": {
+        "inputs": {
+            "expression": "p0+'/ComfyUI'",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
+            "p0": [
+                "17",
+                0
+            ]
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "280": {
+        "inputs": {
+            "expression": "{}",
+            "advanced": "disable",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "MultiParamFormula",
+        "_meta": {
+            "title": "多参代码表达式"
+        }
+    },
+    "281": {
+        "inputs": {
+            "ANY": [
+                "261",
+                0
+            ],
+            "IF_TRUE": [
+                "228",
+                1
+            ],
+            "IF_FALSE": [
+                "242",
+                0
+            ]
+        },
+        "class_type": "IfInnerExecute",
+        "_meta": {
+            "title": "判断选择"
+        }
+    },
+    "286": {
+        "inputs": {
+            "server_url": "https://ark.cn-beijing.volces.com/api/v3",
+            "api_key": [
+                "288",
+                0
+            ],
+            "model_name": "doubao-1-5-thinking-pro-250415",
+            "system_prompt": [
+                "13",
+                0
+            ],
+            "text": [
+                "14",
+                0
+            ],
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "OpenAiPrompt",
+        "_meta": {
+            "title": "OpenAi工具"
+        }
+    },
+    "288": {
+        "inputs": {
+            "value": "41f59907-ff87-4bad-b9a3-28cda22f86e1"
+        },
+        "class_type": "PrimitiveString",
+        "_meta": {
+            "title": "豆包Key"
+        }
+    }
+}

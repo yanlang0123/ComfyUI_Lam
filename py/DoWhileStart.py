@@ -18,7 +18,8 @@ class DoWhileStart:
                 "obj": (AlwaysEqualProxy("*"), ),
             },"hidden": {
                 "i": ("INT", {"default": 0, "min": 0, "max": 99999}),
-                **{f"initial_value{i}": ("*",{"rawLink": True}) for i in range(NUM_FLOW_SOCKETS)}
+                **{f"initial_value{i}": ("*",{"rawLink": True}) for i in range(3, NUM_FLOW_SOCKETS)},
+                "initial_value3": ("INT",),
             }
         }
     RETURN_TYPES = ("DOWHILE","INT","INT",AlwaysEqualProxy("*"))
@@ -28,6 +29,9 @@ class DoWhileStart:
     CATEGORY = "lam"
 
     def do_while_start_fun(self,obj=None,i=0, **kwargs):
+        # Allow DoWhileEnd to forward the incremented counter via initial_value3
+        if 'initial_value3' in kwargs and kwargs['initial_value3'] is not None:
+            i = kwargs['initial_value3']
         random.seed(i)
         values = ["stub",i,random.randint(0,sys.maxsize),obj]
         for i in range(NUM_FLOW_SOCKETS):

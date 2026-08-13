@@ -22,7 +22,8 @@ class ForInnerStart:
                 "i": ("INT", {"default": 0, "min": 0, "max": 99999}),
             },"hidden": {
                 "obj": (AlwaysEqualProxy("*"), ),
-                **{ f"initial_value{i}": ("*",{"rawLink": True}) for i in range(NUM_FLOW_SOCKETS)}
+                **{ f"initial_value{i}": ("*",{"rawLink": True}) for i in range(3, NUM_FLOW_SOCKETS)},
+                "initial_value3": ("INT",),
             }
         }
     RETURN_TYPES = ("DOWHILE","INT","INT",AlwaysEqualProxy("*"),"INT","INT")
@@ -40,8 +41,9 @@ class ForInnerStart:
             stop=kwargs["initial_value1"]
         if 'initial_value2' in kwargs:
             objs=kwargs["initial_value2"]
-        # while_open = graph.node("DoWhileStart", i=i,obj=obj,initial_value0=total,initial_value1=stop,initial_value2=objs,
-        #                         **{(f"initial_value{i}"): kwargs.get(f"initial_value{i}", None) for i in range(3, NUM_FLOW_SOCKETS)})
+        # Allow the incremented loop counter to be carried via initial_value3 (non-rawLink, auto-resolved)
+        if 'initial_value3' in kwargs and kwargs['initial_value3'] is not None:
+            i = kwargs['initial_value3']
         random.seed(i)
         return {
             "result": tuple(["stub", i, random.randint(0,sys.maxsize),obj,total,stop,objs,]),

@@ -5,32 +5,38 @@
         },
         "class_type": "CheckpointLoaderSimple",
         "_meta": {
-            "title": "Checkpoint加载器(简易)"
+            "title": "Checkpoint加载器（简易）"
         }
     },
     "2": {
         "inputs": {
             "width": [
-                "16",
+                "27",
                 0
             ],
             "height": [
-                "16",
+                "27",
                 1
             ],
             "batch_size": 1
         },
         "class_type": "EmptyLatentImage",
         "_meta": {
-            "title": "空Latent"
+            "title": "空Latent图像"
         }
     },
     "3": {
         "inputs": {
             "text": [
-                "17",
+                "28",
                 0
             ],
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
             "clip": [
                 "1",
                 1
@@ -38,15 +44,18 @@
         },
         "class_type": "CLIPTextEncode",
         "_meta": {
-            "title": "CLIP文本编码器"
+            "title": "CLIP文本编码"
         }
     },
     "4": {
         "inputs": {
-            "text": [
-                "18",
-                0
-            ],
+            "text": "",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
             "clip": [
                 "1",
                 1
@@ -54,16 +63,16 @@
         },
         "class_type": "CLIPTextEncode",
         "_meta": {
-            "title": "CLIP文本编码器"
+            "title": "CLIP文本编码"
         }
     },
     "6": {
         "inputs": {
-            "control_net_name": "control_v11p_sd15_lineart.pth"
+            "control_net_name": "control_v11p_sd15_scribble.safetensors"
         },
         "class_type": "ControlNetLoader",
         "_meta": {
-            "title": "ControlNet加载器"
+            "title": "加载ControlNet模型"
         }
     },
     "7": {
@@ -78,49 +87,19 @@
                 0
             ],
             "image": [
-                "22",
+                "25",
                 0
             ]
         },
         "class_type": "ControlNetApply",
         "_meta": {
-            "title": "ControlNet应用（旧版）"
-        }
-    },
-    "8": {
-        "inputs": {
-            "seed": 275540587861329,
-            "steps": 8,
-            "cfg": 1,
-            "sampler_name": "lcm",
-            "scheduler": "karras",
-            "denoise": 1,
-            "model": [
-                "14",
-                0
-            ],
-            "positive": [
-                "7",
-                0
-            ],
-            "negative": [
-                "4",
-                0
-            ],
-            "latent_image": [
-                "2",
-                0
-            ]
-        },
-        "class_type": "KSampler",
-        "_meta": {
-            "title": "K采样器"
+            "title": "应用ControlNet（旧版）"
         }
     },
     "9": {
         "inputs": {
             "samples": [
-                "8",
+                "36",
                 0
             ],
             "vae": [
@@ -131,87 +110,6 @@
         "class_type": "VAEDecode",
         "_meta": {
             "title": "VAE解码"
-        }
-    },
-    "14": {
-        "inputs": {
-            "lora_name": "lcm-lora-sdv1-5.safetensors",
-            "strength_model": 1,
-            "model": [
-                "1",
-                0
-            ]
-        },
-        "class_type": "LoraLoaderModelOnly",
-        "_meta": {
-            "title": "LoRA加载器(仅模型)"
-        }
-    },
-    "16": {
-        "inputs": {
-            "image": [
-                "22",
-                0
-            ]
-        },
-        "class_type": "GetImageSize+",
-        "_meta": {
-            "title": "获取图像尺寸"
-        }
-    },
-    "17": {
-        "inputs": {
-            "text_trans": ""
-        },
-        "class_type": "ZhPromptTranslator",
-        "_meta": {
-            "title": "正向提示词"
-        }
-    },
-    "18": {
-        "inputs": {
-            "text_trans": ""
-        },
-        "class_type": "ZhPromptTranslator",
-        "_meta": {
-            "title": "反向提示词"
-        }
-    },
-    "20": {
-        "inputs": {
-            "channel": "red",
-            "image": [
-                "25",
-                0
-            ]
-        },
-        "class_type": "ImageToMask",
-        "_meta": {
-            "title": "图像到遮罩"
-        }
-    },
-    "21": {
-        "inputs": {
-            "mask": [
-                "20",
-                0
-            ]
-        },
-        "class_type": "InvertMask",
-        "_meta": {
-            "title": "遮罩反转"
-        }
-    },
-    "22": {
-        "inputs": {
-            "mask": [
-                "21",
-                0
-            ]
-        },
-        "class_type": "MaskToImage",
-        "_meta": {
-            "title": "遮罩到图像"
         }
     },
     "23": {
@@ -246,6 +144,65 @@
         "class_type": "LamLoadImageBase64",
         "_meta": {
             "title": "Base64图片加载"
+        }
+    },
+    "27": {
+        "inputs": {
+            "image": [
+                "25",
+                0
+            ]
+        },
+        "class_type": "GetImageSize",
+        "_meta": {
+            "title": "获取图像尺寸"
+        }
+    },
+    "28": {
+        "inputs": {
+            "text_trans": "",
+            "model_type": "600M",
+            "to_lang": "英语",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
+        },
+        "class_type": "ZhPromptTranslator",
+        "_meta": {
+            "title": "中文或其他翻译"
+        }
+    },
+    "36": {
+        "inputs": {
+            "seed": 156680208700286,
+            "steps": 20,
+            "cfg": 8,
+            "sampler_name": "euler",
+            "scheduler": "normal",
+            "denoise": 1,
+            "model": [
+                "1",
+                0
+            ],
+            "positive": [
+                "7",
+                0
+            ],
+            "negative": [
+                "4",
+                0
+            ],
+            "latent_image": [
+                "2",
+                0
+            ]
+        },
+        "class_type": "KSampler",
+        "_meta": {
+            "title": "K采样器"
         }
     }
 }

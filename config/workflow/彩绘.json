@@ -35,7 +35,7 @@
         },
         "class_type": "CheckpointLoaderSimple",
         "_meta": {
-            "title": "Checkpoint加载器(简易)"
+            "title": "Checkpoint加载器（简易）"
         }
     },
     "6": {
@@ -44,6 +44,12 @@
                 "27",
                 0
             ],
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
             "clip": [
                 "21",
                 1
@@ -51,7 +57,7 @@
         },
         "class_type": "CLIPTextEncode",
         "_meta": {
-            "title": "CLIP文本编码器"
+            "title": "CLIP文本编码"
         }
     },
     "7": {
@@ -60,6 +66,12 @@
                 "28",
                 0
             ],
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            },
             "clip": [
                 "4",
                 1
@@ -67,7 +79,7 @@
         },
         "class_type": "CLIPTextEncode",
         "_meta": {
-            "title": "CLIP文本编码器"
+            "title": "CLIP文本编码"
         }
     },
     "8": {
@@ -102,13 +114,13 @@
         },
         "class_type": "LoraLoader",
         "_meta": {
-            "title": "LoRA加载器"
+            "title": "加载LoRA"
         }
     },
     "19": {
         "inputs": {
             "pixels": [
-                "63",
+                "64",
                 0
             ],
             "vae": [
@@ -137,7 +149,7 @@
         },
         "class_type": "LoraLoader",
         "_meta": {
-            "title": "LoRA加载器"
+            "title": "加载LoRA"
         }
     },
     "23": {
@@ -146,12 +158,20 @@
         },
         "class_type": "VAELoader",
         "_meta": {
-            "title": "VAE加载器"
+            "title": "加载VAE"
         }
     },
     "27": {
         "inputs": {
-            "text_trans": ""
+            "text_trans": "",
+            "model_type": "600M",
+            "to_lang": "英语",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
         },
         "class_type": "ZhPromptTranslator",
         "_meta": {
@@ -160,24 +180,19 @@
     },
     "28": {
         "inputs": {
-            "text_trans": ""
+            "text_trans": "",
+            "model_type": "600M",
+            "to_lang": "英语",
+            "speak_and_recognation": {
+                "__value__": [
+                    false,
+                    true
+                ]
+            }
         },
         "class_type": "ZhPromptTranslator",
         "_meta": {
             "title": "反向提示词"
-        }
-    },
-    "37": {
-        "inputs": {
-            "preset": "STANDARD (medium strength)",
-            "model": [
-                "4",
-                0
-            ]
-        },
-        "class_type": "IPAdapterUnifiedLoader",
-        "_meta": {
-            "title": "IPAdapter加载器"
         }
     },
     "61": {
@@ -205,7 +220,7 @@
             "title": "保存图像应用输出"
         }
     },
-    "63": {
+    "64": {
         "inputs": {
             "image": ""
         },

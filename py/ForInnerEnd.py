@@ -48,9 +48,14 @@ elif p1 is not None:
 result=p0
 '''
         addObjs = graph.node("MultiParamFormula", advanced="enable",expression=exprStr,isView=False, p0=[while_open,6], p1=obj)
-        inode = graph.node("MultiParamFormula", advanced="disable",expression="p0+p1",isView=False, p0=[while_open,1], p1=[while_open,5])
+        # Track the previous inode via initial_value4 (passed from parent ForInnerEnd).
+        # On first call (initial_value4 is None), fall back to the original start's slot 1 (widget i).
+        prev_i = kwargs.get("initial_value4", None)
+        if prev_i is None:
+            prev_i = [while_open, 1]
+        inode = graph.node("MultiParamFormula", advanced="disable",expression="p0+p1",isView=False, p0=prev_i, p1=[while_open,5])
         anyNode = graph.node("MultiParamFormula", advanced="disable",expression="p0<p1",isView=False, p0=inode.out(0), p1=[while_open,4])
-        input_values = {f"initial_value{i}": kwargs.get(f"initial_value{i}", None) for i in range(3, NUM_FLOW_SOCKETS)}
+        input_values = {f"initial_value{i}": kwargs.get(f"initial_value{i}", None) for i in range(5, NUM_FLOW_SOCKETS)}
         while_close = graph.node("DoWhileEnd",
                 start=start,
                 stop=[while_open,5],
@@ -59,6 +64,8 @@ result=p0
                 initial_value0=[while_open,4],
                 initial_value1=[while_open,5],
                 initial_value2=addObjs.out(0),
+                initial_value3=inode.out(0),
+                initial_value4=inode.out(0),
                 **input_values)
         return {
             "result": tuple([while_close.out(4),while_close.out(1),]),
