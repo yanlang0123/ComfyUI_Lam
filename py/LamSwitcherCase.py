@@ -1,3 +1,6 @@
+from typing import Any
+
+
 from .src.utils.uitls import AlwaysEqualProxy,AlwaysTupleZero
 class LamSwitcherCase:
     """
@@ -60,7 +63,7 @@ class LamSwitcherCase:
             for i in switcher:
                 if ('case'+str(i)) in cases:
                     result.append(cases['case'+str(i)])
-            return {"ui": {"value": [switcher]}, "result": tuple(result)}
+            return {"ui": {"value": [switcher]}, "result": (result,)}
         else:
             raise Exception("Invalid input type for 'switcher'")
     
