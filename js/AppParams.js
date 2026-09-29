@@ -627,6 +627,18 @@ async function addConvertToGroupOptions() {
             classList: "comfyui-button comfyui-menu-mobile-collapse primary"
         }).element
     );
+    const showManagerSettingId = "Lam.AppParams.ShowManager";
+    const setManagerVisible = (visible) => {
+        cmGroup.element.style.display = visible ? "" : "none";
+    };
+    app.ui.settings.addSetting({
+        id: showManagerSettingId,
+        name: "Lam: 显示应用管理器按钮",
+        type: "boolean",
+        defaultValue: true,
+        onChange: setManagerVisible,
+    });
+    setManagerVisible(app.ui.settings.getSettingValue(showManagerSettingId) !== false);
     app.menu?.settingsGroup.element.before(cmGroup.element);
 
 }
