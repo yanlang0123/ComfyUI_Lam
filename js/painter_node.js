@@ -20,7 +20,7 @@ removeImg.src = removeIcon;
 
 function renderIcon(icon) {
   return function renderIcon(ctx, left, top, styleOverride, fabricObject) {
-    var size = this.cornerSize;
+    const size = this.cornerSize;
     ctx.save();
     ctx.translate(left, top);
     ctx.rotate(fabric.util.degreesToRadians(fabricObject.angle));
@@ -30,8 +30,8 @@ function renderIcon(icon) {
 }
 
 function removeObject(eventData, transform) {
-  var target = transform.target;
-  var canvas = target.canvas;
+  const target = transform.target;
+  const canvas = target.canvas;
   canvas.remove(target);
   canvas.requestRenderAll();
   this.viewListObjects(this.list_objects_panel__items);
@@ -60,40 +60,33 @@ function showHide({ elements = [], hide = null }) {
       el.style.display = !hide ? "block" : "none";
     } else {
       el.style.display =
-        !el.style.display || el.style.display == "none" ? "block" : "none";
+        !el.style.display || el.style.display === "none" ? "block" : "none";
     }
   });
 }
 
-function makeElement(tag, attrs = {}) {
-  if (!tag) tag = "div";
+function makeElement(tag = "div", attrs = {}) {
   const element = document.createElement(tag);
-  Object.keys(attrs).forEach((key) => {
-    const currValue = attrs[key];
+  for (const [key, value] of Object.entries(attrs)) {
     if (key === "class") {
-      if (Array.isArray(currValue)) {
-        element.classList.add(...currValue);
-      } else if (currValue instanceof String && typeof currValue === "string") {
-        element.className = currValue;
+      if (Array.isArray(value)) {
+        element.classList.add(...value);
+      } else if (typeof value === "string") {
+        element.className = value;
       }
     } else if (key === "dataset") {
       try {
-        if (Array.isArray(currValue)) {
-          currValue.forEach((datasetArr) => {
-            const [prop, propval] = Object.entries(datasetArr)[0];
-            element.dataset[prop] = propval;
-          });
-        } else {
-          const [prop, propval] = Object.entries(currValue)[0];
+        const entries = Array.isArray(value) ? value.flatMap(Object.entries) : Object.entries(value);
+        for (const [prop, propval] of entries) {
           element.dataset[prop] = propval;
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     } else {
-      element[key] = currValue;
+      element[key] = value;
     }
-  });
+  }
   return element;
 }
 
@@ -132,8 +125,6 @@ class Painter {
     this.undo_history = [];
     this.redo_history = [];
 
-    // this.undo_history = LS_Painters[node.name].undo_history || [];
-    // this.redo_history = LS_Painters[node.name].redo_history || [];
 
     this.fonts = {
       Arial: "arial",
@@ -152,31 +143,20 @@ class Painter {
     this.canvas = this.initCanvas(canvas);
     this.image = node.widgets.find((w) => w.name === "image");
 
-    // let default_value = this.image.value;
-    // Object.defineProperty(this.image, "value", {
     //   set: function (value) {
-    //     this._real_value = value;
     //   },
 
     //   get: function () {
     //     let value = "";
-    //     if (this._real_value) {
-    //       value = this._real_value;
     //     } else {
     //       return default_value;
     //     }
 
     //     if (value.filename) {
-    //       let real_value = value;
     //       value = "";
-    //       if (real_value.subfolder) {
-    //         value = real_value.subfolder + "/";
     //       }
 
-    //       value += real_value.filename;
 
-    //       if (real_value.type && real_value.type !== "input")
-    //         value += ` [${real_value.type}]`;
     //     }
     //     return value;
     //   },
@@ -295,7 +275,6 @@ class Painter {
       this.painter_shapes_box,
       this.painter_colors_box,
       this.painter_stroke_box,
-      //this.painter_bg_setting,
     ] = this.painter_drawning_elements.children;
 
     this.change_mode = panelPaintBox.querySelector("#painter_change_mode");
@@ -321,11 +300,9 @@ class Painter {
     this.traBackground= panelPaintBox.querySelector("#traBackground");
     this.clear = panelPaintBox.querySelector("#clear");
 
-    // this.painter_bg_setting = panelPaintBox.querySelector(
     //   ".painter_bg_setting"
     // );
 
-    // this.buttonSetCanvasSize = panelPaintBox.querySelector(
     //   "#painter_canvas_size"
     // );
     this.buttonClearCanvas = panelPaintBox.querySelector(
@@ -340,14 +317,13 @@ class Painter {
       style: "display:none",
     });
 
-    //this.painter_bg_setting.appendChild(this.bgImageFile);
     this.changePropertyBrush();
     this.createBrushesToolbar();
     this.bindEvents();
   }
 
   traBackgroundColor(){
-    if('transparent' == this.canvas.backgroundColor){
+    if(this.canvas.backgroundColor === 'transparent'){
       this.canvas.backgroundColor = this.bgColor.value || "#000000";
     }else{
       this.canvas.setBackgroundColor('transparent', fabric.StaticCanvas.NONE_CACHING, false);
@@ -371,7 +347,7 @@ class Painter {
     this.canvas.getObjects().forEach((o) => {
       let type = o.type,
         obEl = document.createElement("button"),
-        countType = objectNames.filter((t) => t == type).length + 1,
+        countType = objectNames.reduce((c, t) => c + (t === type), 0) + 1,
         text_value = type + `_${countType}`;
 
       obEl.setAttribute("painter_object", text_value);
@@ -411,7 +387,7 @@ class Painter {
   }
 
   changeMode(b) {
-    let target = b.target,
+    const target = b.target,
       nextElement = target.parentElement.nextElementSibling,
       panelListObjects = target.nextElementSibling;
 
@@ -434,33 +410,25 @@ class Painter {
         this.canvas.isDrawingMode = false;
     }
 
+    showHide({
+      elements: [
+        this.manipulation_box,
+        nextElement,
+        panelListObjects,
+        this.painter_drawning_box_property,
+      ],
+    });
+
     if (!this.mode) {
       target.textContent = "绘图模式";
       target.title = "启用绘图模式";
       this.viewListObjects(this.list_objects_panel__items);
-
-      showHide({
-        elements: [
-          this.manipulation_box,
-          nextElement,
-          panelListObjects,
-          this.painter_drawning_box_property,
-        ],
-      });
       this.clearLocks();
       this.painter_shapes_box_modify.appendChild(this.painter_colors_box);
       this.painter_shapes_box_modify.appendChild(this.painter_stroke_box);
     } else {
       target.textContent = "选择模式";
       target.title = "启用选择模式";
-      showHide({
-        elements: [
-          this.manipulation_box,
-          nextElement,
-          panelListObjects,
-          this.painter_drawning_box_property,
-        ],
-      });
       this.painter_shapes_box.insertAdjacentElement(
         "afterend",
         this.painter_colors_box
@@ -500,7 +468,7 @@ class Painter {
       this.canvas.freeDrawingBrush.width = parseInt(this.strokeWidth.value, 10);
     }
 
-    if (type != "Erase" || (type == "Erase" && !this.drawning)) {
+    if (type !== "Erase" || (type === "Erase" && !this.drawning)) {
       let a_obs = this.canvas.getActiveObjects();
       if (a_obs) {
         a_obs.forEach((a_o) => {
@@ -529,6 +497,14 @@ class Painter {
     this.canvas.renderAll();
   }
 
+  static _shapeFactories = new Map([
+    ["Rect", () => new fabric.Rect()],
+    ["Circle", () => new fabric.Circle()],
+    ["Triangle", () => new fabric.Triangle()],
+    ["Line", (args) => new fabric.Line(args.points)],
+    ["Path", (args) => new fabric.Path(args.path)],
+  ]);
+
   // Make shape
   shapeCreate({
     type,
@@ -540,33 +516,23 @@ class Painter {
     points = [],
     path = "",
   }) {
-    let shape = null;
+    const factory = Painter._shapeFactories.get(type);
+    if (!factory) return null;
 
-    if (type == "Rect") {
-      shape = new fabric.Rect();
-    } else if (type == "Circle") {
-      shape = new fabric.Circle();
-    } else if (type == "Triangle") {
-      shape = new fabric.Triangle();
-    } else if (type == "Line") {
-      shape = new fabric.Line(points);
-    } else if (type == "Path") {
-      shape = new fabric.Path(path);
-    }
-
+    const shape = factory({ points, path });
     Object.assign(shape, {
       angle: 0,
-      left: left,
-      top: top,
+      left,
+      top,
       originX: "left",
       originY: "top",
-      strokeWidth: strokeWidth,
-      stroke: stroke,
+      strokeWidth,
+      stroke,
       transparentCorners: false,
       hasBorders: false,
       hasControls: false,
       radius: 1,
-      fill: type == "Path" ? false : fill,
+      fill: type === "Path" ? false : fill,
     });
 
     return shape;
@@ -610,7 +576,7 @@ class Painter {
 
     // Select front event
     selectFontFamily.onchange = (e) => {
-      if (this.getActiveStyle("fontFamily") != selectFontFamily.value)
+      if (this.getActiveStyle("fontFamily") !== selectFontFamily.value)
         this.setActiveStyle("fontFamily", selectFontFamily.value);
     };
 
@@ -729,7 +695,7 @@ class Painter {
   bindEvents() {
     // Button tools select
     this.painter_shapes_box.onclick = (e) => {
-      let target = e.target,
+      const target = e.target,
         currentTarget = target.dataset?.shape;
       if (currentTarget) {
         this.type = currentTarget;
@@ -818,7 +784,7 @@ class Painter {
 
     // Manipulation box events
     this.manipulation_box.onclick = (e) => {
-      let target = e.target,
+      const target = e.target,
         listButtons = [
           ...Object.keys(this.locks),
           "zpos_BringForward",
@@ -828,7 +794,7 @@ class Painter {
           "zpos_BringFrontSelected",
         ],
         index = listButtons.indexOf(target.id);
-      if (index != -1) {
+      if (index !== -1) {
         if (
           listButtons[index].includes("_Send") ||
           listButtons[index].includes("_Bring")
@@ -857,7 +823,7 @@ class Painter {
       if (!object) return;
 
       if (object.setSelectionStyles && object.isEditing) {
-        var style = {};
+        const style = {};
         style[styleName] = value;
         object.setSelectionStyles(style);
         object.setCoords();
@@ -887,7 +853,7 @@ class Painter {
       }
 
       const index = listButtonsStyles.indexOf(target.dataset.prop);
-      if (index != -1) {
+      if (index !== -1) {
         if (listButtonsStyles[index].includes("prop_")) {
           const buttonSelStyle = listButtonsStyles[index].replace("prop_", ""),
             activeOb = this.canvas.getActiveObject();
@@ -895,7 +861,7 @@ class Painter {
           if (activeOb?.type === "textbox") {
             switch (buttonSelStyle) {
               case "fontWeight":
-                if (this.getActiveStyle("fontWeight") == "bold") {
+                if (this.getActiveStyle("fontWeight") === "bold") {
                   this.setActiveStyle(buttonSelStyle, "");
                   target.classList.remove("active");
                 } else {
@@ -904,7 +870,7 @@ class Painter {
                 }
                 break;
               case "fontStyle":
-                if (this.getActiveStyle("fontStyle") == "italic") {
+                if (this.getActiveStyle("fontStyle") === "italic") {
                   this.setActiveStyle(buttonSelStyle, "");
                   target.classList.remove("active");
                 } else {
@@ -1012,14 +978,11 @@ class Painter {
       this.clearCanvas();
     });
 
-    // this.painter_bg_setting.onclick = (e) => {
     //   let target = e.target;
     //   if (target.hasAttribute("bgImage")) {
     //     let typeEvent = target.getAttribute("bgImage");
     //     switch (typeEvent) {
-    //       case "img_load":
     //         this.bgImageFile.func = (img) => {
-    //           if (confirm("Change canvas size equal image?")) {
     //             this.setCanvasSize(img.width, img.height);
     //           }
 
@@ -1027,19 +990,14 @@ class Painter {
     //             img,
     //             () => {
     //               this.canvas.renderAll();
-    //               this.uploadPaintFile(this.node.name);
     //               this.bgImageFile.value = "";
     //             },
     //             {
-    //               scaleX: this.canvas.width / img.width,
-    //               scaleY: this.canvas.height / img.height,
-    //               strokeWidth: 0,
     //             }
     //           );
     //         };
     //         this.bgImageFile.click();
     //         break;
-    //       case "img_reset":
     //         this.reset_set_bg();
     //         break;
     //     }
@@ -1047,28 +1005,19 @@ class Painter {
     // };
 
     // Settings
-    // this.buttonSetCanvasSize.addEventListener("click", () => {
-    //   function checkSized(prop = "", defaultVal = 512) {
     //     let inputSize;
     //     let correct = false;
     //     while (!correct) {
-    //       inputSize = +prompt(`Enter canvas ${prop}:`, defaultVal);
     //       if (
-    //         Number(inputSize) === inputSize &&
     //         inputSize % 1 === 0 &&
     //         inputSize > 0
     //       ) {
     //         return inputSize;
     //       }
-    //       alert(`[${prop}] Invalid number "${inputSize}" or <=0!`);
     //     }
     //   }
 
-    //   let width = checkSized("width", this.currentCanvasSize.width),
-    //     height = checkSized("height", this.currentCanvasSize.height);
 
-    //   this.setCanvasSize(width, height);
-    //   this.uploadPaintFile(this.node.name);
     // });
 
     // History undo, redo
@@ -1105,7 +1054,6 @@ class Painter {
           }
         };
 
-    //this.bgColor.onchange = () => this.uploadPaintFile(this.node.name);
 
     // Event change stroke and erase width
     this.eraseWidth.onchange = () => {
@@ -1129,7 +1077,7 @@ class Painter {
 
     this.setInputsStyleObject = () => {
       let targets = this.canvas.getActiveObjects();
-      if (!targets || targets.length == 0) return;
+      if (!targets || targets.length === 0) return;
 
       // Selected tools
       const setProps = (style, check) => {
@@ -1141,18 +1089,18 @@ class Painter {
       };
 
       targets.forEach((target) => {
-        if (target.type == "textbox") {
+        if (target.type === "textbox") {
           setProps(
             "fontWeight",
-            this.getActiveStyle("fontWeight", target) == "normal"
+            this.getActiveStyle("fontWeight", target) === "normal"
           );
           setProps(
             "fontStyle",
-            this.getActiveStyle("fontStyle", target) == "normal"
+            this.getActiveStyle("fontStyle", target) === "normal"
           );
           setProps(
             "underline",
-            Boolean(this.getActiveStyle("underline", target)) == false
+            !this.getActiveStyle("underline", target)
           );
         }
 
@@ -1200,17 +1148,16 @@ class Painter {
 
         if (["Brush", "Erase", "BrushSymmetry"].includes(this.type)) return;
 
-        if (this.type != "Textbox") {
+        if (this.type !== "Textbox") {
           let { x: left, y: top } = this.canvas.getPointer(o.e),
-            colors = ["red", "blue", "green", "yellow", "purple", "orange"],
             strokeWidth = +this.strokeWidth.value,
             stroke =
-              strokeWidth == 0
+              strokeWidth === 0
                 ? "transparent"
                 : toRGBA(
                     this.strokeColor.value,
                     this.strokeColorTransparent.value
-                  ) || colors[Math.floor(Math.random() * colors.length)],
+                  ),
             fill = toRGBA(
               this.fillColor.value,
               this.fillColorTransparent.value
@@ -1269,7 +1216,7 @@ class Painter {
           activeObj.set({ top: pointer.y });
         }
 
-        if (this.type == "Circle") {
+        if (this.type === "Circle") {
           let radius =
             Math.max(
               Math.abs(this.originY - pointer.y),
@@ -1278,7 +1225,7 @@ class Painter {
           if (radius > activeObj.strokeWidth)
             radius -= activeObj.strokeWidth / 2;
           activeObj.set({ radius: radius });
-        } else if (this.type == "Line") {
+        } else if (this.type === "Line") {
           activeObj.set({ x2: pointer.x, y2: pointer.y });
         } else {
           activeObj.set({ width: Math.abs(this.originX - pointer.x) });
@@ -1291,7 +1238,7 @@ class Painter {
       // Mouse button up event
       "mouse:up": (o) => {
         this.canvas._objects.forEach((object) => {
-          if (!object.hasOwnProperty("controls")) {
+          if (!Object.hasOwn(object, "controls")) {
             object.controls = {
               ...object.controls,
               removeControl: new fabric.Control({
@@ -1359,7 +1306,7 @@ class Painter {
   canvasSaveSettingsPainter() {
     try {
       const data = this.canvas.toJSON();
-      if (LS_Painters && LS_Painters.hasOwnProperty(this.node.name)) {
+      if (LS_Painters && Object.hasOwn(LS_Painters, this.node.name)) {
         LS_Painters[this.node.name].canvas_settings = painters_settings_json
           ? data
           : JSON.stringify(data);
@@ -1374,26 +1321,19 @@ class Painter {
     }
   }
 
-  setCanvasLoadData(data) {
-    const obj_data =
-      typeof data === "string" || data instanceof String
-        ? JSON.parse(data)
-        : data;
-
-    const canvas_settings = data.canvas_settings;
-    const settings = data.settings;
-
-    this.canvas.loadFromJSON(canvas_settings, () => {
+  /** 加载画布JSON数据 */
+  loadCanvasData(data) {
+    this.canvas.loadFromJSON(data, () => {
       this.canvas.renderAll();
-      //this.bgColor.value = getColorHEX(data.background).color || "";
     });
   }
 
-  undoRedoLoadData(data) {
-    this.canvas.loadFromJSON(data, () => {
-      this.canvas.renderAll();
-      //this.bgColor.value = getColorHEX(data.background).color || "";
-    });
+  setCanvasLoadData(data) {
+    const obj_data =
+      typeof data === "string"
+        ? JSON.parse(data)
+        : data;
+    this.loadCanvasData(obj_data.canvas_settings);
   }
 
   // Load canvas data from localStorage or JSON
@@ -1401,8 +1341,8 @@ class Painter {
     try {
       if (
         LS_Painters &&
-        LS_Painters.hasOwnProperty(this.node.name) &&
-        LS_Painters[this.node.name].hasOwnProperty("canvas_settings")
+        Object.hasOwn(LS_Painters, this.node.name) &&
+        Object.hasOwn(LS_Painters[this.node.name], "canvas_settings")
       ) {
         const data =
           typeof LS_Painters[this.node.name] === "string" ||
@@ -1424,7 +1364,7 @@ class Painter {
       this.redo_history.push(this.undo_history.pop());
 
       const content = this.undo_history[this.undo_history.length - 1];
-      this.undoRedoLoadData(content);
+      this.loadCanvasData(content);
       this.canvas.renderAll();
     } else {
       this.undo_button.disabled = true;
@@ -1438,7 +1378,7 @@ class Painter {
 
       const content = this.redo_history.pop();
       this.undo_history.push(content);
-      this.undoRedoLoadData(content);
+      this.loadCanvasData(content);
       this.canvas.renderAll();
     } else {
       this.redo_button.disabled = true;
@@ -1446,13 +1386,13 @@ class Painter {
   }
 
   showImage(name) {
-    let img = new Image();
+    const img = new Image();
     img.onload = () => {
       this.node.imgs = [img];
       app.graph.setDirtyCanvas(true);
     };
 
-    let folder_separator = name.lastIndexOf("/");
+    const folder_separator = name.lastIndexOf("/");
     let subfolder = "";
     if (folder_separator > -1) {
       subfolder = name.substring(0, folder_separator);
@@ -1465,22 +1405,28 @@ class Painter {
     this.node.setSizeForImage?.();
   }
 
+  /** 批量设置活动对象的控件/边框可见性 */
+  setControlsVisibility(visible) {
+    const activeObj = this.canvas.getActiveObject();
+    if (activeObj) {
+      activeObj.hasControls = visible;
+      activeObj.hasBorders = visible;
+    }
+    this.canvas.getActiveObjects().forEach((o) => {
+      o.hasControls = visible;
+      o.hasBorders = visible;
+    });
+    this.canvas.renderAll();
+  }
+
   uploadPaintFile(fileName) {
     // Upload paint to temp folder ComfyUI
-    let activeObj = null;
-    if (!this.canvas.isDrawingMode) {
-      activeObj = this.canvas.getActiveObject();
+    const activeObj = !this.canvas.isDrawingMode ? this.canvas.getActiveObject() : null;
 
       if (activeObj) {
-        activeObj.hasControls = false;
-        activeObj.hasBorders = false;
-        this.canvas.getActiveObjects().forEach((a_obs) => {
-          a_obs.hasControls = false;
-          a_obs.hasBorders = false;
-        });
+        this.setControlsVisibility(false);
         this.canvas.renderAll();
       }
-    }
 
     const uploadFile = async (blobFile) => {
       try {
@@ -1500,13 +1446,7 @@ class Painter {
           this.showImage(data.name);
 
           if (activeObj && !this.drawning) {
-            activeObj.hasControls = true;
-            activeObj.hasBorders = true;
-
-            this.canvas.getActiveObjects().forEach((a_obs) => {
-              a_obs.hasControls = true;
-              a_obs.hasBorders = true;
-            });
+            this.setControlsVisibility(true);
             this.canvas.renderAll();
           }
           this.canvasSaveSettingsPainter();
@@ -1522,7 +1462,6 @@ class Painter {
       let formData = new FormData();
       formData.append("image", blob, fileName);
       formData.append("overwrite", "true");
-      //formData.append("type", "temp");
       uploadFile(formData);
     }, "image/png");
     // - end
@@ -1578,15 +1517,11 @@ export function PainterWidget(node, inputName, inputData, app) {
       });
 
       Object.assign(this.painter_wrap.children[0].style, {
-        //transformOrigin: "0 0",
-        //transform: scale,
         width: w + "px",
         height: h + "px",
       });
 
       Object.assign(this.painter_wrap.children[1].style, {
-        //transformOrigin: "0 0",
-        //transform: scale,
         width: w + "px",
         height: h + "px",
       });
@@ -1596,15 +1531,15 @@ export function PainterWidget(node, inputName, inputData, app) {
           "input, button, input:after, span, div.painter_drawning_box"
         )
       ).forEach((element) => {
-        if (element.type == "number") {
+        if (element.type === "number") {
           Object.assign(element.style, {
             width: `${40 * transform.a}px`,
             height: `${21 * transform.d}px`,
             fontSize: `${transform.d * 10.0}px`,
           });
-        } else if (element.tagName == "SPAN") {
+        } else if (element.tagName === "SPAN") {
           // NOPE
-        } else if (element.tagName == "DIV") {
+        } else if (element.tagName === "DIV") {
           Object.assign(element.style, {
             width: `${88 * transform.a}px`,
             left: `${-90 * transform.a}px`,
@@ -1647,10 +1582,10 @@ export function PainterWidget(node, inputName, inputData, app) {
 
   Object.defineProperty(widget, "value", {
     set: (x) => {
-      if (x == "") return;
+      if (x === "") return;
       let data=JSON.parse(x)
       node.painter.undo_history.push(data);
-      node.painter.undoRedoLoadData(data);
+      node.painter.loadCanvasData(data);
       node.painter.canvas.renderAll();
     },
     get: () => {
@@ -1661,11 +1596,132 @@ export function PainterWidget(node, inputName, inputData, app) {
 
   node.painter.makeElements();
 
-  let parentNode = document.createElement("div");
-  parentNode.appendChild(widget.painter_wrap)
-  app.canvasContainer.appendChild(parentNode)
+  const usesDomHost = Boolean(node.openPoseDomContainer);
+  if (usesDomHost) {
+    const painterLayer = document.createElement("div");
+    painterLayer.className = "lam-painter-layer";
+    Object.assign(painterLayer.style, {
+      display: "none",
+      width: "100%",
+      height: "100%",
+      boxSizing: "border-box",
+      position: "absolute",
+      left: "0",
+      top: "0",
+      zIndex: "2",
+    });
 
-  // node.addWidget("button", "清除画布", "clear_painer", () => {
+    const toolbar = document.createElement("div");
+    toolbar.className = "lam-painter-toolbar";
+    Object.assign(toolbar.style, {
+      width: "100%",
+      boxSizing: "border-box",
+      padding: "6px",
+      position: "absolute",
+      left: "0",
+      zIndex: "3",
+      border: "1px solid var(--border-color)",
+      borderRadius: "6px",
+      background: "var(--comfy-menu-bg)",
+    });
+
+    // The legacy painter placed these controls around the canvas with negative
+    // offsets.  In a DOM widget that makes them overlap the canvas, so keep the
+    // existing controls and event bindings but give them a normal-flow toolbar.
+    const panelPaintBox = widget.painter_wrap.querySelector(".panelPaintBox");
+    const propertyBox = panelPaintBox?.querySelector(".painter_drawning_box_property");
+    const drawingBox = panelPaintBox?.querySelector(".painter_drawning_box");
+    const modeBox = panelPaintBox?.querySelector(".painter_mode_box");
+    const drawingElements = panelPaintBox?.querySelector(".painter_drawning_elements");
+    const historyPanel = panelPaintBox?.querySelector(".painter_history_panel");
+    const manipulationBox = panelPaintBox?.querySelector(".painter_manipulation_box");
+
+    if (panelPaintBox) {
+      Object.assign(panelPaintBox.style, {
+        position: "relative",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: "6px",
+      });
+      Object.assign(propertyBox?.style || {}, {
+        position: "relative",
+        top: "auto",
+        left: "auto",
+        minHeight: "30px",
+      });
+      Object.assign(drawingBox?.style || {}, {
+        position: "relative",
+        top: "auto",
+        left: "auto",
+        width: "100%",
+        display: "flex",
+        alignItems: "stretch",
+        gap: "8px",
+      });
+      Object.assign(modeBox?.style || {}, {
+        flex: "0 0 86px",
+        margin: "12px 0 2px",
+      });
+      Object.assign(drawingElements?.style || {}, {
+        display: "grid",
+        gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+        alignItems: "start",
+        gap: "6px",
+        flex: "1 1 auto",
+        minWidth: "0",
+      });
+      Object.assign(historyPanel?.style || {}, {
+        position: "relative",
+        top: "auto",
+        right: "auto",
+        alignSelf: "flex-end",
+        padding: "0",
+      });
+      Object.assign(manipulationBox?.style || {}, {
+        position: "relative",
+        top: "auto",
+        left: "auto",
+        transform: "none",
+        width: "100%",
+      });
+      panelPaintBox.querySelectorAll(".fieldset_box").forEach((box) => {
+        box.style.margin = "12px 0 2px";
+      });
+      toolbar.appendChild(panelPaintBox);
+    }
+
+    Object.assign(widget.painter_wrap.style, {
+      position: "absolute",
+      left: "50%",
+      top: "0",
+      transform: "translateX(-50%)",
+      display: "block",
+      margin: "0",
+      zIndex: "2",
+    });
+    painterLayer.append(widget.painter_wrap, toolbar);
+    node.openPoseDomContainer.appendChild(painterLayer);
+    node.painterDomLayer = painterLayer;
+    node.updatePainterDomLayout = () => {
+      const canvasHeight = Number(node.painter.canvas.height) || 512;
+      const extraHeight = Number(node.openPose?.domExtraHeight) || 220;
+      painterLayer.style.height = `${canvasHeight + extraHeight}px`;
+      // Prompt inputs occupy the first row below the canvas.  Keep the painter
+      // toolbar in its own row so neither control group covers the canvas.
+      toolbar.style.top = `${canvasHeight + 116}px`;
+    };
+    node.updatePainterDomLayout();
+    widget.draw = function () {
+      painterLayer.style.display = node.painter.disabled ? "none" : "block";
+    };
+    widget.computeSize = () => [0, 0];
+  } else {
+    const parentNode = document.createElement("div");
+    parentNode.appendChild(widget.painter_wrap)
+    app.canvasContainer.appendChild(parentNode)
+  }
+
   //   node.painter.list_objects_panel__items.innerHTML = "";
   //   node.painter.clearCanvas();
   // });
@@ -1673,36 +1729,27 @@ export function PainterWidget(node, inputName, inputData, app) {
   // Add customWidget to node
   node.addCustomWidget(widget);
 
-  // node.onRemoved = () => {
   //   if (Object.hasOwn(LS_Painters, node.name)) {
-  //     delete LS_Painters[node.name];
-  //     LS_Save();
   //   }
 
   //   // When removing this node we need to remove the input from the DOM
   //   for (let y in node.widgets) {
-  //     if (node.widgets[y].painter_wrap) {
-  //       node.widgets[y].painter_wrap.remove();
   //     }
   //   }
   // };
 
-  // widget.onRemove = () => {
-  //   widget.painter_wrap?.remove();
   // };
 
   node.onResize = function () {
     let [w, h] = this.size;
-    let aspect_ratio = 1;
-    aspect_ratio = node.painter.currentCanvasSize.height/node.painter.currentCanvasSize.width;
+    let aspect_ratio = node.painter.currentCanvasSize.height / node.painter.currentCanvasSize.width;
 
     if (node?.imgs && typeof this.imgs !== undefined) {
       aspect_ratio = this.imgs[0].naturalHeight / this.imgs[0].naturalWidth;
     }
-    let buffer = 350;
-    if (w > this.painter.maxNodeSize) w = w - (w - this.painter.maxNodeSize);
+    const buffer = 350;
+    w = Math.min(w, this.painter.maxNodeSize);
     if (w < 600) w = 600;
-
     h = w * aspect_ratio + buffer;
 
     this.size = [w, h];
@@ -1741,14 +1788,12 @@ export function PainterWidget(node, inputName, inputData, app) {
     }
   };
 
-  app.canvas.onDrawBackground = function () {
+  if (!usesDomHost) app.canvas.onDrawBackground = function () {
     // Draw node isnt fired once the node is off the screen
     // if it goes off screen quickly, the input may not be removed
     // this shifts it off screen so it can be moved back if the node is visible.
-    for (let n in app.graph._nodes) {
-      const currnode = app.graph._nodes[n];
-      for (let w in currnode.widgets) {
-        let wid = currnode.widgets[w];
+    for (const currnode of app.graph._nodes) {
+      for (const wid of currnode.widgets) {
         if (Object.hasOwn(wid, "painter_widget")) {
           wid.painter_wrap.style.left = -8000 + "px";
           wid.painter_wrap.style.position = "absolute";
@@ -1798,34 +1843,32 @@ export async function loadData() {
 export function createMessage(title, decriptions, parent, func) {
   const message = document.createElement("div");
   message.className = "show_message_info";
-  message.style = `width: 300px;
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-display: flex;
-background: #3b2222;
-z-index: 9999;
-justify-content: center;
-flex-direction: column;
-align-items: stretch;
-text-align: center;
-border-radius: 6px;
-box-shadow: 3px 3px 6px #141414;
-border: 1px solid #f91b1b;
-color: white; 
-padding: 6px;
-opacity: .8;
-font-family: sans-serif;
-line-height: 1.5`;
+  Object.assign(message.style, {
+    width: "300px",
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    display: "flex",
+    background: "#3b2222",
+    zIndex: "9999",
+    justifyContent: "center",
+    flexDirection: "column",
+    alignItems: "stretch",
+    textAlign: "center",
+    borderRadius: "6px",
+    boxShadow: "3px 3px 6px #141414",
+    border: "1px solid #f91b1b",
+    color: "white",
+    padding: "6px",
+    opacity: "0.8",
+    fontFamily: "sans-serif",
+    lineHeight: "1.5",
+  });
   message.innerHTML = `<div style="background: #8f210f; padding: 5px; border-radius: 6px; margin-bottom: 5px;">${title}</div><div>${decriptions}</div>`;
-  parent && parent?.nodeType && parent.nodeType === 1
-    ? parent.appendChild(message)
-    : document.body.appendChild(message);
+  parent?.nodeType === 1 ? parent.appendChild(message) : document.body.appendChild(message);
 
-  if (func && typeof func === "function") {
-    func.apply();
-  }
+  if (typeof func === "function") func();
 
   return message;
 }

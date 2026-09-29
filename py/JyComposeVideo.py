@@ -195,6 +195,9 @@ FONT_MAP = {
     '仿宋': 'simfang.ttf',
     '隶书': 'SIMLI.TTF',
     '幼圆': 'SIMYOU.TTF',
+    '悠然体':'悠然体.ttf',
+    '新青年体':'新青年体.ttf',
+    '后现代体':'后现代体.ttf',
 }
 
 font_dir = os.path.abspath(os.path.join(__file__, "../../fonts"))
@@ -543,6 +546,8 @@ def apply_effect_frame(frame, effect_name, t, duration, w, h):
     import math
     p = min(t / max(duration, 0.001), 1.0) if duration > 0 else 0.5
     eff_key = EFFECT_MAP.get(effect_name)
+    if not eff_key and effect_name in EFFECT_MAP.values():
+        eff_key = effect_name
     if not eff_key:
         ename_lower = effect_name.lower()
         for k, v in EFFECT_MAP.items():
@@ -888,6 +893,275 @@ def _apply_effect_window(final_video, eff_key, e_start, e_end, width, height, _v
 _SLIDE_IN_MAP = {'slide_in_left': 'left', 'slide_in_right': 'right', 'slide_in_up': 'top', 'slide_in_down': 'bottom'}
 _SLIDE_OUT_MAP = {'slide_out_left': 'left', 'slide_out_right': 'right', 'slide_out_up': 'top', 'slide_out_down': 'bottom'}
 
+
+def create_mask_clip(size, mask_func, duration):
+    w, h = size
+    def make_frame(t):
+        p = min(t / max(duration, 0.001), 1.0)
+        return mask_func(w, h, p)
+    return VideoClip(make_frame, duration=duration, is_mask=True)
+
+
+def apply_moviepy_transition(clip_a, clip_b, trans_type, duration, size):
+    w, h = size
+    d = max(duration, 0.01)
+    fps_val = clip_a.fps if hasattr(clip_a, 'fps') and not callable(clip_a.fps) else 30
+
+    # 1. Crossfade
+    if trans_type == 'crossfade':
+        a = clip_a.with_effects([_vfx.CrossFadeOut(d)])
+        b = clip_b.with_effects([_vfx.CrossFadeIn(d)])
+        return concatenate_videoclips([a, b])
+
+    # 2. Fade to black
+    elif trans_type == 'fade_black':
+        black = ColorClip(size=size, color=(0,0,0), duration=d).with_fps(fps_val)
+        a = clip_a.with_effects([_vfx.FadeOut(d, [0,0,0])])
+        b = clip_b.with_effects([_vfx.FadeIn(d, [0,0,0])])
+        return concatenate_videoclips([a, black, b])
+
+    # 3. Fade to white / flash
+    elif trans_type in ('fade_white', 'flash_white'):
+        white = ColorClip(size=size, color=(255,255,255), duration=d).with_fps(fps_val)
+        a = clip_a.with_effects([_vfx.FadeOut(d, [255,255,255])])
+        b = clip_b.with_effects([_vfx.FadeIn(d, [255,255,255])])
+        return concatenate_videoclips([a, white, b])
+
+    # 4. Slide (native)
+    elif trans_type == 'slide_right':
+        a = clip_a.with_effects([_vfx.SlideOut(d, 'right')])
+        b = clip_b.with_effects([_vfx.SlideIn(d, 'right')])
+        return concatenate_videoclips([a, b])
+    elif trans_type == 'slide_left':
+        a = clip_a.with_effects([_vfx.SlideOut(d, 'left')])
+        b = clip_b.with_effects([_vfx.SlideIn(d, 'left')])
+        return concatenate_videoclips([a, b])
+    elif trans_type == 'slide_up':
+        a = clip_a.with_effects([_vfx.SlideOut(d, 'top')])
+        b = clip_b.with_effects([_vfx.SlideIn(d, 'top')])
+        return concatenate_videoclips([a, b])
+    elif trans_type == 'slide_down':
+        a = clip_a.with_effects([_vfx.SlideOut(d, 'bottom')])
+        b = clip_b.with_effects([_vfx.SlideIn(d, 'bottom')])
+        return concatenate_videoclips([a, b])
+
+    # 5. Wipe (mask-based)
+    elif trans_type == 'wipe_right':
+        def wr_mask(ww, hh, p):
+            m = np.zeros((hh, ww), dtype=np.uint8)
+            x = int(ww * p); m[:, :x] = 255; return m
+        mask = create_mask_clip(size, wr_mask, d)
+        return CompositeVideoClip([clip_a, clip_b.with_mask(mask)], size=size)
+    elif trans_type == 'wipe_left':
+        def wl_mask(ww, hh, p):
+            m = np.zeros((hh, ww), dtype=np.uint8)
+            x = int(ww * p); m[:, ww-x:] = 255; return m
+        mask = create_mask_clip(size, wl_mask, d)
+        return CompositeVideoClip([clip_a, clip_b.with_mask(mask)], size=size)
+    elif trans_type == 'wipe_up':
+        def wu_mask(ww, hh, p):
+            m = np.zeros((hh, ww), dtype=np.uint8)
+            y = int(hh * p); m[:y, :] = 255; return m
+        mask = create_mask_clip(size, wu_mask, d)
+        return CompositeVideoClip([clip_a, clip_b.with_mask(mask)], size=size)
+    elif trans_type == 'wipe_down':
+        def wd_mask(ww, hh, p):
+            m = np.zeros((hh, ww), dtype=np.uint8)
+            y = int(hh * p); m[hh-y:, :] = 255; return m
+        mask = create_mask_clip(size, wd_mask, d)
+        return CompositeVideoClip([clip_a, clip_b.with_mask(mask)], size=size)
+
+    # 6. Zoom
+    elif trans_type == 'zoom_in':
+        a_z = clip_a.with_effects([_vfx.Resize(lambda t: 1.0 + 0.5 * min(t/d, 1.0))])
+        return concatenate_videoclips([
+            a_z.with_effects([_vfx.CrossFadeOut(d)]),
+            clip_b.with_effects([_vfx.CrossFadeIn(d)])
+        ])
+    elif trans_type == 'zoom_out':
+        b_z = clip_b.with_effects([_vfx.Resize(lambda t: max(0.5, 1.0 - 0.5 * min(t/d, 1.0)))])
+        return concatenate_videoclips([
+            clip_a.with_effects([_vfx.CrossFadeOut(d)]),
+            b_z.with_effects([_vfx.CrossFadeIn(d)])
+        ])
+
+    # 7. Dissolve blur
+    elif trans_type == 'dissolve_blur':
+        def blur_make_frame(t):
+            p = min(t / d, 1.0) if d > 0 else 0.5
+            try: fa = clip_a.get_frame(clip_a.duration - d + min(t, d))
+            except: fa = np.zeros((h, w, 3), dtype=np.uint8)
+            try: fb = clip_b.get_frame(t)
+            except: fb = np.zeros((h, w, 3), dtype=np.uint8)
+            ka = int(3 + 20 * (1-p)); kb = int(3 + 20 * p)
+            if ka % 2 == 0: ka += 1
+            if kb % 2 == 0: kb += 1
+            ka = min(ka, 31); kb = min(kb, 31)
+            try:
+                from PIL import ImageFilter
+                ia = Image.fromarray(fa).filter(ImageFilter.GaussianBlur(ka))
+                ib = Image.fromarray(fb).filter(ImageFilter.GaussianBlur(kb))
+                fab = np.array(ia).astype(np.float32)
+                fbb = np.array(ib).astype(np.float32)
+            except:
+                fab = fa.astype(np.float32); fbb = fb.astype(np.float32)
+            return np.clip(fab * (1-p) + fbb * p, 0, 255).astype(np.uint8)
+        return VideoClip(blur_make_frame, duration=clip_a.duration + clip_b.duration - d).with_fps(fps_val)
+
+    # 8. Circle reveal (mask)
+    elif trans_type == 'circle_reveal':
+        def c_mask(ww, hh, p):
+            m = np.zeros((hh, ww), dtype=np.uint8)
+            cx, cy = ww//2, hh//2
+            max_r = int(math.hypot(cx, cy))
+            r = int(max_r * p)
+            y, x = np.ogrid[:hh, :ww]
+            m[(x-cx)**2 + (y-cy)**2 <= r*r] = 255
+            return m
+        mask = create_mask_clip(size, c_mask, d)
+        return CompositeVideoClip([clip_a, clip_b.with_mask(mask)], size=size)
+
+    # 9. Curtain open
+    elif trans_type == 'curtain_open':
+        def cur_mask(ww, hh, p):
+            m = np.ones((hh, ww), dtype=np.uint8) * 255
+            off = int(ww//2 * (1-p))
+            m[:, :off] = 0; m[:, ww-off:] = 0
+            return m
+        mask = create_mask_clip(size, cur_mask, d)
+        return CompositeVideoClip([clip_a, clip_b.with_mask(mask)], size=size)
+
+    # 10. Split H/V
+    elif trans_type == 'split_h':
+        def sh_mask(ww, hh, p):
+            m = np.zeros((hh, ww), dtype=np.uint8)
+            stripe = max(hh//10, 1)
+            for y in range(0, hh, stripe):
+                ey = min(y+stripe, hh)
+                m[y:y+int((ey-y)*p), :] = 255
+            return m
+        mask = create_mask_clip(size, sh_mask, d)
+        return CompositeVideoClip([clip_a, clip_b.with_mask(mask)], size=size)
+    elif trans_type == 'split_v':
+        def sv_mask(ww, hh, p):
+            m = np.zeros((hh, ww), dtype=np.uint8)
+            stripe = max(ww//10, 1)
+            for x in range(0, ww, stripe):
+                ex = min(x+stripe, ww)
+                m[:, x:x+int((ex-x)*p)] = 255
+            return m
+        mask = create_mask_clip(size, sv_mask, d)
+        return CompositeVideoClip([clip_a, clip_b.with_mask(mask)], size=size)
+
+    # 11. Blinds
+    elif trans_type == 'blinds':
+        def bl_mask(ww, hh, p):
+            m = np.zeros((hh, ww), dtype=np.uint8)
+            stripe = max(hh//12, 1)
+            for y in range(0, hh, stripe):
+                ey = min(y+stripe, hh)
+                m[y:y+int((ey-y)*p), :] = 255
+            return m
+        mask = create_mask_clip(size, bl_mask, d)
+        return CompositeVideoClip([clip_a, clip_b.with_mask(mask)], size=size)
+
+    # 12. Diagonal split
+    elif trans_type == 'split_diagonal':
+        def di_mask(ww, hh, p):
+            m = np.zeros((hh, ww), dtype=np.uint8)
+            th = int(ww * p); m[:, :th] = 255
+            return m
+        mask = create_mask_clip(size, di_mask, d)
+        return CompositeVideoClip([clip_a, clip_b.with_mask(mask)], size=size)
+
+    # 13. Rotate
+    elif trans_type == 'rotate':
+        a_r = clip_a.with_effects([_vfx.Rotate(360, 'deg', expand=False), _vfx.CrossFadeOut(d)])
+        b_i = clip_b.with_effects([_vfx.CrossFadeIn(d)])
+        return concatenate_videoclips([a_r, b_i])
+
+    # 14. Flip
+    elif trans_type == 'flip':
+        return concatenate_videoclips([
+            clip_a.with_effects([_vfx.MirrorX(), _vfx.CrossFadeOut(d)]),
+            clip_b.with_effects([_vfx.MirrorX(), _vfx.CrossFadeIn(d)])
+        ])
+
+    # 15. Vintage look
+    elif trans_type == 'vintage':
+        return concatenate_videoclips([
+            clip_a.with_effects([_vfx.LumContrast(lum=1.15, contrast=0.9), _vfx.CrossFadeOut(d)]),
+            clip_b.with_effects([_vfx.CrossFadeIn(d)])
+        ])
+
+    # 16. Stretch (per-frame)
+    elif trans_type == 'stretch':
+        def st_make_frame(t):
+            p = min(t/d, 1.0) if d > 0 else 0.5
+            scale = max(1-p, 0.01); nw = max(int(w*scale), 1)
+            try: frame = clip_a.get_frame(t); img = Image.fromarray(frame).resize((nw, h), Image.LANCZOS)
+            except: img = Image.new('RGB', (nw, h), (0,0,0))
+            bg = Image.new('RGB', (w, h), (0,0,0)); bg.paste(img, ((w-nw)//2, 0))
+            return np.array(bg)
+        st_clip = VideoClip(st_make_frame, duration=d).with_fps(fps_val)
+        return concatenate_videoclips([st_clip, clip_b])
+
+    # 17. Bounce (per-frame)
+    elif trans_type == 'bounce':
+        def bo_make_frame(t):
+            p = min(t/d, 1.0) if d > 0 else 0.5
+            try: fa = clip_a.get_frame(t); fb = clip_b.get_frame(t)
+            except: return np.zeros((h, w, 3), dtype=np.uint8)
+            if p < 0.7: by = int(-h*0.3*(1-p/0.7))
+            else: by = int(-h*0.1*math.sin((p-0.7)/0.3*math.pi))
+            res = fa.copy()
+            if by >= 0 and h-by > 0: res[by:, :] = fb[:h-by, :]
+            elif h+by > 0: res[:h+by, :] = fb[-by:, :]
+            return res
+        return VideoClip(bo_make_frame, duration=d).with_fps(fps_val)
+
+    # 18. Glitch
+    elif trans_type == 'glitch':
+        def gl_make_frame(t):
+            p = min(t/d, 1.0) if d > 0 else 0.5
+            try: fa = clip_a.get_frame(t); fb = clip_b.get_frame(t)
+            except: return np.zeros((h, w, 3), dtype=np.uint8)
+            res = fa.copy()
+            if p < 0.8:
+                shift = np.random.randint(-15, 15); res = np.roll(res, shift, axis=1)
+                if res.shape[2] >= 3:
+                    rs = np.random.randint(3, 10)
+                    res[...,0] = np.roll(res[...,0], rs, axis=1)
+                    res[...,2] = np.roll(res[...,2], -rs, axis=1)
+            return np.clip(res.astype(np.float32)*(1-p) + fb.astype(np.float32)*p, 0, 255).astype(np.uint8)
+        return VideoClip(gl_make_frame, duration=d).with_fps(fps_val)
+
+    # 19. Shake
+    elif trans_type == 'shake':
+        def sk_make_frame(t):
+            p = min(t/d, 1.0) if d > 0 else 0.5
+            try: fa = clip_a.get_frame(t); fb = clip_b.get_frame(t)
+            except: return np.zeros((h, w, 3), dtype=np.uint8)
+            amp = 12*(1-p) if p < 0.8 else 2.4
+            sx = int(amp*math.sin(p*25)); sy = int(amp*math.cos(p*20))
+            res = np.roll(np.roll(fa, sx, axis=1), sy, axis=0)
+            return np.clip(res.astype(np.float32)*(1-p) + fb.astype(np.float32)*p, 0, 255).astype(np.uint8)
+        return VideoClip(sk_make_frame, duration=d).with_fps(fps_val)
+
+    # 20. Glow
+    elif trans_type == 'glow':
+        return concatenate_videoclips([
+            clip_a.with_effects([_vfx.LumContrast(lum=1.4, contrast=1.0), _vfx.CrossFadeOut(d)]),
+            clip_b.with_effects([_vfx.CrossFadeIn(d)])
+        ])
+
+    # Default: simple crossfade
+    return concatenate_videoclips([
+        clip_a.with_effects([_vfx.CrossFadeOut(d)]),
+        clip_b.with_effects([_vfx.CrossFadeIn(d)])
+    ])
+
+
 class JyComposeVideo:
     def __init__(self):
         self.output_dir = folder_paths.get_output_directory()
@@ -1056,9 +1330,8 @@ class JyComposeVideo:
         print(f'[JyComposeVideo] Processing: {len(all_clips)} media, {total_audio_items} audio, {total_caption_items} captions, {total_effect_items} effects')
         total_dur = max(c['end'] for c in all_clips)
 
-        # Build per-track videos using concatenate_videoclips (C-level, no Python per-frame)
-        # Each track concatenates its clips with crossfade transitions via moviepy built-ins,
-        # then multiple tracks are composited together.
+        # Build per-track videos using apply_moviepy_transition
+        # Supports 19 transition types: crossfade, slide, wipe, zoom, blur, masks, etc.
         track_videos = []
         clip_idx = 0
         for ti in range(len(track_clip_counts)):

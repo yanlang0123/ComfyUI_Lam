@@ -11,7 +11,7 @@ fabric.Object.prototype.cornerColor = "#108ce6";
 fabric.Object.prototype.borderColor = "#108ce6";
 fabric.Object.prototype.cornerSize = 10;
 
-let connect_keypoints = [
+const connect_keypoints = [
   [0, 1],
   [1, 2],
   [2, 3],
@@ -30,7 +30,7 @@ let connect_keypoints = [
   [0, 15],
   [15, 17],
 ];
-let connect_color = [
+const connect_color = [
   [0, 0, 255],
   [255, 0, 0],
   [255, 170, 0],
@@ -87,6 +87,16 @@ const asyncLoadImg = (imgURL) => {
       // fabric.Image.fromURL(imgURL, (img,isError) => {})
   })
 }
+
+/** 将屏幕坐标映射为 Fabric 画布坐标。 */
+function screenToCanvas(screenX, screenY, canvas) {
+  const bounds = canvas.upperCanvasEl.getBoundingClientRect();
+  return {
+    x: (screenX - bounds.left) * canvas.width / bounds.width,
+    y: (screenY - bounds.top) * canvas.height / bounds.height,
+  };
+}
+
 class OpenPose {
   constructor(node, canvasElement) {
     this.lockMode = false;
@@ -108,6 +118,9 @@ class OpenPose {
     this.history_change = false;
     this.canvas = this.initCanvas(canvasElement);
     this.disabled=false
+    this._widgetIndex = null;
+    this._widgetWidth = null;
+    this._widgetHeight = null;
         // 创建用于选择图片的input元素
     this.addPoseDemoInput = document.createElement("input");
     this.addPoseDemoInput.type = "file";
@@ -126,29 +139,55 @@ class OpenPose {
 
   setCanvasWidth(width){
     this.canvas.setWidth(width);
-    //this.painterCanvas.setWidth(width);
   }
   setCanvasHeight(height){
     this.canvas.setHeight(height);
-    //this.painterCanvas.setHeight(height);
+  }
+
+
+  /** 获取缓存的 widget 引用 */
+  getWidgetIndex() {
+    if (!this._widgetIndex) this._widgetIndex = this.node.widgets.find(w => w.name === 'index');
+    return this._widgetIndex;
+  }
+  getWidgetWidth() {
+    if (!this._widgetWidth) this._widgetWidth = this.node.widgets.find(w => w.name === 'width');
+    return this._widgetWidth;
+  }
+  getWidgetHeight() {
+    if (!this._widgetHeight) this._widgetHeight = this.node.widgets.find(w => w.name === 'height');
+    return this._widgetHeight;
+  }
+
+  /** 缓存全部 widget 引用（节点创建完成后调用） */
+  cacheWidgets() {
+    this._widgetIndex = this.node.widgets.find(w => w.name === 'index');
+    this._widgetWidth = this.node.widgets.find(w => w.name === 'width');
+    this._widgetHeight = this.node.widgets.find(w => w.name === 'height');
+  }
+
+  /** 保存当前状态到 undo_history */
+  pushUndoState() {
+    this.undo_history.push({
+      'groups': JSON.parse(JSON.stringify(this.groups)),
+      'hands': JSON.parse(JSON.stringify(this.hands)),
+      'index': this.history_index,
+    });
+    this.redo_history.length = 0;
+    this.history_change = true;
   }
 
   // 处理背景图片的加载
   onLoadBackground(e) {
     const file = this.backgroundInput.files[0];
-    //const url = URL.createObjectURL(file);
-    // 创建FileReader对象
     const reader = new FileReader();
-    let thi=this
-    // 文件读取成功后执行的回调函数
-    reader.onload = function(event) {
+    reader.onload = (event) => {
       const base64 = event.target.result;
-      //console.log('转换后的Base64字符串:', base64);
-      // 在这里可以使用base64字符串，例如发送到服务器或进行其他处理
-      thi.backgImg=base64;
-      thi.setBackgroundImage(base64);
+      this.backgImg=base64;
+      this.setBackgroundImage(base64);
     };
-    // 以Base64形式读取文件
+
+
     reader.readAsDataURL(file);
   }
 	//添加示例图片
@@ -167,14 +206,13 @@ class OpenPose {
                 originY: 'top',
                 opacity: 0.95
             });
-        let width = this.node.widgets[this.node.widgets.findIndex(obj => obj.name === 'width')];
-        let height = this.node.widgets[this.node.widgets.findIndex(obj => obj.name === 'height')];
-        width.value=img.width
-        height.value=img.height
+        const w = this.getWidgetWidth();
+        const h = this.getWidgetHeight();
+        w.value=img.width
+        h.value=img.height
         this.setCanvasWidth(img.width)
         this.setCanvasHeight(img.height)
-        this.node.painter.setCanvasSize(width.value,height.value)
-        //this.backgImg=img
+        this.node.painter.setCanvasSize(w.value,h.value)
         this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas));
         });
     }
@@ -186,8 +224,8 @@ class OpenPose {
       alert("请选择一只需要翻转的手")
       return 
     }
-    if(aobj&&aobj['itype']&&aobj['itype']=='hand'){
-      this.canvas.getActiveObject().set('flipX', !this.canvas.getActiveObject().flipX);
+    if(aobj?.itype === 'hand'){
+      aobj.set('flipX', !aobj.flipX);
       this.canvas.renderAll();
     }else{
       alert("只有手能翻转")
@@ -200,8 +238,8 @@ class OpenPose {
       alert("请选择一只需要翻转的手")
       return 
     }
-    if(aobj&&aobj['itype']&&aobj['itype']=='hand'){
-      this.canvas.getActiveObject().set('flipX', !this.canvas.getActiveObject().flipX);
+    if(aobj?.itype === 'hand'){
+      aobj.set('flipY', !aobj.flipY);
       this.canvas.renderAll();
     }else{
       alert("只有手能翻转")
@@ -220,29 +258,26 @@ class OpenPose {
     this.hands.push([]);
     this.prompts.push('');
     this.negatives.push('');
-    this.node.widgets[this.index].value = this.groups.length-1;
-    this.node.widgets[this.index].options['max']=this.groups.length-1;
+    this.getWidgetIndex().value = this.groups.length-1;
+    this.getWidgetIndex().options['max']=this.groups.length-1;
     for(let i=0;i<this.groups.length;i++){
       if(!Array.isArray(this.groups[i])){
         let indexColor=getDrawColor(i/this.groups.length,"7F") //hexToRgba(,0.5);
         this.groups[i]['fill']=indexColor
       }
     }
-    this.setIndexPose(this.node.widgets[this.index].value,false);
+    this.setIndexPose(this.getWidgetIndex().value,false);
   }
   // 异步加载图片
   async addHand(obj,isEdit=true,group=undefined){
-    // 引入fabric.js库
-    let thi=this
-    let x=obj['l'],y=obj['t'];
-    let img = await asyncLoadImg(`/lam/getImage?type=hands&&name=${obj.name}`)
+        let x=obj['l'],y=obj['t'];
+    let img = await asyncLoadImg(`/lam/getImage?type=hands&name=${obj.name}`)
     let left=x?x-img.width*0.1/2:0,top=y?y-img.height*0.1/2:0;
     let nobj=Object.assign({
       left: left, // 图片的初始水平位置
       top: top, // 图片的初始垂直位置
       angle: 0, // 图片的初始旋转角度
       opacity: 0.95, // 图片透明度
-      // 这里可以通过scaleX和scaleY来设置图片绘制后的大小，这里为原来大小的一半
       scaleX: 0.1, 
       scaleY: 0.1,
       flipX:false,
@@ -255,11 +290,11 @@ class OpenPose {
     if(group){
       group.addWithUpdate(img);
     }else{
-      thi.canvas.add(img); // 将图片添加到画布上
+      this.canvas.add(img); // 将图片添加到画布上
     }
     if(x && y){
-      thi.canvas.setActiveObject(img); //选中
-      thi.hands[thi.history_index].push({
+      this.canvas.setActiveObject(img); //选中
+      this.hands[this.history_index].push({
         left: left, // 图片的初始水平位置
         top: top, // 图片的初始垂直位置
         angle: 0, // 图片的初始旋转角度
@@ -271,7 +306,7 @@ class OpenPose {
         x:x,
         y:y
       })
-      thi.canvas.requestRenderAll();
+      this.canvas.requestRenderAll();
     }
     return img
   }
@@ -284,8 +319,8 @@ class OpenPose {
     this.hands.splice(delIndex,1)
     this.prompts.splice(delIndex,1)
     this.negatives.splice(delIndex,1)
-    this.node.widgets[this.index].value =0;
-    this.node.widgets[this.index].options['max']=this.groups.length-1;
+    this.getWidgetIndex().value =0;
+    this.getWidgetIndex().options['max']=this.groups.length-1;
     this.node.setDirtyCanvas(true);
     this.setIndexPose(0,false)
   }
@@ -354,23 +389,15 @@ class OpenPose {
   }
 
   clearCanvas(){
-    //this.canvas.clear();
     //this.canvas.backgroundColor = "#000";
-    let thi=this
-    this.canvas.getObjects().forEach(function(object) {
-      thi.canvas.remove(object);
-    });
+        this.canvas.remove(...this.canvas.getObjects());
   }
 
   setPose(keypoints,groups=[],isEdit=true) {
     this.clearCanvas();
-    let res = [];
-    if(groups.length>0){
-      res=groups;
-    }
+    const res = [...groups];
     for (let i = 0; i < keypoints.length; i += 18) {
-      const chunk = keypoints.slice(i, i + 18);
-      res.push(chunk);
+      res.push(keypoints.slice(i, i + 18));
     }
 
     for (let item of res) {
@@ -389,9 +416,9 @@ class OpenPose {
       this.hands.push(hands);
       this.prompts.push('');
       this.negatives.push('');
-      this.node.widgets[this.index].value = this.groups.length-1;
-      this.node.widgets[this.index].options['max']=this.groups.length-1;
-      this.history_index=this.node.widgets[this.index].value
+      this.getWidgetIndex().value = this.groups.length-1;
+      this.getWidgetIndex().options['max']=this.groups.length-1;
+      this.history_index=this.getWidgetIndex().value
       this.promptInput.value=this.prompts[this.history_index]
       this.negativeInput.value=this.negatives[this.history_index]
     }
@@ -411,7 +438,6 @@ class OpenPose {
       if(isEdit){
         this.canvas.setActiveObject(square);
       }
-      // 渲染画布
       this.canvas.renderAll();
     }else{
       const group = new fabric.Group();
@@ -457,7 +483,6 @@ class OpenPose {
       const lines = {};
       const circles = [];
       for (let i = 0; i < connect_keypoints.length; i++) {
-        // 连线
         const item = connect_keypoints[i];
         if(keypoints[item[0]][0]<0||keypoints[item[0]][1]<0||keypoints[item[1]][0]<0||keypoints[item[1]][1]<0){
             continue;
@@ -496,7 +521,6 @@ class OpenPose {
         await this.addHand(hands[i],true,group)
       }
       this.canvas.discardActiveObject();
-      //不可编辑
       if(isEdit){
           this.canvas.setActiveObject(group);
           this.canvas.add(group);  
@@ -507,99 +531,74 @@ class OpenPose {
     
   }
 
-  initCanvas() {
-    this.canvas = new fabric.Canvas(this.canvas, {
+  /** 更新关键点连线位置的公共逻辑 */
+  _updatePointLines(p, left, top, showEyes) {
+    if (p["id"] === 0) {
+      p.line1 && p.line1.set({ x1: left, y1: top });
+    } else {
+      p.line1 && p.line1.set({ x2: left, y2: top });
+    }
+    if (p["id"] === 14 || p["id"] === 15) {
+      p.radius = showEyes ? 5 : 0.3;
+      if (p.line1) p.line1.strokeWidth = showEyes ? 10 : 0;
+      if (p.line2) p.line2.strokeWidth = showEyes ? 10 : 0;
+    }
+    p.line2 && p.line2.set({ x1: left, y1: top });
+    p.line3 && p.line3.set({ x1: left, y1: top });
+    p.line4 && p.line4.set({ x1: left, y1: top });
+    p.line5 && p.line5.set({ x1: left, y1: top });
+  }
+
+  initCanvas(canvasElement) {
+    this.canvas = new fabric.Canvas(canvasElement, {
       backgroundColor: "#000",
       preserveObjectStacking: true,
     });
 
     const updateLines = (target) => {
-      if ("_objects" in target) {
-        const flipX = target.flipX ? -1 : 1;
-        const flipY = target.flipY ? -1 : 1;
-        this.flipped = flipX * flipY === -1;
-        const showEyes = this.flipped ? !this.visibleEyes : this.visibleEyes;
+      if (!("_objects" in target)) {
+        const p = target;
+        this._updatePointLines(p, p.left, p.top, this.visibleEyes);
+        this.canvas.renderAll();
+        return;
+      }
 
-        if (target.angle === 0) {
-          const rtop = target.top;
-          const rleft = target.left;
-          for (const item of target._objects) {
-            let p = item;
-            if((p['itype']&&p['itype']=='hand')||p.type=="rect"){
-              continue
-            }
-            p.scaleX = 1;
-            p.scaleY = 1;
-            const top =
-              rtop +
-              p.top * target.scaleY * flipY +
-              (target.height * target.scaleY) / 2;
-            const left =
-              rleft +
-              p.left * target.scaleX * flipX +
-              (target.width * target.scaleX) / 2;
-            p["_top"] = top;
-            p["_left"] = left;
-            if (p["id"] === 0) {
-              p.line1 && p.line1.set({ x1: left, y1: top });
-            } else {
-              p.line1 && p.line1.set({ x2: left, y2: top });
-            }
-            if (p["id"] === 14 || p["id"] === 15) {
-              p.radius = showEyes ? 5 : 0;
-              if (p.line1) p.line1.strokeWidth = showEyes ? 10 : 0;
-              if (p.line2) p.line2.strokeWidth = showEyes ? 10 : 0;
-            }
-            p.line2 && p.line2.set({ x1: left, y1: top });
-            p.line3 && p.line3.set({ x1: left, y1: top });
-            p.line4 && p.line4.set({ x1: left, y1: top });
-            p.line5 && p.line5.set({ x1: left, y1: top });
-          }
-        } else {
-          const aCoords = target.aCoords;
-          const center = {
-            x: (aCoords.tl.x + aCoords.br.x) / 2,
-            y: (aCoords.tl.y + aCoords.br.y) / 2,
-          };
-          const rad = (target.angle * Math.PI) / 180;
-          const sin = Math.sin(rad);
-          const cos = Math.cos(rad);
+      const flipX = target.flipX ? -1 : 1;
+      const flipY = target.flipY ? -1 : 1;
+      this.flipped = flipX * flipY === -1;
+      const showEyes = this.flipped ? !this.visibleEyes : this.visibleEyes;
 
-          for (const item of target._objects) {
-            let p = item;
-            const p_top = p.top * target.scaleY * flipY;
-            const p_left = p.left * target.scaleX * flipX;
-            const left = center.x + p_left * cos - p_top * sin;
-            const top = center.y + p_left * sin + p_top * cos;
-            p["_top"] = top;
-            p["_left"] = left;
-            if (p["id"] === 0) {
-              p.line1 && p.line1.set({ x1: left, y1: top });
-            } else {
-              p.line1 && p.line1.set({ x2: left, y2: top });
-            }
-            if (p["id"] === 14 || p["id"] === 15) {
-              p.radius = showEyes ? 5 : 0.3;
-              if (p.line1) p.line1.strokeWidth = showEyes ? 10 : 0;
-              if (p.line2) p.line2.strokeWidth = showEyes ? 10 : 0;
-            }
-            p.line2 && p.line2.set({ x1: left, y1: top });
-            p.line3 && p.line3.set({ x1: left, y1: top });
-            p.line4 && p.line4.set({ x1: left, y1: top });
-            p.line5 && p.line5.set({ x1: left, y1: top });
-          }
+      if (target.angle === 0) {
+        const rtop = target.top;
+        const rleft = target.left;
+        for (const p of target._objects) {
+          if ((p['itype'] && p['itype'] === 'hand') || p.type === "rect") continue;
+          p.scaleX = 1;
+          p.scaleY = 1;
+          const top = rtop + p.top * target.scaleY * flipY + (target.height * target.scaleY) / 2;
+          const left = rleft + p.left * target.scaleX * flipX + (target.width * target.scaleX) / 2;
+          p["_top"] = top;
+          p["_left"] = left;
+          this._updatePointLines(p, left, top, showEyes);
         }
       } else {
-        var p = target;
-        if (p["id"] === 0) {
-          p.line1 && p.line1.set({ x1: p.left, y1: p.top });
-        } else {
-          p.line1 && p.line1.set({ x2: p.left, y2: p.top });
+        const aCoords = target.aCoords;
+        const center = {
+          x: (aCoords.tl.x + aCoords.br.x) / 2,
+          y: (aCoords.tl.y + aCoords.br.y) / 2,
+        };
+        const rad = (target.angle * Math.PI) / 180;
+        const sin = Math.sin(rad);
+        const cos = Math.cos(rad);
+        for (const p of target._objects) {
+          const p_top = p.top * target.scaleY * flipY;
+          const p_left = p.left * target.scaleX * flipX;
+          const left = center.x + p_left * cos - p_top * sin;
+          const top = center.y + p_left * sin + p_top * cos;
+          p["_top"] = top;
+          p["_left"] = left;
+          this._updatePointLines(p, left, top, showEyes);
         }
-        p.line2 && p.line2.set({ x1: p.left, y1: p.top });
-        p.line3 && p.line3.set({ x1: p.left, y1: p.top });
-        p.line4 && p.line4.set({ x1: p.left, y1: p.top });
-        p.line5 && p.line5.set({ x1: p.left, y1: p.top });
       }
       this.canvas.renderAll();
     };
@@ -622,14 +621,12 @@ class OpenPose {
       console.log('object:modified取消的事件')
       if (
         this.lockMode ||
-        (this.canvas.getActiveObject()&&this.canvas.getActiveObject().type == "activeSelection")
+        (this.canvas.getActiveObject()?.type == "activeSelection")
       )
         return;
       
       this.changeIndexPose()
-      this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
-            'hands':JSON.parse(JSON.stringify(this.hands)),'index':this.history_index});
-      this.redo_history.length = 0;
+      this.pushUndoState();
       this.history_change = true;
     });
 
@@ -637,13 +634,11 @@ class OpenPose {
       if (this.lockMode)
           return;
       
-      if(e?.deselected?.length>1||(e?.deselected?.length==1&&e?.deselected[0].itype=="hand")){
+      if(e?.deselected?.length > 1 || (e?.deselected?.length === 1 && e?.deselected[0].itype === "hand")){
         let json=this.getJSON();
         if (!Array.isArray(json["keypoints"])||(json["keypoints"].length>0&&json["keypoints"].length >1)) {
             this.changeIndexPose()
-            this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
-            'hands':JSON.parse(JSON.stringify(this.hands)),'index':this.history_index});
-            this.redo_history.length = 0;
+            this.pushUndoState();
             this.history_change = true;
         }
         
@@ -655,9 +650,7 @@ class OpenPose {
     //   this.groups=[]
     //   this.hands=[]
     //   this.addPose();
-    //   this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
-    //   'hands':JSON.parse(JSON.stringify(this.hands)),
-    //   'index':this.history_index});
+    this.pushUndoState();
     // }
     return this.canvas;
   }
@@ -698,9 +691,7 @@ class OpenPose {
     this.negatives = [];
     this.backgImg = null;
     this.addPose();
-    this.undo_history.push({'groups':JSON.parse(JSON.stringify(this.groups)),
-    'hands':JSON.parse(JSON.stringify(this.hands)),
-    'index':this.history_index});
+    this.pushUndoState();
   }
 
   updateHistoryData() {
@@ -713,25 +704,15 @@ class OpenPose {
   }
 
   //拖拽手势处理函数
-  onDragDrop=function(e) {
-    let name=e.dataTransfer.files[0].name;
-    let x=e.x;  
-    let y=e.y;
-    let width=this.canvas.width;
-    let height=this.canvas.height;
-    let oWidth=this.canvas.upperCanvasEl.parentElement.offsetWidth
-    let oHeight=this.canvas.upperCanvasEl.parentElement.offsetHeight
-    let left=this.canvas.upperCanvasEl.parentElement.offsetLeft
-    let top=this.canvas.upperCanvasEl.parentElement.offsetTop
-    x=(x-left)/oWidth*width
-    y=(y-top)/oHeight*height
-    this.addHand({name:name,l:x,t:y})
-    return true;
-  };
+  onDragDrop = (e) => {
+      const name = e.dataTransfer.files[0].name;
+      const { x, y } = screenToCanvas(e.x, e.y, this.canvas);
+      this.addHand({ name, l: x, t: y });
+      return true;
+    };
 
 
   getHands(){ //获取手势
-    let thi=this;
     const addHandsBtn = async () => {
       try {
         const resp = await api.fetchApi(`/lam/getHeads`);
@@ -742,31 +723,21 @@ class OpenPose {
           rightButtons.className = "panelRightButtons comfy-menu-btns";
           for(let i=0;i<data.length;i++){
             var img = document.createElement('img');
-            img.src = `/lam/getImage?type=hands&&name=${data[i]}`;
+            img.src = `/lam/getImage?type=hands&name=${data[i]}`;
             img.alt = data[i];
             img.style.width = "40px";
             img.style.height = "40px";
             img.addEventListener("dragend", (e) =>  {
-              let name=e.target.alt;
-              let x=e.x;  
-              let y=e.y;
-              let width=thi.canvas.width;
-              let height=thi.canvas.height;
-              let oWidth=thi.canvas.upperCanvasEl.parentElement.offsetWidth
-              let oHeight=thi.canvas.upperCanvasEl.parentElement.offsetHeight
-              let left=thi.canvas.upperCanvasEl.parentElement.offsetLeft
-              let top=thi.canvas.upperCanvasEl.parentElement.offsetTop
-              x=(x-left)/oWidth*width
-              y=(y-top)/oHeight*height
-              thi.addHand({name:name,l:x,t:y})
-            });
+              const pt = screenToCanvas(e.x, e.y, this.canvas);
+              this.addHand({ name: e.target.alt, l: pt.x, t: pt.y });
+              });
 
             img.addEventListener("drag", (e) => {
               app.dragOverNode = thi;
             });
             rightButtons.appendChild(img);
           }
-          thi.canvas.wrapperEl.appendChild(rightButtons);
+          this.canvas.wrapperEl.appendChild(rightButtons);
         } else {
           alert(resp.status + " - " + resp.statusText);
         }
@@ -778,10 +749,9 @@ class OpenPose {
   }
 
   getImageOpse(image){ //上传图片识别骨骼姿态
-    let thi=this;
     // 创建一个自定义的Loading控件
     var loading = (function() {
-      if(!thi.canvas.wrapperEl.loadingDiv){
+      if(!this.canvas.wrapperEl.loadingDiv){
         var loadingDiv = document.createElement('div');
         loadingDiv.style.position = 'absolute';
         loadingDiv.style.left = '0';
@@ -794,20 +764,20 @@ class OpenPose {
         loadingDiv.style.alignItems = 'center';
         loadingDiv.style.zIndex = '100';
         loadingDiv.style.textAlign = 'center';
-        loadingDiv.style.paddingTop = thi.canvas.height/2+'px';
+        loadingDiv.style.paddingTop = this.canvas.height/2+'px';
         var loadingText = document.createElement('p');
         loadingText.textContent = '图片识别中...';
         loadingDiv.appendChild(loadingText);
       
-        thi.canvas.wrapperEl.appendChild(loadingDiv);
-        thi.canvas.wrapperEl.loadingDiv = loadingDiv;
+        this.canvas.wrapperEl.appendChild(loadingDiv);
+        this.canvas.wrapperEl.loadingDiv = loadingDiv;
       }
       return {
         show: function() {
-          thi.canvas.wrapperEl.loadingDiv.style.display = 'block';
+          this.canvas.wrapperEl.loadingDiv.style.display = 'block';
         },
         hide: function() {
-          thi.canvas.wrapperEl.loadingDiv.style.display = 'none';
+          this.canvas.wrapperEl.loadingDiv.style.display = 'none';
         }
       };
     })();
@@ -837,8 +807,8 @@ class OpenPose {
             this.negatives.push('');
           }
 
-          this.node.widgets[this.index].value = this.groups.length-1;
-          this.node.widgets[this.index].options['max']=this.groups.length-1;
+          this.getWidgetIndex().value = this.groups.length-1;
+          this.getWidgetIndex().options['max']=this.groups.length-1;
           this.node.setDirtyCanvas(true);
           this.setIndexPose(this.groups.length-1,false)
           this.updateHistoryData();
@@ -900,8 +870,8 @@ class OpenPose {
   loadPreset(obj) {
     this.groups=obj['groups']
     let index=obj['index']
-    this.node.widgets[this.index].value=index;
-    this.node.widgets[this.index].options['max']=this.groups.length;
+    this.getWidgetIndex().value=index;
+    this.getWidgetIndex().options['max']=this.groups.length;
     this.node.setDirtyCanvas(true);
     this.setIndexPose(index,false)
   }
@@ -986,26 +956,29 @@ function createOpenPose(node, inputName, inputData, app) {
   node.openPose = new OpenPose(node, canvasOpenPose,canvasPainter);
   node.openPose.setCanvasWidth(512)
   node.openPose.setCanvasHeight(512)
+node.openPose.cacheWidgets();
   
-  let index = node.widgets[node.widgets.findIndex(obj => obj.name === 'index')];
-  let width = node.widgets[node.widgets.findIndex(obj => obj.name === 'width')];
-  let height = node.widgets[node.widgets.findIndex(obj => obj.name === 'height')];
+  let index = node.openPose.getWidgetIndex();
+  let width = node.openPose.getWidgetWidth();
+  let height = node.openPose.getWidgetHeight();
   index.callback = function (v) {
     node.openPose.setIndexPose(v)
   }
   width.callback = function (v) {
     node.openPose.setCanvasWidth(v)
     node.painter.setCanvasSize(v,node.painter.canvas.height)
+    node.openPose.updateDomLayout?.()
   }
   height.callback = function (v) {
     node.openPose.setCanvasHeight(v)
     node.painter.setCanvasSize(node.painter.canvas.width,v)
+    node.openPose.updateDomLayout?.()
   }
 
   widget.openpose = node.openPose.canvas.wrapperEl;
   widget.parent = node;
-  Object.defineProperty(widget, "value", {
-    set: (x) => {
+  const setPoseValue = (x) => {
+        if (!x) return;
         node.openPose.setCanvasWidth(width.value)
         node.openPose.setCanvasHeight(height.value)
         node.painter.setCanvasSize(width.value,height.value)
@@ -1026,98 +999,63 @@ function createOpenPose(node, inputName, inputData, app) {
           node.openPose.negatives=data.negatives;
         }
         node.openPose.setIndexPose(0,false)
-    },
-    get: () => {
+    };
+  const getPoseValue = () => {
       return JSON.stringify({
-        groups: this.openPose.groups,
-        subsets: this.openPose.subsets,
-        hands: this.openPose.hands,
-        backgImg:this.openPose.backgImg?this.openPose.backgImg:null,
-        prompts:this.openPose.prompts?this.openPose.prompts:null,
-        negatives:this.openPose.negatives?this.openPose.negatives:null
+        groups: node.openPose.groups,
+        subsets: node.openPose.subsets,
+        hands: node.openPose.hands,
+        backgImg:node.openPose.backgImg?node.openPose.backgImg:null,
+        prompts:node.openPose.prompts?node.openPose.prompts:null,
+        negatives:node.openPose.negatives?node.openPose.negatives:null
       });
-    }
+    };
+  Object.defineProperty(widget, "value", {
+    set: setPoseValue,
+    get: getPoseValue,
   });
 
   // Create elements undo, redo, clear history
-  let panelButtons = document.createElement("div"),
-    refButton = document.createElement("button"),
-    addButton = document.createElement("button"),
-    delButton = document.createElement("button"),
-    resButton = document.createElement("button"),
-    imgButton = document.createElement("button"),
-    undoButton = document.createElement("button"),
-    redoButton = document.createElement("button"),
-    fliplfButton = document.createElement("button"),
-    fliptdButton = document.createElement("button"),
-    rectButton = document.createElement("button"),
-    historyClearButton = document.createElement("button");
+  const panelButtons = document.createElement("div");
+  const buttonDefs = [
+    { text: "Ref", title: "背景图片", action: () => node.openPose.backgroundInput.click() },
+    { text: "+", title: "添加骨骼", action: () => node.openPose.addPose() },
+    { text: "-", title: "删除骨骼", action: () => node.openPose.delIndexPose() },
+    { text: "重", title: "重置", action: () => node.openPose.resetCanvas() },
+    { text: "img", title: "添加人物示例", action: () => node.openPose.addPoseDemoInput.click() },
+    { text: "<-", title: "上一步", action: () => node.openPose.undo() },
+    { text: "->", title: "下一步", action: () => node.openPose.redo() },
+    { text: "←", title: "左右翻转", action: () => node.openPose.fliplf() },
+    { text: "↑", title: "上下翻转", action: () => node.openPose.fliptd() },
+    { text: "□", title: "矩形遮罩", action: () => node.openPose.addRect() },
+  ];
 
   panelButtons.className = "panelButtons comfy-menu-btns";
-  refButton.textContent = "Ref";
-  addButton.textContent = "+";
-  delButton.textContent = "-";
-  resButton.textContent = "⟲";
-  imgButton.textContent = "img";
-  undoButton.textContent = "<-";
-  redoButton.textContent = "->";
-  fliplfButton.textContent = "↔";
-  fliptdButton.textContent = "↕";
-  rectButton.textContent = "□";
-  historyClearButton.textContent = "✖";
-  refButton.title = "背景图片";
-  addButton.title = "添加骨骼";
-  delButton.title = "删除骨骼";
-  resButton.title = "重置";
-  imgButton.title = "添加人物示例";
-  undoButton.title = "上一步";
-  redoButton.title = "下一步";
-  fliplfButton.title = "左右翻转";
-  fliptdButton.title = "上下翻转";
-  rectButton.title="矩形遮罩";
-  historyClearButton.title = "清除历史";
+  for (const def of buttonDefs) {
+    const btn = document.createElement("button");
+    btn.textContent = def.text;
+    btn.title = def.title;
+    btn.addEventListener("click", def.action);
+    panelButtons.appendChild(btn);
+  }
 
-  refButton.addEventListener("click", () => node.openPose.backgroundInput.click());
-  addButton.addEventListener("click", () => node.openPose.addPose());
-  delButton.addEventListener("click", () => node.openPose.delIndexPose());
-  resButton.addEventListener("click", () => node.openPose.resetCanvas());
-  imgButton.addEventListener("click", () => node.openPose.addPoseDemoInput.click());
-  undoButton.addEventListener("click", () => node.openPose.undo());
-  redoButton.addEventListener("click", () => node.openPose.redo());
-  fliplfButton.addEventListener("click", () => node.openPose.fliplf());
-  fliptdButton.addEventListener("click", () => node.openPose.fliptd());
-  rectButton.addEventListener("click", () => node.openPose.addRect());
+    // 清除历史按钮（需确认，单独处理）
+  const historyClearButton = document.createElement("button");
+  historyClearButton.textContent = "\u2716";
+  historyClearButton.title = "清除历史";
   historyClearButton.addEventListener("click", () => {
-    if (confirm(`删除节点"${node.name}"的所有姿势历史记录 ?`)) {
+    if (confirm(`删除节点"${node.name}"的所有姿态历史记录?`)) {
       node.openPose.undo_history = [];
       node.openPose.redo_history = [];
-      if(node.openPose.groups.length>0){
-        node.openPose.undo_history.push({'groups':JSON.parse(JSON.stringify(node.openPose.groups)),
-        'hands':JSON.parse(JSON.stringify(node.openPose.hands)),
-        'index':node.openPose.history_index});
+      if (node.openPose.groups.length > 0) {
+        node.openPose.pushUndoState();
       }
-      // node.openPose.groups=[]
-      // node.openPose.subsets = [];
-      // node.openPose.hands = [];
-      // node.openPose.prompts = [];
-      // node.openPose.negatives = [];
-      // node.openPose.addPose();
       node.openPose.history_change = true;
       node.openPose.updateHistoryData();
     }
   });
-  panelButtons.appendChild(refButton);
-  panelButtons.appendChild(addButton);
-  panelButtons.appendChild(delButton);
-  panelButtons.appendChild(resButton);
-  panelButtons.appendChild(imgButton);
-  panelButtons.appendChild(undoButton);
-  panelButtons.appendChild(redoButton);
-  panelButtons.appendChild(fliplfButton);
-  panelButtons.appendChild(fliptdButton);
-  panelButtons.appendChild(rectButton);
   panelButtons.appendChild(historyClearButton);
-  node.openPose.canvas.wrapperEl.appendChild(panelButtons);
+node.openPose.canvas.wrapperEl.appendChild(panelButtons);
 
   //添加提示词输入框
   let promptDiv = document.createElement("div");
@@ -1141,10 +1079,64 @@ function createOpenPose(node, inputName, inputData, app) {
   node.openPose.negativeInput=negativeInput
   node.openPose.canvas.wrapperEl.appendChild(promptDiv);
 
-  let parentNode = document.createElement("div");
-  parentNode.appendChild(widget.openpose)
-  app.canvasContainer.appendChild(parentNode)
-  //document.body.appendChild(parentNode);
+  const usesDomWidget = typeof node.addDOMWidget === "function";
+  let registeredWidget = widget;
+  let domHost = null;
+  if (usesDomWidget) {
+    domHost = document.createElement("div");
+    domHost.className = "lam-openpose-dom-widget";
+    Object.assign(domHost.style, {
+      position: "relative",
+      width: "100%",
+      overflow: "visible",
+    });
+    Object.assign(widget.openpose.style, {
+      position: "relative",
+      left: "auto",
+      top: "auto",
+      margin: "0 auto",
+      zIndex: "1",
+    });
+    domHost.appendChild(widget.openpose);
+    node.openPoseDomContainer = domHost;
+    node.openPose.domExtraHeight = 220;
+    Object.assign(promptDiv.style, {
+      position: "absolute",
+      width: "90%",
+      height: "100px",
+      left: "5%",
+      display: "flex",
+      gap: "6px",
+      zIndex: "4",
+      boxSizing: "border-box",
+    });
+    promptDiv.querySelectorAll("textarea").forEach((textarea) => {
+      Object.assign(textarea.style, {
+        width: "calc(50% - 3px)",
+        height: "100%",
+        margin: "0",
+        boxSizing: "border-box",
+      });
+    });
+    node.openPose.updateDomLayout = () => {
+      const canvasWidth = Number(node.openPose.canvas.width) || 512;
+      const canvasHeight = Number(node.openPose.canvas.height) || 512;
+      const extraHeight = Number(node.openPose.domExtraHeight) || 220;
+      Object.assign(widget.openpose.style, {
+        width: `${canvasWidth}px`,
+        height: `${canvasHeight}px`,
+      });
+      promptDiv.style.top = `${canvasHeight + 8}px`;
+      domHost.style.height = `${canvasHeight + extraHeight}px`;
+      domHost.style.minHeight = `${canvasHeight + extraHeight}px`;
+      node.updatePainterDomLayout?.();
+    };
+    node.openPose.updateDomLayout();
+  } else {
+    const parentNode = document.createElement("div");
+    parentNode.appendChild(widget.openpose)
+    app.canvasContainer.appendChild(parentNode)
+  }
   document.addEventListener('keydown', function(event) {
       if(node.openPose.disabled){
         return;
@@ -1175,20 +1167,55 @@ function createOpenPose(node, inputName, inputData, app) {
   
   node.openPose.getHands()
   node.addWidget("button", "显/隐画板", "ShowPainter", () => {
+    const previousExtraHeight = Number(node.openPose.domExtraHeight) || 220;
     node.painter.disabled=!node.painter.disabled
     node.openPose.disabled=!node.openPose.disabled
     
     if(node.openPose.disabled){
       panelButtons.style.display="none"
-      node.openPose.canvas.wrapperEl.querySelectorAll('.panelRightButtons')[0].style.display="none"
+      const rightPanel = node.openPose.canvas.wrapperEl.querySelector('.panelRightButtons');
+      if (rightPanel) rightPanel.style.display="none"
     }else{
       panelButtons.style.display="flex"
-      node.openPose.canvas.wrapperEl.querySelectorAll('.panelRightButtons')[0].style.display="flex"
+      const rightPanel = node.openPose.canvas.wrapperEl.querySelector('.panelRightButtons');
+      if (rightPanel) rightPanel.style.display="flex"
+    }
+    if (node.painterDomLayer) {
+      // Keep the pose canvas visible below the transparent painter canvas so
+      // users can trace or paint directly against the skeleton reference.
+      node.openPose.canvas.wrapperEl.style.display = "block";
+      node.painterDomLayer.style.display = node.painter.disabled ? "none" : "block";
+    } else {
+      node.openPose.canvas.wrapperEl.style.display = node.openPose.disabled ? "none" : "block";
+      node.painter.canvas.wrapperEl.style.display = node.painter.disabled ? "none" : "block";
+    }
+    if (node.painterDomLayer) {
+      const nextExtraHeight = node.painter.disabled ? 220 : 340;
+      node.openPose.domExtraHeight = nextExtraHeight;
+      node.openPose.updateDomLayout?.();
+      const heightDelta = nextExtraHeight - previousExtraHeight;
+      if (heightDelta && typeof node.setSize === "function") {
+        node.setSize([node.size[0], node.size[1] + heightDelta]);
+      }
+      node.setDirtyCanvas?.(true, true);
     }
   });
-  
-  // Add customWidget to node
-  node.addCustomWidget(widget);
+
+  // Keep the pose data widget after ShowPainter so existing workflow widget
+  // value ordering remains compatible with the legacy implementation.
+  if (usesDomWidget) {
+    registeredWidget = node.addDOMWidget(widget.name, widget.type, domHost, {
+      hideOnZoom: false,
+      getValue: getPoseValue,
+      setValue: setPoseValue,
+      getMinHeight: () => (Number(node.openPose.canvas.height) || 512) + (Number(node.openPose.domExtraHeight) || 220),
+      getHeight: () => (Number(node.openPose.canvas.height) || 512) + (Number(node.openPose.domExtraHeight) || 220),
+    });
+    registeredWidget.openpose = widget.openpose;
+    registeredWidget.parent = node;
+  } else {
+    node.addCustomWidget(widget);
+  }
 
   node.onRemoved = () => {
     if (Object.hasOwn(LS_Poses, node.name)) {
@@ -1207,12 +1234,14 @@ function createOpenPose(node, inputName, inputData, app) {
     }
   };
 
-  widget.onRemove = () => {
-    widget.openpose?.remove();
-    widget.painter_wrap?.remove();
-  };
+  if (!usesDomWidget) {
+    widget.onRemove = () => {
+      widget.openpose?.remove();
+      widget.painter_wrap?.remove();
+    };
+  }
 
-  app.canvas.onDrawBackground = function () {
+  if (!usesDomWidget) app.canvas.onDrawBackground = function () {
     // Draw node isnt fired once the node is off the screen
     // if it goes off screen quickly, the input may not be removed
     // this shifts it off screen so it can be moved back if the node is visible.
@@ -1227,7 +1256,7 @@ function createOpenPose(node, inputName, inputData, app) {
       }
     }
   };
-  return { widget: widget };
+  return { widget: registeredWidget };
 }
 
 window.LS_Poses = {};
@@ -1494,10 +1523,10 @@ app.registerExtension({
     document.head.appendChild(style);
   },
   async setup(app) {
-    let openPoseNode = app.graph._nodes.filter((wi) => wi.type == "LAM.OpenPoseEditorPlus");
+    let openPoseNode = app.graph._nodes.filter((wi) => wi.type === "LAM.OpenPoseEditorPlus");
 
     if (openPoseNode.length) {
-      openPoseNode.map((n) => {
+      for (const n of openPoseNode) {
         console.log(`Setup PoseNode: ${n.name}`);
         let widgetImage = n.widgets.find((w) => w.name == "image");
         if (widgetImage && Object.hasOwn(LS_Poses, n.name)) {
@@ -1511,12 +1540,10 @@ app.registerExtension({
             n.openPose.prompts = [];
             n.openPose.negatives = [];
             n.openPose.addPose();
-            n.openPose.undo_history.push({'groups':JSON.parse(JSON.stringify(n.openPose.groups)),
-            'hands':JSON.parse(JSON.stringify(n.openPose.hands)),
-            'index':n.openPose.history_index});
+            n.openPose.pushUndoState();
           }
         }
-      });
+      }
     }
   },
   async beforeRegisterNodeDef(nodeType, nodeData, app) {
@@ -1543,7 +1570,7 @@ app.registerExtension({
         const r = onNodeCreated
           ? onNodeCreated.apply(this, arguments)
           : undefined;
-        let openPoseNode = app.graph._nodes.filter((wi) => wi.type == "LAM.OpenPoseEditorPlus");
+        let openPoseNode = app.graph._nodes.filter((wi) => wi.type === "LAM.OpenPoseEditorPlus");
         let nodeName = `Pose_${openPoseNode.length}`;
         let nodeNamePNG = `${nodeName}`;
 
