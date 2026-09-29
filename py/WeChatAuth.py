@@ -57,13 +57,16 @@ maxsize = 10  # 队列的最大长度
 client=None
 userHistory={}
 if len(Config().ai.keys())>0:
-    if Config().ai['ai_type']=='glm4' and ZhipuAI_IS_INIT:
-        client = ZhipuAI(api_key=Config().ai['api_key'])
-    elif Config().ai['ai_type']=='openAi' and OpenAI_IS_INIT:
-        client = OpenAI(
-            api_key=Config().ai['api_key'],
-            base_url=Config().ai['base_url'],
-        )
+    try:
+        if Config().ai['ai_type']=='glm4' and ZhipuAI_IS_INIT:
+            client = ZhipuAI(api_key=Config().ai['api_key'])
+        elif Config().ai['ai_type']=='openAi' and OpenAI_IS_INIT:
+            client = OpenAI(
+                api_key=Config().ai['api_key'],
+                base_url=Config().ai['base_url'],
+            )
+    except Exception as e:
+        logging.warning("AI客户端初始化失败，微信页面功能将继续可用：%s", e)
 
 def chat_completion(userId):
     tools=get_lm4_tools()

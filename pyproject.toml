@@ -3,7 +3,7 @@ name = "comfyui_lam"
 description = "This extension has some useful nodes, loops, wechat public number +AI chat drawing, distributed cluster"
 version = "0.3.67"
 license = {file = "LICENSE"}
-dependencies = ["openai", "opencv-python", "edge_tts", "matplotlib", "scikit-image", "omegaconf", "pytorch_lightning", "pandas", "kornia", "qrcode", "imageio", "imageio-ffmpeg", "tensorflow", "yacs", "pydub", "filterpy", "facexlib", "librosa", "face_alignment", "pyzbar", "redis", "zhipuai"]
+dependencies = ["openai>=1.55.3", "opencv-python", "edge_tts", "matplotlib", "scikit-image", "omegaconf", "pytorch_lightning", "pandas", "kornia", "qrcode", "imageio", "imageio-ffmpeg", "tensorflow", "yacs", "pydub", "filterpy", "facexlib", "librosa", "face_alignment", "pyzbar", "redis", "zhipuai"]
 
 [project.urls]
 Repository = "https://github.com/yanlang0123/ComfyUI_Lam"
