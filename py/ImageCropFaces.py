@@ -5,6 +5,7 @@ import os
 import torch
 from lam_tools import tensor2pil,pil2tensor
 import folder_paths
+IS_INSIGHTFACE_INSTALLED = False
 try:
     from insightface.app import FaceAnalysis
     IS_INSIGHTFACE_INSTALLED = True
